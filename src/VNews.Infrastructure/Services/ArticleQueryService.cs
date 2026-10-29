@@ -158,6 +158,15 @@ public class ArticleQueryService : IArticleQueryService
         return article;
     }
 
+    public async Task<PagedResult<ArticleSummaryDto>> GetLatestAsync(
+        int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = PublishedArticles()
+            .OrderByDescending(a => a.PublishedAt);
+
+        return await ToPagedResultAsync(query, page, pageSize, cancellationToken);
+    }
+
     public async Task<PagedResult<ArticleSummaryDto>> GetByCategoryAsync(
         string categorySlug, int page, int pageSize, CancellationToken cancellationToken = default)
     {

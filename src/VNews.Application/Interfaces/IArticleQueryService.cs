@@ -17,4 +17,7 @@ public interface IArticleQueryService
 
     Task<PagedResult<ArticleSummaryDto>> GetByTagAsync(
         string tagSlug, int page, int pageSize, CancellationToken cancellationToken = default);
+
+    Task<PagedResult<ArticleSummaryDto>> GetLatestAsync(
+        int page, int pageSize, CancellationToken cancellationToken = default);
 }

@@ -19,6 +19,7 @@ public static class DependencyInjection
 
         services.AddScoped<IArticleQueryService, ArticleQueryService>();
         services.AddScoped<ICategoryQueryService, CategoryQueryService>();
+        services.AddScoped<IArticleStoredProcedureService, ArticleStoredProcedureService>();
 
         return services;
     }

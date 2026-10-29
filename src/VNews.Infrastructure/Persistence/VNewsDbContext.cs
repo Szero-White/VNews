@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using VNews.Domain.Entities;
+using VNews.Infrastructure.Persistence.ProcedureResults;
 
 namespace VNews.Infrastructure.Persistence;
 
@@ -14,8 +15,23 @@ public class VNewsDbContext : DbContext
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<ArticleTag> ArticleTags => Set<ArticleTag>();
 
+    public DbSet<ArticleByCategoryResult> ArticleByCategoryResults => Set<ArticleByCategoryResult>();
+    public DbSet<DailyPublishStatResult> DailyPublishStatResults => Set<DailyPublishStatResult>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(VNewsDbContext).Assembly);
+
+        modelBuilder.Entity<ArticleByCategoryResult>(b =>
+        {
+            b.HasNoKey();
+            b.ToView(null);
+        });
+
+        modelBuilder.Entity<DailyPublishStatResult>(b =>
+        {
+            b.HasNoKey();
+            b.ToView(null);
+        });
     }
 }

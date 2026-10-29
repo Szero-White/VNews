@@ -7,9 +7,18 @@ DONE:
 - CSS responsive gốc (1440 / 768 / 390) theo phong cách tòa soạn, thương hiệu độc lập "VNews"; ảnh bìa là SVG gradient tự vẽ theo chuyên mục.
 - **Visual-match pass (2026-10-29):** dùng Playwright CLI thật (đã cài, `playwright-cli 0.1.22`) chụp baseline `references/vnexpress-desktop.png`/`vnexpress-mobile.png` từ vnexpress.net, so sánh với VNews, sửa 2 vòng (hero bố cục ảnh trái/chữ phải thay vì xếp dọc; vẽ lại 10 ảnh minh hoạ gradient biên tập thay cho khối màu phẳng + chữ "VNews" lặp lại trông như ảnh vỡ; cân bằng chiều cao cột hero). Chi tiết & ảnh chụp: `docs/UI-VERIFICATION.md`.
 
-CURRENT: M1 (dữ liệu + UI) hoàn tất, đã kiểm chứng bằng screenshot Playwright thật ở 1440px và 390px, console/network không lỗi. Chưa làm phân trang kiểm thử kỹ ở tablet 768px.
+- **M2 (2026-10-29):** REST API versioned `api/v1/...`:
+  - `GET /api/v1/articles` (mới nhất hoặc lọc theo `category`, phân trang), `GET /api/v1/articles/{slug}` (404 nếu không có/chưa publish).
+  - `GET /api/v1/categories`, `GET /api/v1/categories/{slug}`.
+  - `GET /api/v1/categories/{slug}/articles` — gọi **stored procedure** `dbo.sp_GetPublishedArticlesByCategory` (tham số hoá `@CategorySlug/@PageNumber/@PageSize`).
+  - `GET /api/v1/search?q=`, `GET /api/v1/stats/daily-publish?from=&to=` — gọi **stored procedure** `dbo.sp_GetDailyPublishStats` (tham số hoá `@FromDate/@ToDate`).
+  - Cả 2 stored procedure tạo qua migration `AddStoredProcedures` (`CREATE OR ALTER`, có `Down()` để rollback), gọi qua EF Core `FromSqlRaw` + `SqlParameter` (keyless entity `ArticleByCategoryResult`/`DailyPublishStatResult`), không dùng chuỗi nối trực tiếp → an toàn SQL injection.
+  - Validation nhất quán: `[ApiController]` tự trả `ValidationProblem`/`400` khi `page`/`pageSize`/`q` sai; `404` dạng `ProblemDetails` khi không tìm thấy; không bao giờ lộ bài viết chưa publish (mọi service đều lọc `Status == Published`, kể cả trong stored procedure).
+  - Test: 6 unit test (`PagedResultTests`) + 6 integration test thật (`ArticlesApiIntegrationTests`, dùng `WebApplicationFactory<Program>` gọi HTTP thật tới SQL Server LocalDB thật, không mock) — tổng **12/12 pass**.
 
-NEXT: M2 — REST API versioned cho public articles/categories/search, stored procedures tham số hóa (phân trang theo chuyên mục, thống kê publish theo ngày).
+CURRENT: M1 + M2 hoàn tất và đã kiểm chứng. Tiếp tục M3 (ASP.NET Core Identity + CMS CRUD).
+
+NEXT: M3 — ASP.NET Core Identity, role-based auth (Admin/Editor/Author/Reader), CRUD bài viết (draft → review → publish), upload ảnh an toàn, chống XSS, audit log, CSRF.
 
 BLOCKERS: Không còn blocker về browser tool (đã cài Playwright CLI, xem `docs/UI-VERIFICATION.md`). Gói `System.Security.Cryptography.Pkcs` (transitive qua SqlClient) có cảnh báo lỗ hổng NU1902/NU1903 — theo dõi khi có bản vá EF Core/SqlClient mới. Masthead chưa có UI cho đăng nhập/thông báo (cố ý để dành cho M3 Identity, tránh làm UI giả cho chức năng chưa có).
 
