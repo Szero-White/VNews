@@ -53,6 +53,49 @@
         </article>
         break;
 
+    case "category-lead":
+        <article class="category-lead">
+            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="category-lead__image-link">
+                <img src="@a.CoverImageUrl" alt="@a.Title" loading="lazy" decoding="async" />
+            </a>
+            <h3 class="category-lead__title">
+                <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
+            </h3>
+            <p class="category-lead__summary">@a.Summary</p>
+        </article>
+        break;
+
+    case "photo-feature":
+        <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="photo-feature">
+            <img src="@a.CoverImageUrl" alt="@a.Title" loading="lazy" decoding="async" />
+        </a>
+        break;
+
+    case "photo-feature-aside":
+        <article class="photo-feature-aside">
+            <h3 class="photo-feature-aside__title">
+                <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
+            </h3>
+            <p class="photo-feature-aside__summary">@a.Summary</p>
+            <span class="photo-feature-aside__meta">@a.CategoryName</span>
+        </article>
+        break;
+
+    case "spotlight-feature":
+        <article class="spotlight-feature">
+            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="spotlight-feature__image-link">
+                <img src="@a.CoverImageUrl" alt="@a.Title" loading="lazy" decoding="async" />
+            </a>
+            <div class="spotlight-feature__body">
+                <span class="spotlight-feature__category">@a.CategoryName</span>
+                <h3 class="spotlight-feature__title">
+                    <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
+                </h3>
+                <p class="spotlight-feature__summary">@a.Summary</p>
+            </div>
+        </article>
+        break;
+
     case "image-top-large":
         <article class="stream-card">
             <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="stream-card__image-link">
@@ -70,6 +113,21 @@
                 </div>
             </div>
         </article>
+        break;
+
+    case "list-item":
+        <li class="list-item">
+            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="list-item__link">@a.Title</a>
+        </li>
+        break;
+
+    case "list-item-thumb":
+        <li class="list-item-thumb">
+            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="list-item-thumb__img-link">
+                <img src="@a.CoverImageUrl" alt="@a.Title" loading="lazy" decoding="async" />
+            </a>
+            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="list-item-thumb__title">@a.Title</a>
+        </li>
         break;
 
     case "photo-grid":
@@ -90,18 +148,12 @@
         break;
 
     case "podcast-demo":
-        <article class="podcast-card">
-            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="podcast-card__image-link">
-                <img src="@a.CoverImageUrl" alt="@a.Title" loading="lazy" decoding="async" />
-                <span class="podcast-card__play" aria-hidden="true">▶</span>
-            </a>
-            <div class="podcast-card__body">
-                <h3 class="podcast-card__title">
-                    <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
-                </h3>
-                <span class="podcast-card__duration">Tập minh hoạ · 12:34 (chưa có audio thật)</span>
-            </div>
-        </article>
+        <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="podcast-card" aria-label="@a.Title (minh hoạ, chưa có audio thật)">
+            <img src="@a.CoverImageUrl" alt="@a.Title" loading="lazy" decoding="async" />
+            <span class="podcast-card__play" aria-hidden="true">▶</span>
+            <span class="podcast-card__duration">12:34</span>
+            <span class="podcast-card__title">@a.Title</span>
+        </a>
         break;
 
     case "text-only":

@@ -72,10 +72,17 @@
                     <h2 class="section-title">@panel.Category.Name</h2>
                     <a asp-controller="Category" asp-action="Index" asp-route-slug="@panel.Category.Slug" class="see-more">Xem thêm &rarr;</a>
                 </div>
-                <div class="category-panel__grid">
-                    @foreach (var item in panel.Articles)
+                <div class="category-panel__body">
+                    @{ var lead = panel.Articles.First(); }
+                    @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = lead, Layout = "category-lead" })
+                    @if (panel.Articles.Count > 1)
                     {
-                        @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = item, Layout = "image-top" })
+                        <ul class="category-panel__list">
+                            @foreach (var item in panel.Articles.Skip(1))
+                            {
+                                @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = item, Layout = "list-item-thumb" })
+                            }
+                        </ul>
                     }
                 </div>
             </section>
@@ -99,11 +106,15 @@
         {
             <section class="photo-section" aria-label="Ảnh">
                 <h2 class="section-title">Ảnh</h2>
-                <div class="photo-grid">
-                    @foreach (var item in Model.PhotoHighlights)
-                    {
-                        @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = item, Layout = "photo-grid" })
-                    }
+                <div class="photo-feature-row">
+                    @{ var photoLead = Model.PhotoHighlights.First(); }
+                    @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = photoLead, Layout = "photo-feature" })
+                    <div class="photo-feature-aside-list">
+                        @foreach (var item in Model.PhotoHighlights.Skip(1).Take(2))
+                        {
+                            @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = item, Layout = "photo-feature-aside" })
+                        }
+                    </div>
                 </div>
             </section>
         }
@@ -112,12 +123,17 @@
         {
             <section class="spotlight-section" aria-label="Spotlight">
                 <h2 class="section-title">Spotlight</h2>
-                <div class="spotlight-grid">
-                    @foreach (var item in Model.Spotlight)
-                    {
-                        @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = item, Layout = "spotlight" })
-                    }
-                </div>
+                @{ var spotlightLead = Model.Spotlight.First(); }
+                @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = spotlightLead, Layout = "spotlight-feature" })
+                @if (Model.Spotlight.Count > 1)
+                {
+                    <ul class="spotlight-list">
+                        @foreach (var item in Model.Spotlight.Skip(1))
+                        {
+                            @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = item, Layout = "list-item" })
+                        }
+                    </ul>
+                }
             </section>
         }
     }

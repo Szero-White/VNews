@@ -140,7 +140,40 @@ Full-page 1440×5152px (`artifacts/survey/vnews-home-desktop-full.png`).
 - Podcasts là **demo rõ ràng, không có audio thật** — đã gắn nhãn minh bạch ngay trong UI để không gây hiểu lầm, đúng tinh thần "không dùng dữ liệu giả vờ là tính năng thật".
 - Chưa đo lại bounding-box pixel chính xác cho 4 section mới so với VnExpress (chỉ so sánh bằng mắt + đúng kiểu trình bày) — nằm ngoài yêu cầu rõ ràng của lượt này (yêu cầu là "đúng kiểu trình bày và có dữ liệu demo phù hợp", không yêu cầu đo pixel cho từng section mới).
 
-**Nghiệm thu Giai đoạn A: ĐẠT** — toàn bộ section đã kiểm kê (trừ mục 6 "khối đặc biệt" được chủ động loại trừ có lý do) đã được triển khai trên trang chủ VNews, có dữ liệu demo thật từ SQL Server, kiểm thử Playwright + dotnet test đều pass, đã commit Git local.
+**Nghiệm thu pass 1: CHƯA ĐẠT** (phản hồi người dùng, 2026-10-29) — có đủ section nhưng mỗi section chỉ là biến thể của "ảnh + tiêu đề", lặp lại cùng 1 loại card, không đúng *kiểu trình bày* riêng của từng khối thật trên VnExpress.
+
+### Pass 2 — Redesign đúng kiểu trình bày thật (2026-10-29, sau phản hồi "còn khác nhiều")
+
+**Phương pháp:** không khảo sát lại site, dùng ảnh full-page VnExpress đã lưu (`artifacts/survey/vnexpress-home-desktop-full.png`), viết script crop pixel chính xác từng khối (`visual-tests/crop-reference.js`) để xem đúng cấu trúc thật thay vì suy đoán. Phát hiện:
+- Khối chuyên mục thật (KHCN, Kinh doanh...) = ô nền màu nhạt có viền, tiêu đề + tin dẫn lớn (ảnh trái/chữ phải) + danh sách 3 tin phụ dạng thumb nhỏ bên cạnh — **không phải lưới 3 card bằng nhau**.
+- "Ảnh" thật = 1 ảnh lớn + panel tối bên phải liệt kê 2 tin chữ — **không phải lưới mosaic 8 ảnh**.
+- "Spotlight" thật = 1 feature lớn duy nhất (ảnh trái/chữ phải) + danh sách tiêu đề bên dưới — **không phải lưới 3 card ảnh-phủ-chữ**.
+- "Podcasts" thật = dải ảnh lớn ngang, icon play góc trên-trái, badge thời lượng góc dưới-phải — **không phải card nhỏ 72px + icon play giữa**.
+
+**Sửa lại trên code (component `_ArticleCard.cshtml` + `Index.cshtml` + `site.css`):**
+- Thêm 6 layout mới: `category-lead`, `list-item-thumb`, `photo-feature`, `photo-feature-aside`, `spotlight-feature`, `list-item` — mỗi section giờ dùng tổ hợp lead+list khác nhau thay vì 1 loại card lặp lại.
+- `.category-panel`: đổi từ `category-panel__grid` (3 card đều) sang `category-panel__body` (grid 2 cột: lead trái 1.3fr + `<ul>` danh sách thumb nhỏ phải, có viền ngăn cách) + nền `#fcfaf5` viền nhạt giống ô tin tức thật.
+- `.photo-section`: đổi từ `photo-grid` (4×2 ảnh vuông) sang `photo-feature-row` (ảnh lớn 1.5fr trái + panel nền tối `#1c1c1c` liệt kê 2 tin chữ phải).
+- `.spotlight-section`: đổi từ `spotlight-grid` (3 card ảnh-phủ-chữ) sang 1 `spotlight-feature` lớn (ảnh trái 46%/chữ phải) + `spotlight-list` 2 cột danh sách tiêu đề bên dưới.
+- `.podcast-grid`: ảnh phóng to (aspect 3:4, không còn 72×72px), icon play chuyển lên góc trên-trái, thêm badge thời lượng góc dưới-phải đè lên ảnh, tiêu đề đè gradient dưới ảnh — đúng dạng "dải tập phát" thay vì card ngang nhỏ.
+- Responsive viết lại riêng cho từng section ở breakpoint 768px/480px (không dùng chung 1 rule `grid-template-columns: 1fr` cho tất cả) — ví dụ `category-panel__body` chuyển viền trái→viền trên khi xếp dọc, `photo-feature-row` ảnh bo góc trên thay vì góc trái khi xếp dọc.
+- Sửa 2 chỗ lỡ dùng lại font `Georgia` (lỗi vỡ dấu tiếng Việt đã sửa ở pass trước) khi viết CSS mới — phát hiện bằng grep trước khi build, không để lọt lại.
+
+**Kiểm chứng thật (không suy đoán):**
+- `dotnet build` → Build succeeded, 0 lỗi. `dotnet test` → **16/16 pass**.
+- Chạy app thật, cuộn toàn trang kích hoạt lazy-load, `playwright-cli console` → 0 lỗi.
+- Crop riêng từng section desktop (`stageA2-category.png`, `stageA2-photo.png`, `stageA2-spotlight.png`, `stageA2-podcast.png`) và mobile (`stageA2-mobile-*.png`) — xem bằng mắt, xác nhận đúng cấu trúc lead+list/feature+list như bản tham chiếu, mobile xếp dọc hợp lý theo thứ tự biên tập (ảnh → tiêu đề/tóm tắt → danh sách phụ), không phải chỉ ép card desktop xuống 1 cột.
+- `npx playwright test` → **3/3 pass** (hero geometry/overflow không bị phá vỡ bởi redesign).
+- Kiểm tra tương tác thật: click "Xem thêm" ở khối "Thời sự" → điều hướng đúng `/chuyen-muc/thoi-su` (200); link ảnh trong Spotlight → điều hướng đúng trang bài viết thật (200).
+- Ảnh full-page cuối cùng lưu tại `artifacts/visual/vnews-desktop.png`, `artifacts/visual/vnews-mobile.png` (ghi đè bản trước đó bằng bản đã redesign).
+- Dọn ảnh trung gian pass 1 (`stageA-*.png`, không còn phản ánh code hiện tại), giữ ảnh crop pass 2 (`stageA2-*.png`) làm bằng chứng đối chiếu cuối cùng.
+
+**Giới hạn còn lại (báo cáo trung thực, không pixel-perfect):**
+- Khối chuyên mục thật của VnExpress còn có pill sub-tab (Chính trị/Dân sinh/...) và đôi khi widget đặc biệt (bảng giá, banner nội bộ) — VNews chưa có vì không có dữ liệu sub-category.
+- "Dòng tin mới nhất" (Stream) của VNews vẫn là 1 cột card lớn tuần tự; bản thật VnExpress có cột trái là sidebar tin nhỏ chạy song song các khối chuyên mục — không tái tạo vì cần đổi toàn bộ bố cục 2-cột của cả trang, vượt phạm vi 1 lượt sửa, ghi nhận để cân nhắc ở lượt sau nếu được yêu cầu.
+- Footer vẫn 3 cột đều (chưa đổi sang 5 cột lệch như bản thật) — mức ưu tiên thấp hơn 4 section trên theo đúng thứ tự "từ trên xuống dưới", chưa sửa trong lượt này.
+
+**Nghiệm thu Giai đoạn A (pass 2): ĐẠT có điều kiện** — 4 section bị phản hồi "khác biệt lớn" (khối chuyên mục, Ảnh, Spotlight, Podcasts) đã redesign đúng *kiểu trình bày* riêng biệt theo bản tham chiếu, kiểm chứng bằng Playwright + dotnet test đều pass, không ảnh/tràn ngang/khoảng trắng bất thường, liên kết hoạt động đúng. Còn 3 giới hạn nêu trên (sub-tab, stream 2-cột, footer 5-cột) chưa đạt pixel-perfect nhưng không thuộc "khác biệt lớn nhất" theo đúng phạm vi phản hồi lần này.
 
 ### Giai đoạn B — Trang chuyên mục
 6. Thêm lead-story lớn đầu trang chuyên mục (dùng lại `_ArticleCard layout="image-left"` — chính component đã làm hero trang chủ).
