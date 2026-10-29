@@ -17,14 +17,16 @@
                 <a asp-controller="Article" asp-action="Detail" asp-route-slug="@Model.Hero.Slug" class="hero-lead__image-link">
                     <img src="@Model.Hero.CoverImageUrl" alt="@Model.Hero.Title" />
                 </a>
-                <h1 class="hero-lead__title">
-                    <a asp-controller="Article" asp-action="Detail" asp-route-slug="@Model.Hero.Slug">@Model.Hero.Title</a>
-                </h1>
-                <p class="hero-lead__summary">@Model.Hero.Summary</p>
-                <div class="article-meta">
-                    <span>@Model.Hero.CategoryName</span>
-                    <span>@Model.Hero.AuthorName</span>
-                    <span>@Model.Hero.PublishedAt?.ToString("dd/MM/yyyy HH:mm")</span>
+                <div class="hero-lead__content">
+                    <span class="hero-lead__category">@Model.Hero.CategoryName</span>
+                    <h1 class="hero-lead__title">
+                        <a asp-controller="Article" asp-action="Detail" asp-route-slug="@Model.Hero.Slug">@Model.Hero.Title</a>
+                    </h1>
+                    <p class="hero-lead__summary">@Model.Hero.Summary</p>
+                    <div class="article-meta">
+                        <span>@Model.Hero.AuthorName</span>
+                        <span>@Model.Hero.PublishedAt?.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
                 </div>
             </article>
 

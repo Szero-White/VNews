@@ -11,3 +11,5 @@
 **/secrets.json
 artifacts/
 TestResults/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/

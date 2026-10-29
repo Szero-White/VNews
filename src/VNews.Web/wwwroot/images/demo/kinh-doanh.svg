@@ -1,5 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
-  <rect width="640" height="360" fill="#1f6f43"/>
-  <text x="320" y="190" font-family="Segoe UI, Arial, sans-serif" font-size="36" fill="#ffffff" text-anchor="middle" font-weight="700">VNews</text>
-  <text x="320" y="230" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#f0f0f0" text-anchor="middle">Kinh doanh</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="g_kinh_doanh" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14532d"/>
+      <stop offset="100%" stop-color="#2f9e5c"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#g_kinh_doanh)"/>
+  <circle cx="650" cy="150" r="220" fill="#ffffff" opacity="0.06"/>
+  <circle cx="120" cy="480" r="160" fill="#000000" opacity="0.10"/>
+  <polygon points="0,600 800,420 800,600" fill="#000000" opacity="0.12"/>
+  <rect x="24" y="536" width="1000" height="0" fill="none"/>
+  <g>
+    <rect x="24" y="532" width="138" height="30" rx="4" fill="#000000" opacity="0.35"/>
+    <text x="38" y="552" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#ffffff" font-weight="600">Kinh doanh</text>
+  </g>
 </svg>
