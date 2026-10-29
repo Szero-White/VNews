@@ -1,0 +1,31 @@
+@model ArticleDetailDto
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container article-page">
+    <nav class="breadcrumb">
+        <a asp-controller="Home" asp-action="Index">Trang chủ</a> &rsaquo;
+        <a asp-controller="Category" asp-action="Index" asp-route-slug="@Model.CategorySlug">@Model.CategoryName</a>
+    </nav>
+
+    <article class="article-detail">
+        <h1 class="article-detail__title">@Model.Title</h1>
+        <p class="article-detail__summary">@Model.Summary</p>
+
+        <div class="article-meta">
+            <span>@Model.AuthorName</span>
+            <span>@Model.PublishedAt?.ToString("dd/MM/yyyy HH:mm")</span>
+            <span>@Model.ViewCount lượt xem</span>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.CoverImageUrl))
+        {
+            <img class="article-detail__cover" src="@Model.CoverImageUrl" alt="@Model.Title" />
+        }
+
+        <div class="article-detail__body">
+            @Html.Raw(Model.Body)
+        </div>
+    </article>
+</div>

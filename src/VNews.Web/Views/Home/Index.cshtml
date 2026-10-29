@@ -1,0 +1,105 @@
+﻿@model HomePageData
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<div class="container">
+    @if (Model.Hero is null)
+    {
+        <div class="empty-state">
+            <p>Chưa có bài viết nào được xuất bản. Vui lòng chạy seed dữ liệu hoặc quay lại sau.</p>
+        </div>
+    }
+    else
+    {
+        <section class="hero-grid">
+            <article class="hero-lead">
+                <a asp-controller="Article" asp-action="Detail" asp-route-slug="@Model.Hero.Slug" class="hero-lead__image-link">
+                    <img src="@Model.Hero.CoverImageUrl" alt="@Model.Hero.Title" />
+                </a>
+                <h1 class="hero-lead__title">
+                    <a asp-controller="Article" asp-action="Detail" asp-route-slug="@Model.Hero.Slug">@Model.Hero.Title</a>
+                </h1>
+                <p class="hero-lead__summary">@Model.Hero.Summary</p>
+                <div class="article-meta">
+                    <span>@Model.Hero.CategoryName</span>
+                    <span>@Model.Hero.AuthorName</span>
+                    <span>@Model.Hero.PublishedAt?.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+            </article>
+
+            <aside class="hero-side">
+                @foreach (var item in Model.SideFeatures)
+                {
+                    <article class="hero-side__item">
+                        <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug" class="hero-side__image-link">
+                            <img src="@item.CoverImageUrl" alt="@item.Title" />
+                        </a>
+                        <h2 class="hero-side__title">
+                            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug">@item.Title</a>
+                        </h2>
+                    </article>
+                }
+            </aside>
+        </section>
+
+        <section class="content-split">
+            <div class="latest-list">
+                <h2 class="section-title">Tin mới nhất</h2>
+                @foreach (var item in Model.Latest)
+                {
+                    <article class="story-row">
+                        <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug" class="story-row__image-link">
+                            <img src="@item.CoverImageUrl" alt="@item.Title" />
+                        </a>
+                        <div class="story-row__body">
+                            <h3 class="story-row__title">
+                                <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug">@item.Title</a>
+                            </h3>
+                            <p class="story-row__summary">@item.Summary</p>
+                            <div class="article-meta">
+                                <span>@item.CategoryName</span>
+                                <span>@item.PublishedAt?.ToString("dd/MM/yyyy")</span>
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
+
+            <aside class="sidebar">
+                <h2 class="section-title">Đọc nhiều</h2>
+                <ol class="most-viewed">
+                    @foreach (var item in Model.MostViewed)
+                    {
+                        <li>
+                            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug">@item.Title</a>
+                        </li>
+                    }
+                </ol>
+            </aside>
+        </section>
+
+        @foreach (var panel in Model.CategoryPanels)
+        {
+            <section class="category-panel">
+                <div class="category-panel__header">
+                    <h2 class="section-title">@panel.Category.Name</h2>
+                    <a asp-controller="Category" asp-action="Index" asp-route-slug="@panel.Category.Slug" class="see-more">Xem thêm &rarr;</a>
+                </div>
+                <div class="category-panel__grid">
+                    @foreach (var item in panel.Articles)
+                    {
+                        <article class="card">
+                            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug" class="card__image-link">
+                                <img src="@item.CoverImageUrl" alt="@item.Title" />
+                            </a>
+                            <h3 class="card__title">
+                                <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug">@item.Title</a>
+                            </h3>
+                        </article>
+                    }
+                </div>
+            </section>
+        }
+    }
+</div>

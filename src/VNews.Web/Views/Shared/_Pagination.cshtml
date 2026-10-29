@@ -1,0 +1,26 @@
+@model PagedResult<VNews.Application.DTOs.ArticleSummaryDto>
+@{
+    var action = (string)ViewData["PaginationAction"]!;
+    var slug = ViewData["PaginationSlug"] as string;
+    var query = ViewData["PaginationQuery"] as string;
+}
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="pagination">
+        @for (var p = 1; p <= Model.TotalPages; p++)
+        {
+            var isCurrent = p == Model.Page;
+            if (slug is not null)
+            {
+                <a class="pagination__item @(isCurrent ? "is-current" : "")"
+                   asp-controller="@action" asp-action="Index" asp-route-slug="@slug" asp-route-page="@p">@p</a>
+            }
+            else
+            {
+                <a class="pagination__item @(isCurrent ? "is-current" : "")"
+                   asp-controller="@action" asp-action="Index" asp-route-q="@query" asp-route-page="@p">@p</a>
+            }
+        }
+    </nav>
+}

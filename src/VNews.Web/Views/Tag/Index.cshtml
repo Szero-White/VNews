@@ -1,0 +1,38 @@
+@model TagPageViewModel
+@{
+    ViewData["Title"] = $"Chủ đề: {Model.TagSlug}";
+    ViewData["PaginationAction"] = "Tag";
+    ViewData["PaginationSlug"] = Model.TagSlug;
+}
+
+<div class="container listing-page">
+    <h1 class="listing-page__title">Chủ đề: @Model.TagSlug</h1>
+
+    @if (Model.Articles.Items.Count == 0)
+    {
+        <div class="empty-state">
+            <p>Chưa có bài viết nào gắn chủ đề này.</p>
+        </div>
+    }
+    else
+    {
+        <div class="listing-grid">
+            @foreach (var item in Model.Articles.Items)
+            {
+                <article class="story-row">
+                    <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug" class="story-row__image-link">
+                        <img src="@item.CoverImageUrl" alt="@item.Title" />
+                    </a>
+                    <div class="story-row__body">
+                        <h3 class="story-row__title">
+                            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug">@item.Title</a>
+                        </h3>
+                        <p class="story-row__summary">@item.Summary</p>
+                    </div>
+                </article>
+            }
+        </div>
+
+        @await Html.PartialAsync("_Pagination", Model.Articles)
+    }
+</div>

@@ -1,0 +1,1 @@
+Read CLAUDE.md, docs/PROGRESS.md and M4 in docs/SCOPE.md. Finish tests, GitHub Actions build/test CI, README, RUN-WINDOWS.md, docs/FEATURE-MAP.md mapping each .NET JD skill to actual source files, and accessible UI polish. Run the real verification checks. Avoid adding optional tech unless core acceptance is green. Record verified/not verified items faithfully in PROGRESS.md.

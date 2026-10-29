@@ -1,0 +1,1 @@
+Read CLAUDE.md and docs/PROGRESS.md only; inspect changed code as needed. Continue from CURRENT/NEXT without repeating completed milestones or dumping all docs. Implement the next smallest complete vertical slice. Verify with actual commands, fix any failures, then update PROGRESS.md. Keep your reply concise.

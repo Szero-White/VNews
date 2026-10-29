@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/VNews.Application/VNews.Application.csproj" />
+    <Project Path="src/VNews.Domain/VNews.Domain.csproj" />
+    <Project Path="src/VNews.Infrastructure/VNews.Infrastructure.csproj" />
+    <Project Path="src/VNews.Web/VNews.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/VNews.Tests/VNews.Tests.csproj" />
+  </Folder>
+</Solution>
