@@ -15,3 +15,7 @@ TestResults/
 .playwright-cli/
 # User-uploaded content (runtime data, not source)
 src/VNews.Web/wwwroot/uploads/
+# Visual verification Playwright Test project
+visual-tests/node_modules/
+visual-tests/test-results/
+visual-tests/playwright-report/

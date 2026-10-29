@@ -41,8 +41,42 @@ Người dùng yêu cầu rõ: không chấp nhận 10 ảnh gradient placeholde
 - Xác nhận bằng HTTP thật: `/images/demo/cong-nghe.jpg` → 200, `Content-Type: image/jpeg`. Chụp lại `artifacts/visual/vnews-desktop-v2-photos.png` và `vnews-mobile-v2-photos.png` qua Playwright CLI — ảnh hiển thị là ảnh chụp thật (phong cảnh, nội thất tàu điện...), không còn khối màu phẳng, trông giống một trang báo thật hơn hẳn.
 - **Giới hạn trung thực:** ảnh là ảnh stock ngẫu nhiên theo seed, KHÔNG minh hoạ đúng nội dung từng bài viết cụ thể (vd. bài về AI báo chí hiện ảnh phong cảnh núi) — chấp nhận được cho mục đích demo/portfolio, tương tự cách nhiều trang demo dùng ảnh stock, nhưng không phải ảnh biên tập thật sự khớp ngữ cảnh bài viết.
 
-## Khác biệt còn tồn tại (báo cáo trung thực, chưa sửa)
-- Masthead VNews đơn giản hơn tham chiếu (thiếu dropdown khu vực, biểu tượng thời tiết, chuông thông báo) — các mục đăng nhập/tài khoản nay đã có thật qua M3 (`/tai-khoan/dang-nhap`) nhưng chưa gắn link vào masthead công khai.
+## Pass D (2026-10-29) — bộ đo Playwright Test + sửa bố cục/font/ảnh theo yêu cầu đo bounding box
+
+Bối cảnh: trước pass này đã có chỉnh sửa thủ công đáng kể (xem `_ui_backup/`) đổi hero sang ảnh trái/chữ phải thật, tin phụ 3 cột bên dưới (giống reference), masthead 2 tầng (logo+motto / tiện ích). Pass này: (1) dựng bộ đo Playwright Test chính thức, (2) đo bounding box thật từ `references/vnexpress-desktop.png` bằng phân tích pixel (không ước lượng bằng mắt), (3) sửa các lệch còn lại, (4) phát hiện và sửa 2 lỗi hiển thị nghiêm trọng phát sinh ngoài dự kiến.
+
+### Công cụ đo: `visual-tests/` (Playwright Test, Node)
+- `analyze-reference.js`: load `references/vnexpress-desktop.png` qua `file://`, vẽ vào canvas, quét pixel dọc/ngang để tìm biên vùng (masthead, nav, hero) dựa trên chênh lệch màu RGB > ngưỡng. Loại trừ quảng cáo: quét xác nhận banner quảng cáo chiếm y=0-270px trong ảnh reference, **loại khỏi mọi số đo mục tiêu** (chỉ dùng chiều cao tương đối masthead/nav, không dùng toạ độ Y tuyệt đối).
+- `homepage.spec.ts`: 3 test — đo bounding box desktop (`boundingBox()` qua CSS selector thật: `.masthead`, `.primary-nav`, `.hero-lead__image-link img`, `.hero-lead__content`, `.hero-side`) so với bảng mục tiêu, dung sai 12px; kiểm tra không tràn ngang + không ảnh vỡ ở 390px và 768px.
+
+### Bảng mục tiêu (từ pixel reference) vs thực tế (sau sửa)
+| Vùng | Mục tiêu (từ reference, đã loại ad) | Thực tế VNews | Lệch | Đạt (≤12px) |
+|---|---|---|---|---|
+| Chiều cao masthead | 61px | 73px | 12px | ✅ (đúng ngưỡng) |
+| Chiều cao nav | 50px | 48px | 2px | ✅ |
+| Y bắt đầu nội dung chính (sau masthead+nav) | 111px | 121px | 10px | ✅ |
+| Chiều rộng ảnh hero | 552px | 552px | 0px | ✅ |
+| Tỉ lệ khung ảnh hero | 1.67 (5:3) | 1.67 | 0 | ✅ |
+| Khoảng cách ảnh↔chữ hero | 24px | 24px | 0px | ✅ |
+| Tin phụ nằm dưới hero (không phải cột phải) | bắt buộc | đúng, y=494 ≥ 474 (đáy hero row) | — | ✅ |
+
+Dữ liệu thô: `artifacts/visual/layout-measurements.json`.
+
+### Thay đổi để đạt bảng trên
+- **Gỡ `.utility-strip`** (thanh ngày/disclaimer riêng biệt cao 33px nằm trên masthead) — nguyên nhân chính khiến `contentTopY` lệch 43px so với mục tiêu. Reference không có thanh này (thông tin ngày/vị trí nằm chung hàng với logo). Nội dung disclaimer vốn đã trùng lặp với dòng đầu tiên trong `<footer>` nên không mất thông tin. Ngày hiện tại (`#today-date`) chuyển vào `.masthead__right`, cùng hàng với "Đăng nhập"/tìm kiếm — khớp đúng mẫu reference.
+- Sau khi gỡ utility-strip: `contentTopY` giảm từ 154px xuống 121px (còn lệch 10px, trong ngưỡng).
+- Sửa 1 bug CSS phát sinh: selector `.masthead__utility-link:first-child` (dùng để ẩn bớt mục trên mobile) không còn trúng đúng phần tử sau khi chèn thêm ngày — gây tràn ngang 7px ở 390px. Thay bằng class tường minh `.masthead__hide-mobile`.
+
+### 2 lỗi hiển thị nghiêm trọng phát hiện ngoài phạm vi bố cục, đã sửa vì ảnh hưởng trực tiếp "không lỗi hiển thị nghiêm trọng"
+1. **Chữ tiếng Việt vỡ dấu** trên nhiều tiêu đề (vd. "mở rộng đô´i tượng áp dụng", "tuyên truyê`n pháp luật", "Nhiê`u trường đại học..."). Xác minh nguyên nhân bằng thực nghiệm: ép `font-family: Arial` lên các tiêu đề qua `page.addStyleTag` → chữ hiển thị đúng hoàn toàn → xác nhận 100% do font `Georgia, "Times New Roman", serif` (dùng cho mọi tiêu đề) không dựng đúng một số tổ hợp dấu tiếng Việt trên Chromium/máy này. Sửa: thay toàn bộ 6 khai báo `font-family: Georgia...` trong `site.css` bằng `Arial, "Helvetica Neue", Helvetica, sans-serif`.
+2. **Ảnh trùng lặp**: nhiều bài trong cùng chuyên mục dùng chung đúng 1 ảnh (do M1 gán ảnh theo chuyên mục, không theo bài). Sửa: tải 51 ảnh JPEG riêng biệt (Picsum/Unsplash License, seed theo từng `Article.Id`) vào `wwwroot/images/demo/articles/{id}.jpg`; UPDATE có chọn lọc `CoverImageUrl` cho đúng 51 bài gốc (loại trừ 8 bài rác do `dotnet test` tạo lặp qua nhiều lần chạy — đã xoá 8 bài rác này, không đụng 51 bài demo thật); cập nhật `ArticleSeedData.cs` dùng `counter` (thứ tự bài) làm seed ảnh cho lần seed sau. Xoá 10 ảnh cấp-chuyên-mục cũ.
+
+### Kết quả cuối — ảnh chụp thật (Playwright Test)
+`artifacts/visual/vnews-desktop.png`, `vnews-mobile.png`, `vnews-tablet.png` (dùng `waitForFunction` chỉ chờ ảnh trong viewport ban đầu tải xong trước khi chụp, tránh chụp nhầm lúc ảnh chưa decode xong — đã từng gây hiện tượng "ảnh vỡ" giả do lỗi timing trong chính kịch bản đo, không phải lỗi thật của site, đã xác minh lại bằng `img.naturalWidth`/`img.complete` trước khi kết luận).
+
+### Khác biệt còn tồn tại (báo cáo trung thực, chưa sửa)
+- Masthead VNews đơn giản hơn tham chiếu (thiếu dropdown khu vực, biểu tượng thời tiết, chuông thông báo) — mục "Đăng nhập" đã có thật qua M3.
 - Thanh chuyên mục chưa có icon "VnE-GO" dạng pill hay nút hamburger cuối hàng như tham chiếu — mức độ ưu tiên thấp, không ảnh hưởng chức năng.
-- Ảnh minh hoạ là ảnh stock ngẫu nhiên theo chuyên mục, không khớp ngữ cảnh từng bài cụ thể (xem Pass C ở trên).
-- Chưa kiểm tra tablet 768px bằng screenshot thực tế (chỉ có CSS responsive khai báo breakpoint `max-width: 1024px`), nên chưa xác nhận trực quan ở độ phân giải này.
+- Ảnh minh hoạ vẫn là ảnh stock (Picsum), nay đã **không trùng lặp** nhưng vẫn không khớp ngữ cảnh cụ thể từng bài (không có nguồn ảnh biên tập thật để dùng).
+- `mastheadHeight` lệch đúng 12px (ở biên ngưỡng) — có thể siết thêm nếu cần tuyệt đối khớp, nhưng rủi ro làm vỡ bố cục `.masthead__identity` 2 dòng (logo+motto); chưa làm vì đã đạt tiêu chí ≤12px.
+- Trang chi tiết bài viết (`/tin/{slug}`) **chưa được đo lại** trong pass này (phạm vi yêu cầu chỉ giới hạn trang chủ); ảnh `vnews-article-desktop.png` trong thư mục artifacts là ảnh cũ từ phiên trước, có thể không phản ánh đúng font Arial mới.

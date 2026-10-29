@@ -1,9 +1,10 @@
-﻿@model HomePageData
+@model HomePageData
+@using System.Linq
 @{
     ViewData["Title"] = "Trang chủ";
 }
 
-<div class="container">
+<div class="container news-home">
     @if (Model.Hero is null)
     {
         <div class="empty-state">
@@ -12,47 +13,61 @@
     }
     else
     {
-        <section class="hero-grid">
-            <article class="hero-lead">
-                <a asp-controller="Article" asp-action="Detail" asp-route-slug="@Model.Hero.Slug" class="hero-lead__image-link">
-                    <img src="@Model.Hero.CoverImageUrl" alt="@Model.Hero.Title" />
-                </a>
-                <div class="hero-lead__content">
-                    <span class="hero-lead__category">@Model.Hero.CategoryName</span>
-                    <h1 class="hero-lead__title">
-                        <a asp-controller="Article" asp-action="Detail" asp-route-slug="@Model.Hero.Slug">@Model.Hero.Title</a>
-                    </h1>
-                    <p class="hero-lead__summary">@Model.Hero.Summary</p>
-                    <div class="article-meta">
-                        <span>@Model.Hero.AuthorName</span>
-                        <span>@Model.Hero.PublishedAt?.ToString("dd/MM/yyyy HH:mm")</span>
+        <section class="front-page" aria-label="Tin nổi bật">
+            <div class="front-page__main">
+                <article class="hero-lead">
+                    <a asp-controller="Article" asp-action="Detail" asp-route-slug="@Model.Hero.Slug"
+                       class="hero-lead__image-link" aria-label="Đọc bài: @Model.Hero.Title">
+                        <img src="@Model.Hero.CoverImageUrl" alt="@Model.Hero.Title"
+                             fetchpriority="high" decoding="async" />
+                    </a>
+                    <div class="hero-lead__content">
+                        <h1 class="hero-lead__title">
+                            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@Model.Hero.Slug">@Model.Hero.Title</a>
+                        </h1>
+                        <p class="hero-lead__summary">@Model.Hero.Summary</p>
+                        <div class="article-meta hero-lead__meta">
+                            <span>@Model.Hero.CategoryName</span>
+                            <span>@Model.Hero.PublishedAt?.ToString("dd/MM/yyyy")</span>
+                        </div>
                     </div>
-                </div>
-            </article>
+                </article>
 
-            <aside class="hero-side">
-                @foreach (var item in Model.SideFeatures)
-                {
-                    <article class="hero-side__item">
-                        <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug" class="hero-side__image-link">
-                            <img src="@item.CoverImageUrl" alt="@item.Title" />
-                        </a>
-                        <h2 class="hero-side__title">
-                            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug">@item.Title</a>
-                        </h2>
-                    </article>
-                }
-            </aside>
+                <div class="hero-side" aria-label="Các tin đáng chú ý">
+                    @foreach (var item in Model.SideFeatures.Take(2))
+                    {
+                        <article class="hero-side__item">
+                            <h2 class="hero-side__title">
+                                <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug">@item.Title</a>
+                            </h2>
+                            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug"
+                               class="hero-side__image-link" aria-label="Đọc bài: @item.Title">
+                                <img src="@item.CoverImageUrl" alt="@item.Title" loading="lazy" decoding="async" />
+                            </a>
+                        </article>
+                    }
+                    @foreach (var item in Model.MostViewed.Take(1))
+                    {
+                        <article class="hero-side__opinion">
+                            <span class="hero-side__eyebrow">Được quan tâm</span>
+                            <h2 class="hero-side__title">
+                                <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug">@item.Title</a>
+                            </h2>
+                            <p class="hero-side__aside-copy">Khám phá thêm những bài viết đang được bạn đọc chú ý.</p>
+                        </article>
+                    }
+                </div>
+            </div>
         </section>
 
-        <section class="content-split">
+        <section class="content-split" aria-label="Tin tức mới và tin đọc nhiều">
             <div class="latest-list">
                 <h2 class="section-title">Tin mới nhất</h2>
                 @foreach (var item in Model.Latest)
                 {
                     <article class="story-row">
                         <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug" class="story-row__image-link">
-                            <img src="@item.CoverImageUrl" alt="@item.Title" />
+                            <img src="@item.CoverImageUrl" alt="@item.Title" loading="lazy" decoding="async" />
                         </a>
                         <div class="story-row__body">
                             <h3 class="story-row__title">
@@ -68,7 +83,7 @@
                 }
             </div>
 
-            <aside class="sidebar">
+            <aside class="sidebar" aria-label="Đọc nhiều">
                 <h2 class="section-title">Đọc nhiều</h2>
                 <ol class="most-viewed">
                     @foreach (var item in Model.MostViewed)
@@ -93,7 +108,7 @@
                     {
                         <article class="card">
                             <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug" class="card__image-link">
-                                <img src="@item.CoverImageUrl" alt="@item.Title" />
+                                <img src="@item.CoverImageUrl" alt="@item.Title" loading="lazy" decoding="async" />
                             </a>
                             <h3 class="card__title">
                                 <a asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug">@item.Title</a>
