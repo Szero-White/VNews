@@ -32,8 +32,17 @@ Kết quả sau pass A: `artifacts/visual/vnews-desktop-pass-a.png` — hero đ�
 - `playwright-cli console` trên trang chủ: 0 lỗi, 0 cảnh báo. `playwright-cli requests`: không có request 404/lỗi.
 - Baseline tham chiếu cố định: `references/vnexpress-desktop.png`, `references/vnexpress-mobile.png` (chụp 2026-10-29 bằng Playwright CLI thật từ vnexpress.net, không chỉnh sửa).
 
+## Pass C (2026-10-29) — thay ảnh gradient bằng ảnh báo chí thật
+Người dùng yêu cầu rõ: không chấp nhận 10 ảnh gradient placeholder thay cho ảnh chất lượng báo chí. Đã xử lý:
+- Tải 10 ảnh chụp thật (JPEG, 800x600) từ **Picsum Photos** (`https://picsum.photos/seed/vnews-{category}/800/600`) — nguồn ảnh cấp phép theo **Unsplash License** (miễn phí sử dụng kể cả thương mại, không bắt buộc ghi nguồn, xem `https://picsum.photos` + `https://unsplash.com/license`), hợp lệ với yêu cầu "ảnh được phép sử dụng" trong CLAUDE.md. Dùng seed cố định theo từng slug chuyên mục để có thể tải lại y hệt (reproducible).
+- Thay `src/VNews.Web/wwwroot/images/demo/{slug}.svg` (khối màu phẳng) bằng `{slug}.jpg` (ảnh thật) cho cả 10 chuyên mục; xoá các file `.svg` cũ.
+- Cập nhật `ArticleSeedData.cs` để các lần seed mới trỏ `.jpg`.
+- **Cập nhật có chọn lọc dữ liệu đã seed** bằng `UPDATE Articles SET CoverImageUrl = REPLACE(CoverImageUrl, '.svg', '.jpg') WHERE CoverImageUrl LIKE '/images/demo/%.svg'` trên SQL Server LocalDB thật (ảnh hưởng đúng 50 dòng đã seed từ trước, không đụng tới cấu trúc bảng, user, hay bài viết khác) — không drop/reset database.
+- Xác nhận bằng HTTP thật: `/images/demo/cong-nghe.jpg` → 200, `Content-Type: image/jpeg`. Chụp lại `artifacts/visual/vnews-desktop-v2-photos.png` và `vnews-mobile-v2-photos.png` qua Playwright CLI — ảnh hiển thị là ảnh chụp thật (phong cảnh, nội thất tàu điện...), không còn khối màu phẳng, trông giống một trang báo thật hơn hẳn.
+- **Giới hạn trung thực:** ảnh là ảnh stock ngẫu nhiên theo seed, KHÔNG minh hoạ đúng nội dung từng bài viết cụ thể (vd. bài về AI báo chí hiện ảnh phong cảnh núi) — chấp nhận được cho mục đích demo/portfolio, tương tự cách nhiều trang demo dùng ảnh stock, nhưng không phải ảnh biên tập thật sự khớp ngữ cảnh bài viết.
+
 ## Khác biệt còn tồn tại (báo cáo trung thực, chưa sửa)
-- Masthead VNews đơn giản hơn tham chiếu (thiếu dropdown khu vực, biểu tượng thời tiết, mục "Đăng nhập"/chuông thông báo) — vì các chức năng đó (đăng nhập, thông báo) thuộc M3 (CMS/Identity), chưa làm giả UI cho chức năng chưa tồn tại.
+- Masthead VNews đơn giản hơn tham chiếu (thiếu dropdown khu vực, biểu tượng thời tiết, chuông thông báo) — các mục đăng nhập/tài khoản nay đã có thật qua M3 (`/tai-khoan/dang-nhap`) nhưng chưa gắn link vào masthead công khai.
 - Thanh chuyên mục chưa có icon "VnE-GO" dạng pill hay nút hamburger cuối hàng như tham chiếu — mức độ ưu tiên thấp, không ảnh hưởng chức năng.
-- Ảnh bài viết là đồ hoạ gradient gốc (không phải ảnh chụp thật) — đúng chủ đích vì không được phép dùng ảnh có bản quyền của VnExpress; đây là lựa chọn thiết kế, không phải lỗi.
+- Ảnh minh hoạ là ảnh stock ngẫu nhiên theo chuyên mục, không khớp ngữ cảnh từng bài cụ thể (xem Pass C ở trên).
 - Chưa kiểm tra tablet 768px bằng screenshot thực tế (chỉ có CSS responsive khai báo breakpoint `max-width: 1024px`), nên chưa xác nhận trực quan ở độ phân giải này.

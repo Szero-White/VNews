@@ -117,7 +117,7 @@ internal static class ArticleSeedData
                     Slug = slug,
                     Summary = BuildSummary(headline),
                     Body = BuildBody(headline, category.Name),
-                    CoverImageUrl = $"/images/demo/{categorySlug}.svg",
+                    CoverImageUrl = $"/images/demo/{categorySlug}.jpg",
                     AuthorName = author,
                     Status = ArticleStatus.Published,
                     PublishedAt = publishedAt,
