@@ -1,0 +1,29 @@
+@model IReadOnlyList<CategoryDto>
+@{
+    ViewData["Title"] = "Quản lý chuyên mục";
+    Layout = "_CmsLayout";
+}
+
+<div class="cms-card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h1 style="margin:0;">Chuyên mục</h1>
+        <a asp-action="Create" class="cms-btn">+ Tạo chuyên mục</a>
+    </div>
+
+    <table class="cms-table">
+        <thead>
+            <tr><th>Tên</th><th>Slug</th><th>Mô tả</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td>@c.Name</td>
+                    <td>@c.Slug</td>
+                    <td>@c.Description</td>
+                    <td><a asp-action="Edit" asp-route-id="@c.Id" class="cms-btn cms-btn--secondary">Sửa</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

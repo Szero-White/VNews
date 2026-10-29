@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - VNews CMS</title>
+    <link rel="stylesheet" href="~/css/cms.css" asp-append-version="true" />
+</head>
+<body class="cms-shell">
+    <div class="cms-topbar">
+        <div>
+            <a asp-controller="CmsArticles" asp-action="Index" class="cms-topbar__brand">VNews CMS</a>
+            <a asp-controller="CmsArticles" asp-action="Index">Bài viết</a>
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-controller="CmsCategories" asp-action="Index">Chuyên mục</a>
+                <a asp-controller="CmsUsers" asp-action="Index">Người dùng</a>
+            }
+            <a asp-controller="Home" asp-action="Index">Xem trang công khai</a>
+        </div>
+        <div>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <span>@User.Identity.Name</span>
+                <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
+                    <button type="submit" class="cms-btn cms-btn--secondary" style="margin-left:8px;">Đăng xuất</button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <div class="cms-container">
+        @if (TempData["Message"] is string msg)
+        {
+            <div class="cms-alert cms-alert--success">@msg</div>
+        }
+        @if (TempData["Error"] is string err)
+        {
+            <div class="cms-alert cms-alert--error">@err</div>
+        }
+        @RenderBody()
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

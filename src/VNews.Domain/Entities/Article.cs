@@ -15,6 +15,13 @@ public class Article
     public DateTime? UpdatedAt { get; set; }
     public int ViewCount { get; set; }
 
+    public string? AuthorUserId { get; set; }
+    public string? ReviewNote { get; set; }
+    public string? ReviewedByUserId { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Timestamp]
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;
 

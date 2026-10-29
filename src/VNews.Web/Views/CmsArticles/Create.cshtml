@@ -1,0 +1,71 @@
+@model ArticleSaveRequest
+@{
+    ViewData["Title"] = "Tạo bài viết mới";
+    Layout = "_CmsLayout";
+    var categories = (IReadOnlyList<CategoryDto>)ViewBag.Categories;
+}
+
+<div class="cms-card">
+    <h1>Tạo bài viết mới</h1>
+    <form asp-action="Create" method="post" class="cms-form">
+        <div asp-validation-summary="All" class="cms-validation"></div>
+
+        <label asp-for="Title">Tiêu đề</label>
+        <input asp-for="Title" type="text" />
+
+        <label asp-for="CategoryId">Chuyên mục</label>
+        <select asp-for="CategoryId">
+            <option value="">-- Chọn chuyên mục --</option>
+            @foreach (var c in categories)
+            {
+                <option value="@c.Id">@c.Name</option>
+            }
+        </select>
+
+        <label asp-for="Summary">Tóm tắt</label>
+        <textarea asp-for="Summary" style="min-height:80px;"></textarea>
+
+        <label>Ảnh bìa</label>
+        <input type="file" id="coverFile" accept="image/jpeg,image/png,image/webp,image/svg+xml" />
+        <input asp-for="CoverImageUrl" type="text" placeholder="/uploads/articles/... (tự điền sau khi tải lên)" style="margin-top:6px;" />
+        <div id="uploadStatus" style="font-size:0.85rem; margin-top:4px;"></div>
+
+        <label asp-for="Body">Nội dung (HTML cơ bản: p, strong, em, ul/ol/li, h2-h4, blockquote, a, img — sẽ được lọc sạch khi lưu)</label>
+        <textarea asp-for="Body"></textarea>
+
+        <button type="submit" class="cms-btn" style="margin-top:16px;">Tạo bản nháp</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('coverFile').addEventListener('change', async function (e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var status = document.getElementById('uploadStatus');
+            status.textContent = 'Đang tải lên...';
+
+            var form = new FormData();
+            form.append('file', file);
+            var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            try {
+                var res = await fetch('@Url.Action("UploadCoverImage", "CmsArticles")', {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token },
+                    body: form
+                });
+                var data = await res.json();
+                if (res.ok) {
+                    document.querySelector('[name="CoverImageUrl"]').value = data.url;
+                    status.textContent = 'Đã tải lên: ' + data.url;
+                } else {
+                    status.textContent = 'Lỗi: ' + data.error;
+                }
+            } catch (err) {
+                status.textContent = 'Lỗi tải lên.';
+            }
+        });
+    </script>
+}

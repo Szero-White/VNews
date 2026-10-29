@@ -16,11 +16,23 @@ DONE:
   - Validation nhất quán: `[ApiController]` tự trả `ValidationProblem`/`400` khi `page`/`pageSize`/`q` sai; `404` dạng `ProblemDetails` khi không tìm thấy; không bao giờ lộ bài viết chưa publish (mọi service đều lọc `Status == Published`, kể cả trong stored procedure).
   - Test: 6 unit test (`PagedResultTests`) + 6 integration test thật (`ArticlesApiIntegrationTests`, dùng `WebApplicationFactory<Program>` gọi HTTP thật tới SQL Server LocalDB thật, không mock) — tổng **12/12 pass**.
 
-CURRENT: M1 + M2 hoàn tất và đã kiểm chứng. Tiếp tục M3 (ASP.NET Core Identity + CMS CRUD).
+- **M3 (2026-10-29):** ASP.NET Core Identity + CMS.
+  - `VNewsDbContext : IdentityDbContext<ApplicationUser>`; migration `AddIdentityAndCmsWorkflow` tạo bảng AspNetUsers/Roles + cột workflow trên `Articles` (`AuthorUserId`, `ReviewedByUserId`, `ReviewNote`, `RowVersion` — concurrency token) + bảng `AuditLogs`.
+  - 4 role (Admin/Editor/Author/Reader) + 3 tài khoản **demo-only** seed idempotent qua `IdentitySeeder` (`admin@vnews.local` / `editor@vnews.local` / `author@vnews.local`, mật khẩu `Demo@12345` — công khai trong source, chỉ để trình diễn, ghi rõ trong `RUN-WINDOWS.md`).
+  - Workflow Draft → PendingReview → Published/Rejected qua `ArticleCommandService` (`CreateDraftAsync`, `UpdateDraftAsync` có optimistic concurrency bằng `RowVersion`, `SubmitForReviewAsync`, `PublishAsync`, `RejectAsync`), ghi `AuditLogs` cho mỗi hành động.
+  - Chống XSS: `HtmlSanitizer` (Ganss.Xss, allow-list thẻ p/strong/em/ul/li/h2-h4/blockquote/a/img, allow-list thuộc tính href/src/alt, allow-list scheme http/https) áp dụng khi lưu `Article.Body` — **đã kiểm chứng thật**: gửi `<script>alert('xss')</script>` qua form thật, script bị loại bỏ hoàn toàn trong DB (xác nhận bằng SQL trực tiếp).
+  - Upload ảnh an toàn (`ImageUploadService`): giới hạn 3MB, allow-list đuôi file + Content-Type, kiểm tra magic bytes thật (JPEG/PNG/WEBP) hoặc chặn `<script>`/`onload=` trong SVG, tên file random GUID (chống path traversal/ghi đè).
+  - CSRF: `[ValidateAntiForgeryToken]` trên mọi POST action CMS; antiforgery token sinh/validate qua cookie thật.
+  - Role-based authorization: `[Authorize(Roles=...)]` theo controller/action; Author chỉ thấy/sửa bài của mình (so khớp `AuthorUserId`), Editor/Admin thấy tất cả và mới được Publish/Reject. Admin quản lý Category (`CmsCategoriesController`) và User/Role (`CmsUsersController`).
+  - **Kiểm chứng end-to-end thật bằng Playwright CLI** (không mock): đăng nhập author → tạo bài (kèm payload XSS) → gửi duyệt → đăng xuất → đăng nhập editor → thấy đúng trạng thái PendingReview → xuất bản → bài hiện công khai thật tại `/tin/{slug}` với dữ liệu từ SQL Server. Thử tấn công: Author gọi thẳng `fetch POST /cms/CmsArticles/Publish/51` (bỏ qua UI) → bị chặn, redirect `/tai-khoan/khong-co-quyen` (403), trạng thái DB không đổi. Khách chưa đăng nhập vào `/cms` → redirect `/tai-khoan/dang-nhap` (302).
+  - **Bug phát hiện và đã sửa trong quá trình kiểm thử:** (1) route `cms/{controller=CmsArticles}/...` đăng ký trước route `default` và không có constraint đã làm sai lệch sinh URL cho TOÀN BỘ site (vd. link "Trang chủ" bị sinh thành `/cms/Home`) — sửa bằng route constraint `controller=CmsArticles|CmsCategories|CmsUsers`. (2) route tiếng Việt `/tai-khoan/dang-nhap` không khớp action `Login` → 404 — sửa bằng route tường minh riêng cho từng action. (3) trang lỗi tuỳ biến `PageNotFound` luôn ép status về 404 bất kể status gốc, che giấu lỗi 400 thật — sửa để giữ đúng status code gốc.
+  - Test: `dotnet test` vẫn 12/12 pass sau toàn bộ thay đổi M3 (không có test riêng cho CMS do giới hạn thời gian — ghi nhận là thiếu sót, xem BLOCKERS).
 
-NEXT: M3 — ASP.NET Core Identity, role-based auth (Admin/Editor/Author/Reader), CRUD bài viết (draft → review → publish), upload ảnh an toàn, chống XSS, audit log, CSRF.
+CURRENT: M1 + M2 + M3 (core workflow) hoàn tất và đã kiểm chứng thật qua Playwright + SQL. Tiếp tục: test tự động cho CMS, và **theo yêu cầu người dùng — thay ảnh gradient M1 bằng ảnh chất lượng báo chí hơn** trước khi công bố v1.0.
 
-BLOCKERS: Không còn blocker về browser tool (đã cài Playwright CLI, xem `docs/UI-VERIFICATION.md`). Gói `System.Security.Cryptography.Pkcs` (transitive qua SqlClient) có cảnh báo lỗ hổng NU1902/NU1903 — theo dõi khi có bản vá EF Core/SqlClient mới. Masthead chưa có UI cho đăng nhập/thông báo (cố ý để dành cho M3 Identity, tránh làm UI giả cho chức năng chưa có).
+NEXT: (1) Thay 10 ảnh gradient placeholder bằng ảnh biên tập chất lượng cao hơn, có quyền sử dụng hợp lệ. (2) M4 — unit/integration test cho CmsArticlesController và ArticleCommandService, GitHub Actions CI, SEO metadata, sitemap, `docs/FEATURE-MAP.md`, security review tổng thể.
+
+BLOCKERS: Gói `System.Security.Cryptography.Pkcs` (transitive qua SqlClient) có cảnh báo lỗ hổng NU1902/NU1903 — theo dõi bản vá. **Thiếu sót đã biết (chưa khắc phục, ghi nhận trung thực):** chưa có test tự động riêng cho luồng CMS (chỉ kiểm chứng thủ công qua Playwright như trên); `ImageUploadService` chưa được test end-to-end qua UI thật (chỉ review code); chưa có chức năng xoá bài viết/chuyên mục; chưa viết GitHub Actions CI; ảnh minh hoạ vẫn là gradient (đang xử lý theo yêu cầu mới nhất của người dùng).
 
 ## Điều tra sự cố "CSS/ảnh hỏng tại localhost:5299" (2026-10-29)
 

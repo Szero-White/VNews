@@ -1,0 +1,30 @@
+@model CategorySaveViewModel
+@{
+    ViewData["Title"] = "Sửa chuyên mục";
+    Layout = "_CmsLayout";
+}
+
+<div class="cms-card">
+    <h1>Sửa chuyên mục</h1>
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="cms-form">
+        <div asp-validation-summary="All" class="cms-validation"></div>
+
+        <label asp-for="Name">Tên</label>
+        <input asp-for="Name" type="text" />
+
+        <label asp-for="Slug">Slug</label>
+        <input asp-for="Slug" type="text" />
+
+        <label asp-for="Description">Mô tả</label>
+        <textarea asp-for="Description" style="min-height:60px;"></textarea>
+
+        <label asp-for="DisplayOrder">Thứ tự hiển thị</label>
+        <input asp-for="DisplayOrder" type="number" />
+
+        <button type="submit" class="cms-btn" style="margin-top:16px;">Lưu</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

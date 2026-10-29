@@ -1,0 +1,82 @@
+@model PagedResult<ArticleCmsListItemDto>
+@{
+    ViewData["Title"] = "Quản lý bài viết";
+    Layout = "_CmsLayout";
+}
+
+<div class="cms-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <h1 style="margin:0;">Bài viết @(ViewBag.IsPrivileged ? "(tất cả)" : "(của tôi)")</h1>
+        <a asp-action="Create" class="cms-btn">+ Tạo bài mới</a>
+    </div>
+
+    <form method="get" style="margin: 12px 0;">
+        <select name="status" onchange="this.form.submit()">
+            <option value="">-- Tất cả trạng thái --</option>
+            <option value="Draft" selected="@(ViewBag.StatusFilter == "Draft")">Nháp</option>
+            <option value="PendingReview" selected="@(ViewBag.StatusFilter == "PendingReview")">Chờ duyệt</option>
+            <option value="Published" selected="@(ViewBag.StatusFilter == "Published")">Đã xuất bản</option>
+            <option value="Rejected" selected="@(ViewBag.StatusFilter == "Rejected")">Bị từ chối</option>
+        </select>
+    </form>
+
+    <table class="cms-table">
+        <thead>
+            <tr>
+                <th>Tiêu đề</th>
+                <th>Chuyên mục</th>
+                <th>Tác giả</th>
+                <th>Trạng thái</th>
+                <th>Cập nhật</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.Title</td>
+                    <td>@item.CategoryName</td>
+                    <td>@item.AuthorName</td>
+                    <td><span class="cms-badge cms-badge--@item.Status.ToLowerInvariant()">@item.Status</span></td>
+                    <td>@((item.UpdatedAt ?? item.CreatedAt).ToString("dd/MM/yyyy HH:mm"))</td>
+                    <td class="cms-actions">
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="cms-btn cms-btn--secondary">Sửa</a>
+                        @if (item.Status is "Draft" or "Rejected")
+                        {
+                            <form asp-action="SubmitForReview" asp-route-id="@item.Id" method="post" style="display:inline">
+                                <button type="submit" class="cms-btn">Gửi duyệt</button>
+                            </form>
+                        }
+                        @if (item.Status == "PendingReview" && ViewBag.IsPrivileged)
+                        {
+                            <form asp-action="Publish" asp-route-id="@item.Id" method="post" style="display:inline">
+                                <button type="submit" class="cms-btn cms-btn--success">Xuất bản</button>
+                            </form>
+                            <form asp-action="Reject" asp-route-id="@item.Id" method="post" style="display:inline" onsubmit="return setReason(this)">
+                                <input type="hidden" name="reason" value="" />
+                                <button type="submit" class="cms-btn cms-btn--danger">Từ chối</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (!Model.Items.Any())
+    {
+        <p style="color:#666; margin-top:12px;">Chưa có bài viết nào.</p>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function setReason(form) {
+            var reason = prompt('Lý do từ chối:');
+            if (!reason) { return false; }
+            form.querySelector('input[name="reason"]').value = reason;
+            return true;
+        }
+    </script>
+}

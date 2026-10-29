@@ -1,0 +1,37 @@
+@model IReadOnlyList<UserListItemViewModel>
+@{
+    ViewData["Title"] = "Quản lý người dùng";
+    Layout = "_CmsLayout";
+    var allRoles = (string[])ViewBag.AllRoles;
+}
+
+<div class="cms-card">
+    <h1>Người dùng</h1>
+    <table class="cms-table">
+        <thead>
+            <tr><th>Email</th><th>Tên hiển thị</th><th>Vai trò</th><th>Gán vai trò</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model)
+            {
+                <tr>
+                    <td>@u.Email</td>
+                    <td>@u.DisplayName</td>
+                    <td>@string.Join(", ", u.Roles)</td>
+                    <td>
+                        <form asp-action="SetRole" method="post" class="cms-actions">
+                            <input type="hidden" name="userId" value="@u.Id" />
+                            <select name="role">
+                                @foreach (var r in allRoles)
+                                {
+                                    <option value="@r" selected="@(u.Roles.Contains(r))">@r</option>
+                                }
+                            </select>
+                            <button type="submit" class="cms-btn cms-btn--secondary">Gán</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

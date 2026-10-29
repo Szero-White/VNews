@@ -52,6 +52,23 @@ dotnet test VNews.slnx
 - `/tim-kiem?q=...` — tìm kiếm
 - `/chu-de/{slug}` — theo tag (hiện chưa có dữ liệu tag mẫu, sẽ hiển thị trạng thái rỗng)
 
+## REST API (M2) — versioned `api/v1`
+- `GET /api/v1/articles?category=&page=&pageSize=`, `GET /api/v1/articles/{slug}`
+- `GET /api/v1/categories`, `GET /api/v1/categories/{slug}`
+- `GET /api/v1/categories/{slug}/articles` — qua stored procedure `dbo.sp_GetPublishedArticlesByCategory`
+- `GET /api/v1/search?q=&page=&pageSize=`
+- `GET /api/v1/stats/daily-publish?from=&to=` — qua stored procedure `dbo.sp_GetDailyPublishStats`
+
+## CMS (M3) — `/cms`, yêu cầu đăng nhập
+- Đăng nhập: `/tai-khoan/dang-nhap` — **tài khoản demo (chỉ để trình diễn, không phải tài khoản thật):**
+  - `admin@vnews.local` / `Demo@12345` — vai trò Admin (quản lý chuyên mục, người dùng, toàn quyền)
+  - `editor@vnews.local` / `Demo@12345` — vai trò Editor (duyệt/xuất bản/từ chối bài)
+  - `author@vnews.local` / `Demo@12345` — vai trò Author (tạo/sửa bài nháp của chính mình)
+- `/cms` — danh sách bài viết (Author chỉ thấy bài của mình; Editor/Admin thấy tất cả)
+- `/cms/CmsArticles/Create`, `/cms/CmsArticles/Edit/{id}` — tạo/sửa bài (nội dung HTML được lọc sạch chống XSS khi lưu)
+- `/cms/CmsCategories`, `/cms/CmsUsers` — chỉ Admin
+- Quy trình: Author tạo **Nháp** → Gửi duyệt (**PendingReview**) → Editor/Admin **Xuất bản** hoặc **Từ chối** (kèm lý do) → bài Published mới hiển thị công khai.
+
 ## Lưu ý
 - Không dùng mock/in-memory DB; toàn bộ nội dung public đọc từ SQL Server LocalDB qua EF Core.
 - Nếu muốn reset dữ liệu, xóa database `VNewsDb` bằng `sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "DROP DATABASE VNewsDb"` rồi chạy lại `dotnet run` (sẽ tự tạo và seed lại). **Chỉ thực hiện khi bạn chắc chắn muốn xóa dữ liệu.**

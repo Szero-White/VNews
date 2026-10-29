@@ -1,0 +1,30 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+    Layout = "_CmsLayout";
+}
+
+<div class="cms-card" style="max-width:420px; margin: 40px auto;">
+    <h1>Đăng nhập VNews CMS</h1>
+    <form asp-controller="Account" asp-action="Login" method="post" class="cms-form">
+        <input type="hidden" asp-for="ReturnUrl" />
+        <div asp-validation-summary="ModelOnly" class="cms-validation"></div>
+
+        <label asp-for="Email">Email</label>
+        <input asp-for="Email" type="email" autocomplete="username" />
+        <span asp-validation-for="Email" class="cms-validation"></span>
+
+        <label asp-for="Password">Mật khẩu</label>
+        <input asp-for="Password" type="password" autocomplete="current-password" />
+        <span asp-validation-for="Password" class="cms-validation"></span>
+
+        <button type="submit" class="cms-btn" style="margin-top:16px;">Đăng nhập</button>
+    </form>
+    <p style="margin-top:16px; font-size:0.85rem; color:#666;">
+        Tài khoản demo: admin@vnews.local / editor@vnews.local / author@vnews.local — mật khẩu <code>Demo@12345</code> (chỉ dùng để trình diễn, không phải tài khoản thật).
+    </p>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

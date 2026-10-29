@@ -20,9 +20,9 @@ public class HomeController : Controller
         return View(data);
     }
 
-    public IActionResult PageNotFound()
+    public IActionResult PageNotFound(int? statusCode)
     {
-        Response.StatusCode = 404;
+        Response.StatusCode = statusCode is >= 400 and <= 599 ? statusCode.Value : 404;
         return View();
     }
 

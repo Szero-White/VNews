@@ -1,0 +1,249 @@
+using Ganss.Xss;
+using Microsoft.EntityFrameworkCore;
+using VNews.Application.Common;
+using VNews.Application.DTOs.Cms;
+using VNews.Application.Interfaces;
+using VNews.Domain.Entities;
+using VNews.Infrastructure.Common;
+using VNews.Infrastructure.Persistence;
+
+namespace VNews.Infrastructure.Services;
+
+public class ArticleCommandService : IArticleCommandService
+{
+    private readonly VNewsDbContext _context;
+    private readonly IAuditLogService _auditLog;
+    private static readonly HtmlSanitizer Sanitizer = BuildSanitizer();
+
+    public ArticleCommandService(VNewsDbContext context, IAuditLogService auditLog)
+    {
+        _context = context;
+        _auditLog = auditLog;
+    }
+
+    private static HtmlSanitizer BuildSanitizer()
+    {
+        var sanitizer = new HtmlSanitizer();
+        sanitizer.AllowedTags.Clear();
+        foreach (var tag in new[] { "p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li", "h2", "h3", "h4", "blockquote", "a", "img" })
+        {
+            sanitizer.AllowedTags.Add(tag);
+        }
+
+        sanitizer.AllowedAttributes.Clear();
+        sanitizer.AllowedAttributes.Add("href");
+        sanitizer.AllowedAttributes.Add("src");
+        sanitizer.AllowedAttributes.Add("alt");
+
+        sanitizer.AllowedSchemes.Clear();
+        sanitizer.AllowedSchemes.Add("http");
+        sanitizer.AllowedSchemes.Add("https");
+
+        return sanitizer;
+    }
+
+    public async Task<PagedResult<ArticleCmsListItemDto>> ListForCmsAsync(
+        string? statusFilter, string? authorUserId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
+
+        var query = _context.Articles.Include(a => a.Category).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(authorUserId))
+        {
+            query = query.Where(a => a.AuthorUserId == authorUserId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(statusFilter) && Enum.TryParse<ArticleStatus>(statusFilter, true, out var status))
+        {
+            query = query.Where(a => a.Status == status);
+        }
+
+        var ordered = query.OrderByDescending(a => a.UpdatedAt ?? a.CreatedAt);
+
+        var totalCount = await ordered.CountAsync(cancellationToken);
+
+        var items = await ordered
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(a => new ArticleCmsListItemDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Slug = a.Slug,
+                Status = a.Status.ToString(),
+                CategoryName = a.Category.Name,
+                AuthorName = a.AuthorName,
+                AuthorUserId = a.AuthorUserId,
+                CreatedAt = a.CreatedAt,
+                UpdatedAt = a.UpdatedAt,
+                PublishedAt = a.PublishedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<ArticleCmsListItemDto>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        };
+    }
+
+    public async Task<ArticleEditDto?> GetForEditAsync(int articleId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Articles
+            .Where(a => a.Id == articleId)
+            .Select(a => new ArticleEditDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Slug = a.Slug,
+                Summary = a.Summary,
+                Body = a.Body,
+                CoverImageUrl = a.CoverImageUrl,
+                AuthorName = a.AuthorName,
+                AuthorUserId = a.AuthorUserId,
+                Status = a.Status.ToString(),
+                ReviewNote = a.ReviewNote,
+                CategoryId = a.CategoryId,
+                RowVersion = a.RowVersion
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<int> CreateDraftAsync(ArticleSaveRequest request, string authorUserId, string authorDisplayName, CancellationToken cancellationToken = default)
+    {
+        var slug = await GenerateUniqueSlugAsync(request.Title, cancellationToken);
+
+        var article = new Article
+        {
+            Title = request.Title.Trim(),
+            Slug = slug,
+            Summary = request.Summary.Trim(),
+            Body = Sanitizer.Sanitize(request.Body),
+            CoverImageUrl = request.CoverImageUrl,
+            CategoryId = request.CategoryId,
+            AuthorName = authorDisplayName,
+            AuthorUserId = authorUserId,
+            Status = ArticleStatus.Draft,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Articles.Add(article);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        await _auditLog.LogAsync(authorUserId, authorDisplayName, "Create", "Article", article.Id.ToString(), $"Tạo bản nháp '{article.Title}'", cancellationToken);
+
+        return article.Id;
+    }
+
+    public async Task UpdateDraftAsync(int articleId, ArticleSaveRequest request, byte[] rowVersion, string actingUserId, CancellationToken cancellationToken = default)
+    {
+        var article = await _context.Articles.FirstOrDefaultAsync(a => a.Id == articleId, cancellationToken)
+            ?? throw new ArticleNotFoundException(articleId);
+
+        if (article.Status is not ArticleStatus.Draft and not ArticleStatus.Rejected)
+        {
+            throw new ArticleWorkflowException("Chỉ có thể sửa bài viết ở trạng thái Nháp hoặc Bị từ chối.");
+        }
+
+        _context.Entry(article).Property(a => a.RowVersion).OriginalValue = rowVersion;
+
+        article.Title = request.Title.Trim();
+        article.Summary = request.Summary.Trim();
+        article.Body = Sanitizer.Sanitize(request.Body);
+        article.CoverImageUrl = request.CoverImageUrl;
+        article.CategoryId = request.CategoryId;
+        article.UpdatedAt = DateTime.UtcNow;
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ArticleConcurrencyException();
+        }
+
+        await _auditLog.LogAsync(actingUserId, article.AuthorName, "Update", "Article", article.Id.ToString(), $"Cập nhật '{article.Title}'", cancellationToken);
+    }
+
+    public async Task SubmitForReviewAsync(int articleId, string actingUserId, CancellationToken cancellationToken = default)
+    {
+        var article = await _context.Articles.FirstOrDefaultAsync(a => a.Id == articleId, cancellationToken)
+            ?? throw new ArticleNotFoundException(articleId);
+
+        if (article.Status is not ArticleStatus.Draft and not ArticleStatus.Rejected)
+        {
+            throw new ArticleWorkflowException("Chỉ có thể gửi duyệt bài viết ở trạng thái Nháp hoặc Bị từ chối.");
+        }
+
+        article.Status = ArticleStatus.PendingReview;
+        article.UpdatedAt = DateTime.UtcNow;
+        article.ReviewNote = null;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        await _auditLog.LogAsync(actingUserId, article.AuthorName, "SubmitForReview", "Article", article.Id.ToString(), article.Title, cancellationToken);
+    }
+
+    public async Task PublishAsync(int articleId, string editorUserId, string editorDisplayName, CancellationToken cancellationToken = default)
+    {
+        var article = await _context.Articles.FirstOrDefaultAsync(a => a.Id == articleId, cancellationToken)
+            ?? throw new ArticleNotFoundException(articleId);
+
+        if (article.Status != ArticleStatus.PendingReview)
+        {
+            throw new ArticleWorkflowException("Chỉ có thể xuất bản bài viết đang chờ duyệt.");
+        }
+
+        article.Status = ArticleStatus.Published;
+        article.PublishedAt = DateTime.UtcNow;
+        article.UpdatedAt = DateTime.UtcNow;
+        article.ReviewedByUserId = editorUserId;
+        article.ReviewNote = null;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        await _auditLog.LogAsync(editorUserId, editorDisplayName, "Publish", "Article", article.Id.ToString(), article.Title, cancellationToken);
+    }
+
+    public async Task RejectAsync(int articleId, string editorUserId, string editorDisplayName, string reason, CancellationToken cancellationToken = default)
+    {
+        var article = await _context.Articles.FirstOrDefaultAsync(a => a.Id == articleId, cancellationToken)
+            ?? throw new ArticleNotFoundException(articleId);
+
+        if (article.Status != ArticleStatus.PendingReview)
+        {
+            throw new ArticleWorkflowException("Chỉ có thể từ chối bài viết đang chờ duyệt.");
+        }
+
+        article.Status = ArticleStatus.Rejected;
+        article.UpdatedAt = DateTime.UtcNow;
+        article.ReviewedByUserId = editorUserId;
+        article.ReviewNote = reason;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        await _auditLog.LogAsync(editorUserId, editorDisplayName, "Reject", "Article", article.Id.ToString(), reason, cancellationToken);
+    }
+
+    private async Task<string> GenerateUniqueSlugAsync(string title, CancellationToken cancellationToken)
+    {
+        var baseSlug = SlugHelper.Slugify(title);
+        if (string.IsNullOrWhiteSpace(baseSlug))
+        {
+            baseSlug = "bai-viet";
+        }
+
+        var slug = baseSlug;
+        var suffix = 1;
+
+        while (await _context.Articles.AnyAsync(a => a.Slug == slug, cancellationToken))
+        {
+            suffix++;
+            slug = $"{baseSlug}-{suffix}";
+        }
+
+        return slug;
+    }
+}

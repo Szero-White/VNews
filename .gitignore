@@ -13,3 +13,5 @@ artifacts/
 TestResults/
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+# User-uploaded content (runtime data, not source)
+src/VNews.Web/wwwroot/uploads/

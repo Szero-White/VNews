@@ -1,9 +1,18 @@
 @{
-    ViewData["Title"] = "Không tìm thấy trang";
+    ViewData["Title"] = "Có lỗi xảy ra";
+    var code = Context.Response.StatusCode;
+    var (heading, message) = code switch
+    {
+        400 => ("400 — Yêu cầu không hợp lệ", "Dữ liệu gửi lên không hợp lệ hoặc phiên làm việc đã hết hạn. Vui lòng thử lại."),
+        401 => ("401 — Chưa đăng nhập", "Bạn cần đăng nhập để truy cập trang này."),
+        403 => ("403 — Không có quyền truy cập", "Tài khoản của bạn không có quyền thực hiện thao tác này."),
+        404 => ("404 — Không tìm thấy trang", "Trang bạn tìm không tồn tại hoặc đã bị gỡ bỏ."),
+        _ => ($"{code} — Có lỗi xảy ra", "Đã có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại sau.")
+    };
 }
 
 <div class="container empty-state-page">
-    <h1>404 — Không tìm thấy trang</h1>
-    <p>Trang bạn tìm không tồn tại hoặc đã bị gỡ bỏ.</p>
+    <h1>@heading</h1>
+    <p>@message</p>
     <a asp-controller="Home" asp-action="Index">Quay về trang chủ</a>
 </div>

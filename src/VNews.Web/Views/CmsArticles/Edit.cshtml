@@ -1,0 +1,92 @@
+@model ArticleSaveRequest
+@{
+    ViewData["Title"] = "Sửa bài viết";
+    Layout = "_CmsLayout";
+    var categories = (IReadOnlyList<CategoryDto>)ViewBag.Categories;
+    var article = (ArticleEditDto)ViewBag.Article;
+}
+
+<div class="cms-card">
+    <h1>Sửa bài viết <span class="cms-badge cms-badge--@article.Status.ToLowerInvariant()">@article.Status</span></h1>
+
+    @if (!string.IsNullOrWhiteSpace(article.ReviewNote))
+    {
+        <div class="cms-alert cms-alert--error">Lý do từ chối trước đó: @article.ReviewNote</div>
+    }
+
+    <form asp-action="Edit" asp-route-id="@article.Id" method="post" class="cms-form">
+        <input type="hidden" name="rowVersionBase64" value="@Convert.ToBase64String(article.RowVersion)" />
+        <div asp-validation-summary="All" class="cms-validation"></div>
+
+        <label asp-for="Title">Tiêu đề</label>
+        <input asp-for="Title" type="text" />
+
+        <label asp-for="CategoryId">Chuyên mục</label>
+        <select asp-for="CategoryId">
+            @foreach (var c in categories)
+            {
+                <option value="@c.Id" selected="@(c.Id == Model.CategoryId)">@c.Name</option>
+            }
+        </select>
+
+        <label asp-for="Summary">Tóm tắt</label>
+        <textarea asp-for="Summary" style="min-height:80px;"></textarea>
+
+        <label>Ảnh bìa</label>
+        <input type="file" id="coverFile" accept="image/jpeg,image/png,image/webp,image/svg+xml" />
+        <input asp-for="CoverImageUrl" type="text" style="margin-top:6px;" />
+        <div id="uploadStatus" style="font-size:0.85rem; margin-top:4px;"></div>
+        @if (!string.IsNullOrWhiteSpace(Model.CoverImageUrl))
+        {
+            <img src="@Model.CoverImageUrl" alt="cover" style="max-width:240px; margin-top:8px; display:block;" />
+        }
+
+        <label asp-for="Body">Nội dung</label>
+        <textarea asp-for="Body"></textarea>
+
+        <div class="cms-actions" style="margin-top:16px;">
+            <button type="submit" class="cms-btn">Lưu thay đổi</button>
+            <a asp-action="Index" class="cms-btn cms-btn--secondary">Quay lại danh sách</a>
+        </div>
+    </form>
+
+    @if (article.Status is "Draft" or "Rejected")
+    {
+        <form asp-action="SubmitForReview" asp-route-id="@article.Id" method="post" style="margin-top:12px;">
+            <button type="submit" class="cms-btn cms-btn--success">Gửi duyệt</button>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('coverFile').addEventListener('change', async function (e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var status = document.getElementById('uploadStatus');
+            status.textContent = 'Đang tải lên...';
+
+            var form = new FormData();
+            form.append('file', file);
+            var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            try {
+                var res = await fetch('@Url.Action("UploadCoverImage", "CmsArticles")', {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token },
+                    body: form
+                });
+                var data = await res.json();
+                if (res.ok) {
+                    document.querySelector('[name="CoverImageUrl"]').value = data.url;
+                    status.textContent = 'Đã tải lên: ' + data.url;
+                } else {
+                    status.textContent = 'Lỗi: ' + data.error;
+                }
+            } catch (err) {
+                status.textContent = 'Lỗi tải lên.';
+            }
+        });
+    </script>
+}

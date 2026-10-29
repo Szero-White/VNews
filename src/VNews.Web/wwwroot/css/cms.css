@@ -1,0 +1,142 @@
+/* VNews CMS — minimal functional admin styling */
+
+.cms-shell {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  color: #1a1a1a;
+  background: #f4f5f7;
+  min-height: 100vh;
+}
+
+.cms-topbar {
+  background: #1a1a1a;
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cms-topbar a {
+  color: #fff;
+  text-decoration: none;
+  margin-right: 16px;
+  font-size: 0.9rem;
+}
+
+.cms-topbar a:hover {
+  text-decoration: underline;
+}
+
+.cms-topbar__brand {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #e6476b !important;
+}
+
+.cms-container {
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+.cms-card {
+  background: #fff;
+  border: 1px solid #e2e2e2;
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.cms-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.cms-table th, .cms-table td {
+  border-bottom: 1px solid #eee;
+  padding: 10px 8px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.cms-table th {
+  background: #f8f8f8;
+  font-weight: 600;
+}
+
+.cms-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.cms-badge--draft { background: #e5e5e5; color: #444; }
+.cms-badge--pendingreview { background: #fff3cd; color: #8a6400; }
+.cms-badge--published { background: #d4edda; color: #1d6e34; }
+.cms-badge--rejected { background: #f8d7da; color: #a3123a; }
+
+.cms-form label {
+  display: block;
+  font-weight: 600;
+  margin: 12px 0 4px;
+  font-size: 0.9rem;
+}
+
+.cms-form input[type="text"],
+.cms-form input[type="email"],
+.cms-form input[type="password"],
+.cms-form input[type="number"],
+.cms-form select,
+.cms-form textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+.cms-form textarea {
+  min-height: 220px;
+  font-family: Consolas, monospace;
+}
+
+.cms-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  background: #a3123a;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.cms-btn:hover { background: #7f0e2e; color: #fff; }
+.cms-btn--secondary { background: #555; }
+.cms-btn--success { background: #1d6e34; }
+.cms-btn--danger { background: #a31212; }
+
+.cms-alert {
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.cms-alert--success { background: #d4edda; color: #1d6e34; }
+.cms-alert--error { background: #f8d7da; color: #a3123a; }
+
+.cms-validation {
+  color: #a3123a;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+.cms-actions { display: flex; gap: 8px; flex-wrap: wrap; }
