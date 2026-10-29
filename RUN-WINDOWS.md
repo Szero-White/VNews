@@ -29,6 +29,8 @@ Khi khởi động, `Program.cs` gọi `DbInitializer.SeedAsync` sẽ:
 
 Mặc định ứng dụng lắng nghe tại `https://localhost:xxxx` / `http://localhost:xxxx` (xem log console). Mở trình duyệt vào URL đó.
 
+**Lưu ý nếu chạy với cổng tùy chỉnh (`dotnet run --no-launch-profile --urls http://localhost:xxxx`):** PHẢI set `ASPNETCORE_ENVIRONMENT=Development` thủ công (ví dụ: `set ASPNETCORE_ENVIRONMENT=Development && dotnet run ...` trên cmd, hoặc `$env:ASPNETCORE_ENVIRONMENT="Development"` trên PowerShell). Cờ `--no-launch-profile` bỏ qua `launchSettings.json` (nơi set biến này mặc định), khiến môi trường rơi về `Production` → tính năng nén tài nguyên tĩnh (CSS/JS) của `MapStaticAssets()` trả về response rỗng cho mọi trình duyệt thật (gửi `Accept-Encoding: gzip` mặc định), làm vỡ toàn bộ giao diện dù server vẫn chạy bình thường.
+
 ## Kiểm tra dữ liệu SQL trực tiếp (tùy chọn)
 ```powershell
 sqlcmd -S "(localdb)\MSSQLLocalDB" -d VNewsDb -Q "SELECT COUNT(*) FROM Categories; SELECT COUNT(*) FROM Articles;"

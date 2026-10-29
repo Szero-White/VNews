@@ -99,7 +99,7 @@ public class ArticleQueryService : IArticleQueryService
             var articles = await PublishedArticles()
                 .Where(a => a.CategoryId == category.Id)
                 .OrderByDescending(a => a.PublishedAt)
-                .Take(4)
+                .Take(5)
                 .Select(ToSummary)
                 .ToListAsync(cancellationToken);
 

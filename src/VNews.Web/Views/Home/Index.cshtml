@@ -30,16 +30,50 @@
             </div>
         </section>
 
-        @if (Model.StreamItems.Any())
+        var parallelSectionRendered = Model.StreamItems.Any() && Model.CategoryPanels.Any();
+        @if (parallelSectionRendered)
         {
-            <section class="stream-section" aria-label="Dòng tin mới nhất">
-                <h2 class="section-title">Dòng tin mới nhất</h2>
-                <div class="stream-grid">
-                    @foreach (var item in Model.StreamItems)
-                    {
-                        @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = item, Layout = "image-top-large" })
-                    }
+            var firstPanel = Model.CategoryPanels[0];
+            var leadArticle = firstPanel.Articles.ElementAtOrDefault(0);
+            var sideArticle = firstPanel.Articles.ElementAtOrDefault(1);
+            var row2Articles = firstPanel.Articles.Skip(2).Take(3).ToList();
+
+            <section class="home-parallel" aria-label="Dòng tin mới nhất và chuyên mục nổi bật">
+                <div class="home-parallel__stream stream-section" aria-label="Dòng tin mới nhất">
+                    <h2 class="section-title">Dòng tin mới nhất</h2>
+                    <ul class="stream-list">
+                        @foreach (var item in Model.StreamItems)
+                        {
+                            @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = item, Layout = "stream-compact" })
+                        }
+                    </ul>
                 </div>
+
+                <section class="home-parallel__category category-panel category-panel--first">
+                    <div class="category-panel__header">
+                        <h2 class="section-title">@firstPanel.Category.Name</h2>
+                        <a asp-controller="Category" asp-action="Index" asp-route-slug="@firstPanel.Category.Slug" class="see-more">Xem thêm &rarr;</a>
+                    </div>
+                    @if (leadArticle is not null)
+                    {
+                        <div class="category-panel__row1">
+                            @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = leadArticle, Layout = "category-lead-row1" })
+                            @if (sideArticle is not null)
+                            {
+                                @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = sideArticle, Layout = "category-side-text" })
+                            }
+                        </div>
+                    }
+                    @if (row2Articles.Any())
+                    {
+                        <ul class="category-panel__row2">
+                            @foreach (var item in row2Articles)
+                            {
+                                @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = item, Layout = "list-item" })
+                            }
+                        </ul>
+                    }
+                </section>
             </section>
         }
 
@@ -65,7 +99,7 @@
             </aside>
         </section>
 
-        @foreach (var panel in Model.CategoryPanels)
+        @foreach (var panel in Model.CategoryPanels.Skip(parallelSectionRendered ? 1 : 0))
         {
             <section class="category-panel">
                 <div class="category-panel__header">

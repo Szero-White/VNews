@@ -96,22 +96,39 @@
         </article>
         break;
 
-    case "image-top-large":
-        <article class="stream-card">
-            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="stream-card__image-link">
+    case "stream-compact":
+        <li class="stream-compact">
+            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="stream-compact__image-link">
                 <img src="@a.CoverImageUrl" alt="@a.Title" loading="lazy" decoding="async" />
             </a>
-            <div class="stream-card__body">
-                <span class="stream-card__category">@a.CategoryName</span>
-                <h3 class="stream-card__title">
+            <div class="stream-compact__body">
+                <h3 class="stream-compact__title">
                     <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
                 </h3>
-                <p class="stream-card__summary">@a.Summary</p>
-                <div class="article-meta">
-                    <span>@a.AuthorName</span>
-                    <span>@a.PublishedAt?.ToString("dd/MM/yyyy")</span>
-                </div>
+                <p class="stream-compact__summary">@a.Summary</p>
             </div>
+        </li>
+        break;
+
+    case "category-lead-row1":
+        <article class="category-lead-row1">
+            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="category-lead-row1__image-link">
+                <img src="@a.CoverImageUrl" alt="@a.Title" loading="lazy" decoding="async" />
+            </a>
+            <div class="category-lead-row1__body">
+                <h3 class="category-lead-row1__title">
+                    <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
+                </h3>
+                <p class="category-lead-row1__summary">@a.Summary</p>
+            </div>
+        </article>
+        break;
+
+    case "category-side-text":
+        <article class="category-side-text">
+            <h3 class="category-side-text__title">
+                <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
+            </h3>
         </article>
         break;
 

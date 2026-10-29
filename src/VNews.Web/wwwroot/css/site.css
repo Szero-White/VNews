@@ -828,16 +828,42 @@ body {
 .news-home .list-item-thumb__title { font-size: 13.5px; font-weight: 600; line-height: 1.4; color: #222; }
 .news-home .list-item-thumb__title:hover { color: var(--vn-accent); }
 
-/* "Dòng tin mới nhất" — long mixed-category stream of large cards. */
-.news-home .stream-section { width: 832px; max-width: 100%; margin: 0 0 42px; }
-.news-home .stream-grid { display: flex; flex-direction: column; gap: 22px; }
-.news-home .stream-card { display: flex; gap: 18px; align-items: flex-start; }
-.news-home .stream-card__image-link { flex: 0 0 240px; display: block; }
-.news-home .stream-card__image-link img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: var(--vn-surface); }
-.news-home .stream-card__body { flex: 1; min-width: 0; }
-.news-home .stream-card__category { display: block; color: var(--vn-accent); font-size: 12px; font-weight: 700; margin-bottom: 4px; }
-.news-home .stream-card__title { font: 700 19px/1.35 Arial, "Helvetica Neue", Helvetica, sans-serif; margin: 0 0 6px; }
-.news-home .stream-card__summary { color: #666; font-size: 13px; line-height: 1.5; margin: 0 0 6px; }
+/* "Dòng tin mới nhất" (stream, narrow left column) running side-by-side with
+   the first category block (wide right column), matching VnExpress's real
+   section_stream_home layout (measured: 380px stream column + 680px category
+   column out of a 1100px content area, i.e. ~35%/65%). See docs/VISUAL-CONTRACT-HOME.md. */
+.news-home .home-parallel { width: 832px; max-width: 100%; margin: 0 0 42px; display: flex; gap: 28px; align-items: flex-start; }
+.news-home .home-parallel__stream { flex: 0 0 35%; min-width: 0; margin: 0; }
+.news-home .home-parallel__category { flex: 1 1 auto; min-width: 0; width: auto; margin: 0; }
+
+.news-home .stream-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+.news-home .stream-compact { display: flex; gap: 10px; align-items: flex-start; padding-bottom: 16px; border-bottom: 1px solid #e8e0cc; }
+.news-home .stream-compact:last-child { border-bottom: 0; padding-bottom: 0; }
+.news-home .stream-compact__image-link { flex: 0 0 40%; max-width: 140px; display: block; }
+.news-home .stream-compact__image-link img { width: 100%; aspect-ratio: 5 / 3; object-fit: cover; border-radius: 3px; background: var(--vn-surface); }
+.news-home .stream-compact__body { flex: 1; min-width: 0; }
+.news-home .stream-compact__title { font: 700 15px/1.45 Arial, "Helvetica Neue", Helvetica, sans-serif; margin: 0 0 4px; }
+.news-home .stream-compact__summary { color: #4f4f4f; font-size: 13px; line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* First category block: lead + side headline on row 1, 3-column text list on row 2
+   (instead of the lead+vertical-list composition used by the other panels). */
+.news-home .category-panel--first { width: auto; }
+.news-home .category-panel__row1 { display: flex; gap: 20px; align-items: flex-start; margin-top: 14px; }
+
+/* Row-1 lead: image-left (not image-on-top like .category-lead), matching the
+   reference's 225x135 thumb occupying ~49% of the lead box width. */
+.news-home .category-lead-row1 { flex: 0 0 66%; max-width: 66%; display: flex; gap: 16px; align-items: flex-start; }
+.news-home .category-lead-row1__image-link { flex: 0 0 49%; max-width: 49%; display: block; }
+.news-home .category-lead-row1__image-link img { width: 100%; aspect-ratio: 5 / 3; object-fit: cover; border-radius: 4px; background: var(--vn-surface); }
+.news-home .category-lead-row1__body { flex: 1; min-width: 0; }
+.news-home .category-lead-row1__title { font: 700 17px/1.3 Arial, "Helvetica Neue", Helvetica, sans-serif; margin: 0 0 6px; }
+.news-home .category-lead-row1__summary { color: #666; font-size: 13px; line-height: 1.5; margin: 0; }
+
+.news-home .category-side-text { flex: 1 1 auto; min-width: 0; }
+.news-home .category-side-text__title { font: 700 14px/1.5 Arial, "Helvetica Neue", Helvetica, sans-serif; margin: 0; }
+.news-home .category-side-text__title a:hover { color: var(--vn-accent); }
+.news-home .category-panel__row2 { list-style: none; margin: 14px 0 0; padding: 14px 0 0; border-top: 1px solid #e8e0cc; display: flex; gap: 20px; }
+.news-home .category-panel__row2 .list-item { flex: 1 1 0; min-width: 0; padding: 0; }
 
 /* "Podcasts" — demo-only section, clearly labelled as illustrative.
    Horizontal strip of large thumbnails with a duration badge, like a real episode rail. */
@@ -941,8 +967,11 @@ body {
   .news-home .category-panel { padding: 16px; }
   .news-home .category-panel__body { grid-template-columns: 1fr; gap: 16px; }
   .news-home .category-panel__list { border-left: 0; border-top: 1px solid #e8e0cc; padding-left: 0; padding-top: 10px; }
-  .news-home .stream-card { flex-direction: column; }
-  .news-home .stream-card__image-link { flex: none; width: 100%; }
+  .news-home .home-parallel { flex-direction: column; }
+  .news-home .home-parallel__stream { flex-basis: auto; width: 100%; }
+  .news-home .category-panel__row1 { flex-direction: column; }
+  .news-home .category-lead-row1 { flex-basis: auto; max-width: 100%; }
+  .news-home .category-panel__row2 { flex-direction: column; gap: 10px; }
   .news-home .podcast-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .news-home .photo-feature-row { grid-template-columns: 1fr; }
   .news-home .photo-feature img { border-radius: 4px 4px 0 0; }
