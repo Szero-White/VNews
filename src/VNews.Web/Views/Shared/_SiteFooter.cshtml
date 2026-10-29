@@ -1,0 +1,45 @@
+@using VNews.Application.Interfaces
+@inject ICategoryQueryService CategoryQueryService
+@{
+    var footerCategories = await CategoryQueryService.GetAllAsync();
+}
+
+<footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__grid">
+            <div class="site-footer__col">
+                <h3>Chuyên mục</h3>
+                <ul>
+                    @foreach (var c in footerCategories.Take(6))
+                    {
+                        <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@c.Slug">@c.Name</a></li>
+                    }
+                </ul>
+            </div>
+            <div class="site-footer__col">
+                <h3>Khám phá</h3>
+                <ul>
+                    <li><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+                    <li><a asp-controller="Search" asp-action="Index">Tìm kiếm</a></li>
+                    @foreach (var c in footerCategories.Skip(6).Take(4))
+                    {
+                        <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@c.Slug">@c.Name</a></li>
+                    }
+                </ul>
+            </div>
+            <div class="site-footer__col">
+                <h3>Về VNews</h3>
+                <ul>
+                    <li><a asp-controller="Account" asp-action="Login">Đăng nhập CMS</a></li>
+                    <li><span>Dự án học tập / portfolio cá nhân</span></li>
+                    <li><span>Không phải cơ quan báo chí thật</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="site-footer__legal">
+            <p><strong>VNews</strong> — portfolio demo, nội dung minh họa, không phải báo chí chính thức.</p>
+            <p>&copy; @DateTime.Now.Year VNews. Dự án học tập / portfolio cá nhân. Ảnh minh hoạ dùng theo giấy phép Unsplash License (qua Picsum Photos).</p>
+        </div>
+    </div>
+</footer>

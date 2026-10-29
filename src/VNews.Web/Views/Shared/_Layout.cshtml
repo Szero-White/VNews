@@ -60,12 +60,7 @@
         @RenderBody()
     </main>
 
-    <footer class="site-footer">
-        <div class="site-footer__inner">
-            <p><strong>VNews</strong> — portfolio demo, nội dung minh họa, không phải báo chí chính thức.</p>
-            <p>&copy; @DateTime.Now.Year VNews. Dự án học tập / portfolio cá nhân.</p>
-        </div>
-    </footer>
+    <partial name="_SiteFooter" />
 
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

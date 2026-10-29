@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using VNews.Application.Common;
 using VNews.Application.DTOs;
@@ -16,6 +17,19 @@ public class ArticleQueryService : IArticleQueryService
         _context = context;
     }
 
+    private static readonly Expression<Func<Article, ArticleSummaryDto>> ToSummary = a => new ArticleSummaryDto
+    {
+        Id = a.Id,
+        Title = a.Title,
+        Slug = a.Slug,
+        Summary = a.Summary,
+        CoverImageUrl = a.CoverImageUrl,
+        AuthorName = a.AuthorName,
+        PublishedAt = a.PublishedAt,
+        CategoryName = a.Category.Name,
+        CategorySlug = a.Category.Slug
+    };
+
     private IQueryable<Article> PublishedArticles() =>
         _context.Articles
             .Where(a => a.Status == ArticleStatus.Published)
@@ -28,18 +42,7 @@ public class ArticleQueryService : IArticleQueryService
 
         var topArticles = await latestOrdered
             .Take(6)
-            .Select(a => new ArticleSummaryDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                Slug = a.Slug,
-                Summary = a.Summary,
-                CoverImageUrl = a.CoverImageUrl,
-                AuthorName = a.AuthorName,
-                PublishedAt = a.PublishedAt,
-                CategoryName = a.Category.Name,
-                CategorySlug = a.Category.Slug
-            })
+            .Select(ToSummary)
             .ToListAsync(cancellationToken);
 
         var hero = topArticles.FirstOrDefault();
@@ -48,40 +51,46 @@ public class ArticleQueryService : IArticleQueryService
         var latest = await latestOrdered
             .Skip(3)
             .Take(10)
-            .Select(a => new ArticleSummaryDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                Slug = a.Slug,
-                Summary = a.Summary,
-                CoverImageUrl = a.CoverImageUrl,
-                AuthorName = a.AuthorName,
-                PublishedAt = a.PublishedAt,
-                CategoryName = a.Category.Name,
-                CategorySlug = a.Category.Slug
-            })
+            .Select(ToSummary)
+            .ToListAsync(cancellationToken);
+
+        // "Stream tin tổng hợp" — longer mixed-category feed of large cards.
+        var streamItems = await latestOrdered
+            .Take(10)
+            .Select(ToSummary)
+            .ToListAsync(cancellationToken);
+
+        // "Ảnh" — photo-forward grid, most recently published articles with a cover image.
+        var photoHighlights = await PublishedArticles()
+            .Where(a => a.CoverImageUrl != null)
+            .OrderByDescending(a => a.PublishedAt)
+            .Take(8)
+            .Select(ToSummary)
             .ToListAsync(cancellationToken);
 
         var mostViewed = await PublishedArticles()
             .OrderByDescending(a => a.ViewCount)
             .Take(5)
-            .Select(a => new ArticleSummaryDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                Slug = a.Slug,
-                Summary = a.Summary,
-                CoverImageUrl = a.CoverImageUrl,
-                AuthorName = a.AuthorName,
-                PublishedAt = a.PublishedAt,
-                CategoryName = a.Category.Name,
-                CategorySlug = a.Category.Slug
-            })
+            .Select(ToSummary)
+            .ToListAsync(cancellationToken);
+
+        // "Spotlight" — large feature cards, highest view count.
+        var spotlight = await PublishedArticles()
+            .OrderByDescending(a => a.ViewCount)
+            .Take(3)
+            .Select(ToSummary)
+            .ToListAsync(cancellationToken);
+
+        // "Podcasts" demo section — reuses a slice of recent articles, clearly labeled
+        // as illustrative (no real audio) by the view, not the data.
+        var podcastDemoItems = await latestOrdered
+            .Skip(10)
+            .Take(4)
+            .Select(ToSummary)
             .ToListAsync(cancellationToken);
 
         var categories = await _context.Categories
             .OrderBy(c => c.DisplayOrder)
-            .Take(4)
             .ToListAsync(cancellationToken);
 
         var panels = new List<CategoryPanel>();
@@ -91,19 +100,13 @@ public class ArticleQueryService : IArticleQueryService
                 .Where(a => a.CategoryId == category.Id)
                 .OrderByDescending(a => a.PublishedAt)
                 .Take(4)
-                .Select(a => new ArticleSummaryDto
-                {
-                    Id = a.Id,
-                    Title = a.Title,
-                    Slug = a.Slug,
-                    Summary = a.Summary,
-                    CoverImageUrl = a.CoverImageUrl,
-                    AuthorName = a.AuthorName,
-                    PublishedAt = a.PublishedAt,
-                    CategoryName = a.Category.Name,
-                    CategorySlug = a.Category.Slug
-                })
+                .Select(ToSummary)
                 .ToListAsync(cancellationToken);
+
+            if (articles.Count == 0)
+            {
+                continue;
+            }
 
             panels.Add(new CategoryPanel
             {
@@ -124,7 +127,11 @@ public class ArticleQueryService : IArticleQueryService
             SideFeatures = sideFeatures,
             Latest = latest,
             CategoryPanels = panels,
-            MostViewed = mostViewed
+            MostViewed = mostViewed,
+            StreamItems = streamItems,
+            PhotoHighlights = photoHighlights,
+            Spotlight = spotlight,
+            PodcastDemoItems = podcastDemoItems
         };
     }
 
@@ -221,18 +228,7 @@ public class ArticleQueryService : IArticleQueryService
         var items = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(a => new ArticleSummaryDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                Slug = a.Slug,
-                Summary = a.Summary,
-                CoverImageUrl = a.CoverImageUrl,
-                AuthorName = a.AuthorName,
-                PublishedAt = a.PublishedAt,
-                CategoryName = a.Category.Name,
-                CategorySlug = a.Category.Slug
-            })
+            .Select(ToSummary)
             .ToListAsync(cancellationToken);
 
         return new PagedResult<ArticleSummaryDto>
