@@ -31,9 +31,10 @@
         break;
 
     case ArticleCardLayout.HeroSide:
-        @* Text-only by design: matches the VnExpress reference, where the two secondary
-           hero items carry no thumbnail (only the third "Góc nhìn" item does). *@
-        <article class="hero-side__item hero-side__item--text">
+        <article class="hero-side__item">
+            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="hero-side__image-link">
+                <img src="@imageUrl" alt="@a.Title" loading="lazy" decoding="async" />
+            </a>
             <h2 class="hero-side__title">
                 <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
             </h2>

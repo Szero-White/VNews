@@ -3,12 +3,14 @@ import fs from 'fs';
 import path from 'path';
 
 // Target measurements derived from pixel analysis of references/vnexpress-desktop.png
-// (see analyze-reference.js). Ad banner excluded: all Y values are heights/offsets
-// relative to the masthead top (VNews has no ad banner above the masthead).
+// (see analyze-reference.js / measure-reference.js). Both the reference and VNews now
+// place a leaderboard ad banner ABOVE the masthead, and that ad's height is not a fixed
+// structural signal (a real ad slot varies), so it is excluded from these targets: every
+// Y value below is a relative offset/gap, never an absolute viewport position.
 const TARGETS = {
   mastheadHeight: 61,      // y331 - y270
   navHeight: 50,           // y381 - y331
-  contentTopY: 111,        // mastheadHeight + navHeight (where main content starts)
+  mainContentGap: 0,      // <main> should abut the nav directly; its own padding-top handles spacing
   heroImageWidth: 520,    // re-measured this round via visual-tests/measure-columns.js: x[170,690] on the 1440x900 reference
   heroImageAspect: 5 / 3,  // width/height, from site.css comment
   heroGap: 24,
@@ -41,12 +43,14 @@ test('homepage desktop layout matches VnExpress reference geometry', async ({ pa
 
   const masthead = page.locator('.masthead');
   const nav = page.locator('.primary-nav');
+  const mainContent = page.locator('#main-content');
   const heroImage = page.locator('.hero-lead__image-link img').first();
   const heroContent = page.locator('.hero-lead__content').first();
   const heroSide = page.locator('.hero-side');
 
   const mastheadBox = await masthead.boundingBox();
   const navBox = await nav.boundingBox();
+  const mainContentBox = await mainContent.boundingBox();
   const heroImageBox = await heroImage.boundingBox();
   const heroContentBox = await heroContent.boundingBox();
   const heroSideBox = await heroSide.boundingBox();
@@ -57,9 +61,10 @@ test('homepage desktop layout matches VnExpress reference geometry', async ({ pa
   report.mastheadHeight = { actual: mastheadBox?.height, target: TARGETS.mastheadHeight };
   // Nav height
   report.navHeight = { actual: navBox?.height, target: TARGETS.navHeight };
-  // Content starts right after masthead+nav (no gap)
-  const contentTopY = (navBox?.y ?? 0) + (navBox?.height ?? 0);
-  report.contentTopY = { actual: contentTopY, target: TARGETS.contentTopY };
+  // Relative gap between nav bottom and <main> top — independent of whatever variable-height
+  // ad banner sits above the masthead, on either the reference or this page.
+  const mainContentGap = (mainContentBox?.y ?? 0) - ((navBox?.y ?? 0) + (navBox?.height ?? 0));
+  report.mainContentGap = { actual: mainContentGap, target: TARGETS.mainContentGap };
   // Hero image width
   report.heroImageWidth = { actual: heroImageBox?.width, target: TARGETS.heroImageWidth };
   // Hero image aspect ratio check
@@ -83,7 +88,7 @@ test('homepage desktop layout matches VnExpress reference geometry', async ({ pa
   expect(mastheadBox?.height, `masthead height ${mastheadBox?.height} vs target ${TARGETS.mastheadHeight}`).not.toBeNull();
   expect(within(mastheadBox!.height, TARGETS.mastheadHeight)).toBeTruthy();
   expect(within(navBox!.height, TARGETS.navHeight)).toBeTruthy();
-  expect(within(contentTopY, TARGETS.contentTopY)).toBeTruthy();
+  expect(within(mainContentGap, TARGETS.mainContentGap)).toBeTruthy();
   expect(within(heroImageBox!.width, TARGETS.heroImageWidth)).toBeTruthy();
   expect(gap !== null && within(gap, TARGETS.heroGap, 15)).toBeTruthy();
   expect(heroSideBox!.y).toBeGreaterThanOrEqual(heroRowBottom - 2);

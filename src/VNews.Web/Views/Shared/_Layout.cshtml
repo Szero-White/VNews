@@ -13,6 +13,14 @@
 <body>
     <a class="skip-link" href="#main-content">Bỏ qua điều hướng, đến nội dung</a>
     <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+    @if (Configuration.GetValue("Features:ShowDemoAdSlot", true))
+    {
+        <div class="ad-slot ad-slot--leaderboard" aria-hidden="true">
+            <span class="ad-slot__label">Vị trí quảng cáo (demo)</span>
+        </div>
+    }
+
     <header class="masthead">
         <div class="masthead__inner">
             <button class="masthead__menu-toggle" type="button" aria-label="Mở menu tiện ích" aria-controls="utility-drawer" aria-expanded="false">
@@ -75,13 +83,6 @@
     <div class="mobile-weather-row">
         @await Component.InvokeAsync("WeatherWidget")
     </div>
-
-    @if (Configuration.GetValue("Features:ShowDemoAdSlot", true))
-    {
-        <div class="ad-slot ad-slot--leaderboard" aria-hidden="true">
-            <span class="ad-slot__label">Vị trí quảng cáo (demo)</span>
-        </div>
-    }
 
     <main class="site-main" id="main-content">
         @RenderBody()

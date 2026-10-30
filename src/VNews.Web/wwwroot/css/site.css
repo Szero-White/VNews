@@ -615,203 +615,9 @@ body {
 .category-nav__list li a:hover { color: var(--vn-accent); }
 .site-main { padding: 22px 0 65px; }
 
-/* Hero geometry based on the reference screenshot:
-   image 552 x ~333; headline/summary column ~256; 24px gap.
-   The two secondary articles go BELOW the hero, not to its right.
-   The remaining right rail is intentionally unused, just as in
-   the reference page's open editorial/advertising area. */
-.news-home .front-page {
-  width: 832px;
-  max-width: 100%;
-  margin: 0 0 30px;
-}
-.news-home .front-page__main { width: 100%; }
-.news-home .hero-lead {
-  display: grid;
-  grid-template-columns: minmax(0, 552px) minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
-}
-.news-home .hero-lead__image-link { display: block; min-width: 0; }
-.news-home .hero-lead__image-link img {
-  width: 100%;
-  aspect-ratio: 5 / 3;
-  object-fit: cover;
-  background: #f3f3f3;
-}
-.news-home .hero-lead__content { padding-top: 1px; min-width: 0; }
-.news-home .hero-lead__title {
-  margin: 0 0 12px;
-  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.35;
-  letter-spacing: -0.22px;
-  overflow-wrap: break-word;
-}
-.news-home .hero-lead__summary {
-  margin: 0 0 7px;
-  font-size: 14px;
-  line-height: 1.47;
-  color: #4b4b4b;
-}
-.news-home .article-meta { color: #888; font-size: 12px; gap: 9px; }
-.news-home .hero-lead__meta span:first-child { color: #777; }
-
-/* Secondary stories form a three-column strip, matching news layout. */
-.news-home .hero-side {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  align-items: start;
-  padding: 19px 0 22px;
-  margin: 20px 0 0;
-  border-top: 1px solid var(--vn-border);
-  border-bottom: 1px solid var(--vn-border);
-}
-.news-home .hero-side__title {
-  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  font-size: 16px;
-  line-height: 1.43;
-  font-weight: 700;
-  margin: 0 0 14px;
-}
-.news-home .hero-side__category {
-  display: block;
-  color: #888;
-  font-size: 12px;
-}
-/* NOTE: .news-home--v3 rules in editorial.css (loaded after this file) override
-   the block above on the real homepage markup (class="news-home news-home--v3").
-   Kept here only as the base/fallback for any page using .news-home without v3. */
-.news-home .hero-side__eyebrow {
-  display: block;
-  margin-bottom: 7px;
-  color: var(--vn-accent);
-  font-size: 13px;
-  font-weight: 700;
-}
-.news-home .hero-side__aside-copy {
-  margin: -5px 0 0;
-  color: #666;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-/* Remaining content keeps real ViewModel data, but is quieter and narrower. */
-.news-home .content-split {
-  max-width: 832px;
-  width: 100%;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 28px;
-  margin-bottom: 40px;
-}
-.news-home .section-title {
-  font-family: Arial, sans-serif;
-  font-size: 18px;
-  border-left: 0;
-  padding: 0;
-  font-weight: 700;
-  margin: 0 0 16px;
-}
-.news-home .story-row {
-  align-items: flex-start;
-  gap: 16px;
-  padding: 18px 0;
-}
-.news-home .story-row__image-link { flex: 0 0 175px; }
-.news-home .story-row__image-link img { width: 100%; aspect-ratio: 16 / 9; }
-.news-home .story-row__title {
-  font: 700 17px/1.42 Arial, "Helvetica Neue", Helvetica, sans-serif;
-  margin: 0 0 6px;
-}
-.news-home .story-row__summary {
-  color: #666;
-  font-size: 13px;
-  line-height: 1.52;
-  margin: 0 0 8px;
-}
-.news-home .sidebar { padding-left: 23px; }
-.news-home .most-viewed { padding-left: 18px; }
-.news-home .most-viewed li {
-  font: 700 14px/1.5 Arial, "Helvetica Neue", Helvetica, sans-serif;
-  margin-bottom: 12px;
-}
-
-
-
-.news-home .card__title { font: 700 16px/1.42 Arial, "Helvetica Neue", Helvetica, sans-serif; }
-.news-home .card img { width: 100%; }
-
-/* Category lead (left) + compact headline list (right), matching the reference's
-   "featured story + list" magazine composition instead of a flat equal-card grid. */
-.news-home .category-lead__image-link { display: block; }
-.news-home .category-lead__image-link img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: var(--vn-surface); border-radius: 4px; }
-.news-home .category-lead__title { font: 700 19px/1.3 Arial, "Helvetica Neue", Helvetica, sans-serif; margin: 10px 0 6px; }
-.news-home .category-lead__summary { color: #666; font-size: 13px; line-height: 1.5; margin: 0; }
-
-.news-home .list-item-thumb { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #e8e0cc; }
-.news-home .list-item-thumb:last-child { border-bottom: 0; }
-.news-home .list-item-thumb__img-link { flex: 0 0 68px; display: block; }
-.news-home .list-item-thumb__img-link img { width: 68px; height: 50px; object-fit: cover; border-radius: 3px; }
-.news-home .list-item-thumb__title { font-size: 13.5px; font-weight: 600; line-height: 1.4; color: #222; }
-.news-home .list-item-thumb__title:hover { color: var(--vn-accent); }
-
-/* "Dòng tin mới nhất" (stream, narrow left column) running side-by-side with
-   the first category block (wide right column), matching VnExpress's real
-   section_stream_home layout (measured: 380px stream column + 680px category
-   column out of a 1100px content area, i.e. ~35%/65%). See docs/VISUAL-CONTRACT-HOME.md. */
-.news-home .home-parallel { width: 832px; max-width: 100%; margin: 0 0 42px; display: flex; gap: 28px; align-items: flex-start; }
-.news-home .home-parallel__stream { flex: 0 0 35%; min-width: 0; margin: 0; }
-.news-home .home-parallel__category { flex: 1 1 auto; min-width: 0; width: auto; margin: 0; }
-
-.news-home .stream-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
-.news-home .stream-compact { display: flex; gap: 10px; align-items: flex-start; padding-bottom: 16px; border-bottom: 1px solid #e8e0cc; }
-.news-home .stream-compact:last-child { border-bottom: 0; padding-bottom: 0; }
-.news-home .stream-compact__image-link { flex: 0 0 40%; max-width: 140px; display: block; }
-.news-home .stream-compact__image-link img { width: 100%; aspect-ratio: 5 / 3; object-fit: cover; border-radius: 3px; background: var(--vn-surface); }
-.news-home .stream-compact__body { flex: 1; min-width: 0; }
-.news-home .stream-compact__title { font: 700 15px/1.45 Arial, "Helvetica Neue", Helvetica, sans-serif; margin: 0 0 4px; }
-.news-home .stream-compact__summary { color: #4f4f4f; font-size: 13px; line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-/* First category block: lead + side headline on row 1, 3-column text list on row 2
-   (instead of the lead+vertical-list composition used by the other panels). */
-
-
-
-/* Row-1 lead: image-left (not image-on-top like .category-lead), matching the
-   reference's 225x135 thumb occupying ~49% of the lead box width. */
-
-
-
-
-/* "Podcasts" — demo-only section, clearly labelled as illustrative.
-   Horizontal strip of large thumbnails with a duration badge, like a real episode rail. */
-.news-home .podcast-section { width: 832px; max-width: 100%; margin: 0 0 42px; }
-.news-home .section-note { color: #888; font-size: 12px; margin: -10px 0 16px; }
-.news-home .podcast-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-
-
-
-
-/* "Ảnh" — one large featured photo + a short text list beside it (photo-story slider pattern),
-   not a flat mosaic grid. */
-.news-home .photo-section { width: 832px; max-width: 100%; margin: 0 0 42px; }
-
-/* "Spotlight" — one large feature (image + text side by side), plus a short headline list,
-   matching the reference's single-feature pattern instead of a repeated card grid. */
-.news-home .spotlight-section { width: 832px; max-width: 100%; margin: 0 0 42px; }
-.news-home .spotlight-feature { display: flex; gap: 22px; align-items: center; margin-bottom: 16px; }
-.news-home .spotlight-feature__image-link { flex: 0 0 46%; display: block; }
-.news-home .spotlight-feature__image-link img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; }
-.news-home .spotlight-feature__body { flex: 1; min-width: 0; }
-.news-home .spotlight-feature__category { display: block; color: var(--vn-accent); font-size: 12px; font-weight: 700; margin-bottom: 6px; }
-.news-home .spotlight-feature__title { font: 700 22px/1.3 Arial, "Helvetica Neue", Helvetica, sans-serif; margin: 0 0 10px; }
-.news-home .spotlight-feature__summary { color: #555; font-size: 14px; line-height: 1.55; margin: 0; }
-
-.news-home .list-item { padding: 6px 0; }
-.news-home .list-item__link { font-size: 13.5px; font-weight: 600; color: #222; }
-.news-home .list-item__link:hover { color: var(--vn-accent); }
+/* Homepage layout rules live in .news-home--v3 (editorial.css), the markup's
+   actual composition class; the older flat .news-home prototype rules that
+   used to live here were fully superseded and have been removed. */
 
 /* Footer — 3-column link layout. */
 .site-footer { background: var(--vn-text); color: #cfcfcf; }
@@ -831,10 +637,6 @@ body {
 }
 
 @media (max-width: 900px) {
-  .news-home .hero-lead { grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); gap: 18px; }
-  .news-home .hero-lead__title { font-size: 22px; }
-  .news-home .hero-side { gap: 14px; }
-  .news-home .hero-side__title { font-size: 15px; }
   .masthead__right { gap: 12px; }
   .category-nav__list { gap: 15px; }
 }
@@ -867,25 +669,6 @@ body {
   .category-nav__list li a { padding: 11px 0; font-size: 13px; }
   .ad-slot--leaderboard { width: 320px; height: 50px; max-width: calc(100% - 32px); }
   .site-main { padding-top: 15px; }
-  .news-home .hero-lead { grid-template-columns: 1fr; gap: 13px; }
-  .news-home .hero-lead__image-link img { aspect-ratio: 5 / 3; }
-  .news-home .hero-lead__title { font-size: 24px; line-height: 1.35; }
-  .news-home .hero-side { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .news-home .hero-side__opinion { grid-column: 1 / -1; border-top: 1px solid var(--vn-border); padding-top: 14px; }
-  .news-home .content-split { grid-template-columns: 1fr; }
-  .news-home .sidebar { border-left: 0; border-top: 1px solid var(--vn-border); padding: 20px 0 0; }
-  
-  
-  
-  .news-home .home-parallel { flex-direction: column; }
-  .news-home .home-parallel__stream { flex-basis: auto; width: 100%; }
-  
-  
-  .news-home .podcast-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .news-home .spotlight-feature { flex-direction: column; align-items: stretch; }
-  .news-home .spotlight-feature__image-link { flex: none; }
-  .news-home .spotlight-feature__title { font-size: 19px; }
-  
   .site-footer__grid { grid-template-columns: 1fr; gap: 20px; padding: 24px 0 16px; }
 }
 
@@ -895,15 +678,4 @@ body {
   .masthead__utility-link { font-size: 12px; }
   .masthead__right { gap: 3px; }
   .masthead__search summary { width: 30px; }
-  .news-home .hero-side { gap: 13px; }
-  .news-home .hero-side__title { font-size: 14px; }
-  .news-home .story-row { flex-direction: row; gap: 12px; }
-  .news-home .story-row__image-link { flex: 0 0 112px; }
-  .news-home .story-row__title { font-size: 15px; }
-  .news-home .story-row__summary { display: none; }
-  .news-home .category-lead__title { font-size: 16px; }
-  .news-home .list-item-thumb__img-link { flex: 0 0 56px; }
-  .news-home .list-item-thumb__img-link img { width: 56px; height: 42px; }
-  .news-home .podcast-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  
 }
