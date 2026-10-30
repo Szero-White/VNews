@@ -1,31 +1,61 @@
-@model ArticleDetailDto
+@model ArticleDetailPageViewModel
 @{
-    ViewData["Title"] = Model.Title;
+    var article = Model.Article;
+    var related = Model.RelatedArticles;
+    ViewData["Title"] = article.Title;
+    ViewData["Description"] = article.Summary;
 }
-
-<div class="container article-page">
-    <nav class="breadcrumb">
-        <a asp-controller="Home" asp-action="Index">Trang chủ</a> &rsaquo;
-        <a asp-controller="Category" asp-action="Index" asp-route-slug="@Model.CategorySlug">@Model.CategoryName</a>
-    </nav>
-
-    <article class="article-detail">
-        <h1 class="article-detail__title">@Model.Title</h1>
-        <p class="article-detail__summary">@Model.Summary</p>
-
-        <div class="article-meta">
-            <span>@Model.AuthorName</span>
-            <span>@Model.PublishedAt?.ToString("dd/MM/yyyy HH:mm")</span>
-            <span>@Model.ViewCount lượt xem</span>
-        </div>
-
-        @if (!string.IsNullOrWhiteSpace(Model.CoverImageUrl))
+<div class="container article-layout">
+    <div class="article-layout__main article-page">
+        <nav class="breadcrumb" aria-label="Đường dẫn">
+            <a asp-controller="Home" asp-action="Index">Trang chủ</a> <span aria-hidden="true">/</span>
+            <a asp-controller="Category" asp-action="Index" asp-route-slug="@article.CategorySlug">@article.CategoryName</a>
+        </nav>
+        <article class="article-detail" data-news-article data-news-slug="@article.Slug" data-news-title="@article.Title" data-news-image="@article.CoverImageUrl">
+            <div class="article-kicker"><a asp-controller="Category" asp-action="Index" asp-route-slug="@article.CategorySlug">@article.CategoryName</a></div>
+            <h1 class="article-detail__title">@article.Title</h1>
+            <p class="article-detail__summary" id="article-summary">@article.Summary</p>
+            <div class="article-meta article-detail__meta">
+                <span>@article.AuthorName</span>
+                <time datetime="@article.PublishedAt?.ToString("yyyy-MM-ddTHH:mm:ss")">@article.PublishedAt?.ToString("dd/MM/yyyy HH:mm")</time>
+                <span>@article.ViewCount lượt xem</span>
+            </div>
+            <div class="article-tools" aria-label="Công cụ đọc bài">
+                <button type="button" class="article-tool" data-action="share" aria-label="Chia sẻ bài viết">Chia sẻ</button>
+                <button type="button" class="article-tool" data-action="save" aria-pressed="false">☆ Lưu bài</button>
+                <button type="button" class="article-tool" data-action="speak" aria-pressed="false">▶ Nghe tóm tắt</button>
+                <button type="button" class="article-tool" data-action="font-down" aria-label="Giảm cỡ chữ">A−</button>
+                <button type="button" class="article-tool" data-action="font-up" aria-label="Tăng cỡ chữ">A+</button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(article.CoverImageUrl))
+            {
+                <figure class="article-cover-wrap">
+                    <img class="article-detail__cover" src="@article.CoverImageUrl" alt="Ảnh minh họa: @article.Title" fetchpriority="high" />
+                    <figcaption>Ảnh minh họa nội dung demo của VNews.</figcaption>
+                </figure>
+            }
+            <div class="article-detail__body" id="article-body">
+                @* CMS sanitizes HTML on save. Existing seeded body is generated within the application. *@
+                @Html.Raw(article.Body)
+            </div>
+            <div class="article-end-note">Bạn đang đọc nội dung minh họa phục vụ dự án VNews.</div>
+            <div class="article-bottom-actions">
+                <a asp-controller="Category" asp-action="Index" asp-route-slug="@article.CategorySlug">Xem thêm bài @article.CategoryName <span aria-hidden="true">→</span></a>
+                <button type="button" data-action="share">Chia sẻ bài viết</button>
+            </div>
+        </article>
+    </div>
+    <aside class="article-layout__aside" aria-label="Tin cùng chuyên mục">
+        <h2>Đọc tiếp</h2>
+        @foreach (var relatedArticle in related)
         {
-            <img class="article-detail__cover" src="@Model.CoverImageUrl" alt="@Model.Title" />
+            <a class="related-story" asp-controller="Article" asp-action="Detail" asp-route-slug="@relatedArticle.Slug">
+                @if (!string.IsNullOrWhiteSpace(relatedArticle.CoverImageUrl))
+                {
+                    <img src="@relatedArticle.CoverImageUrl" alt="" loading="lazy" decoding="async" />
+                }
+                <span>@relatedArticle.Title</span>
+            </a>
         }
-
-        <div class="article-detail__body">
-            @Html.Raw(Model.Body)
-        </div>
-    </article>
+    </aside>
 </div>

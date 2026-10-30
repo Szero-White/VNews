@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using VNews.Application.Interfaces;
+using VNews.Web.Models;
 
 namespace VNews.Web.Controllers;
 
@@ -25,6 +26,11 @@ public class ArticleController : Controller
             return NotFound();
         }
 
-        return View(article);
+        var related = await _articleQueryService.GetByCategoryAsync(article.CategorySlug, 1, 8, cancellationToken);
+        return View(new ArticleDetailPageViewModel
+        {
+            Article = article,
+            RelatedArticles = related.Items.Where(item => item.Id != article.Id).Take(4).ToArray()
+        });
     }
 }

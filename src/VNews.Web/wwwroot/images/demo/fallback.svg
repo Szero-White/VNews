@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Ảnh minh họa VNews">
+  <rect width="800" height="500" fill="#f1f2f4"/>
+  <path d="M0 410 194 242 314 344 500 173 800 423V500H0Z" fill="#d1d6dd"/>
+  <circle cx="642" cy="126" r="48" fill="#e0e4e9"/>
+  <text x="400" y="454" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="27" fill="#69717a">VNews</text>
+</svg>

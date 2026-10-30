@@ -4,9 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - VNews</title>
+    <meta name="description" content="@(ViewData["Description"] ?? "VNews - Website tin tức minh họa và portfolio ASP.NET Core MVC.")" />
+    <meta name="theme-color" content="#a3123a" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/editorial.css" asp-append-version="true" />
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Bỏ qua điều hướng, đến nội dung</a>
+    <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
     <header class="masthead">
         <div class="masthead__inner">
             <div class="masthead__identity">
@@ -17,8 +22,9 @@
             <div class="masthead__right">
                 <span id="today-date" class="masthead__date masthead__hide-mobile"></span>
                 <span class="masthead__separator masthead__hide-mobile" aria-hidden="true"></span>
-                <a class="masthead__utility-link masthead__hide-mobile" asp-controller="Home" asp-action="Index">Tin mới nhất</a>
+                <a class="masthead__utility-link masthead__hide-mobile" asp-controller="Home" asp-action="Latest">Tin mới nhất</a>
                 <span class="masthead__separator" aria-hidden="true"></span>
+                <a class="masthead__utility-link masthead__hide-mobile" asp-controller="Home" asp-action="Saved">Đã lưu</a>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
                     <a class="masthead__utility-link" asp-controller="CmsArticles" asp-action="Index">Quản lý bài viết</a>
@@ -61,6 +67,8 @@
     </main>
 
     <partial name="_SiteFooter" />
+    <button id="back-to-top" class="back-to-top" type="button" aria-label="Lên đầu trang" hidden>↑</button>
+    <div id="site-toast" class="site-toast" role="status" aria-live="polite" hidden></div>
 
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

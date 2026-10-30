@@ -20,6 +20,16 @@ public class HomeController : Controller
         return View(data);
     }
 
+    [HttpGet("da-luu")]
+    public IActionResult Saved() => View();
+
+    [HttpGet("tin-moi-nhat")]
+    public async Task<IActionResult> Latest(int page = 1, CancellationToken cancellationToken = default)
+    {
+        var articles = await _articleQueryService.GetLatestAsync(page, 12, cancellationToken);
+        return View(articles);
+    }
+
     public IActionResult PageNotFound(int? statusCode)
     {
         Response.StatusCode = statusCode is >= 400 and <= 599 ? statusCode.Value : 404;

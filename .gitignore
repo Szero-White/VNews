@@ -19,3 +19,5 @@ src/VNews.Web/wwwroot/uploads/
 visual-tests/node_modules/
 visual-tests/test-results/
 visual-tests/playwright-report/
+# Local UI backups (not source of truth, not meant for version control)
+_ui_backup/

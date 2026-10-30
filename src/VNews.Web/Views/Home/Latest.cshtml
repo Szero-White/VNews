@@ -1,0 +1,25 @@
+@model PagedResult<ArticleSummaryDto>
+@{
+    ViewData["Title"] = "Tin mới nhất";
+    ViewData["Description"] = "Cập nhật những bài viết mới nhất trên VNews.";
+    ViewData["PaginationAction"] = "Home";
+}
+<div class="container listing-page editorial-listing">
+    <nav class="breadcrumb"><a asp-controller="Home" asp-action="Index">Trang chủ</a> &rsaquo; Tin mới nhất</nav>
+    <h1 class="listing-page__title">Tin mới nhất</h1>
+    <p class="listing-page__description">Theo dõi những câu chuyện mới được xuất bản trên VNews.</p>
+    @if (Model.Items.Count == 0)
+    {
+        <div class="empty-state"><p>Chưa có bài viết mới.</p></div>
+    }
+    else
+    {
+        <div class="editorial-listing__articles">
+            @foreach (var article in Model.Items)
+            {
+                @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.StoryRow })
+            }
+        </div>
+        @await Html.PartialAsync("_Pagination", Model)
+    }
+</div>

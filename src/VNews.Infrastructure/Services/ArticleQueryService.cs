@@ -48,15 +48,17 @@ public class ArticleQueryService : IArticleQueryService
         var hero = topArticles.FirstOrDefault();
         var sideFeatures = topArticles.Skip(1).Take(2).ToList();
 
+        // Keep homepage collections disjoint: top 3 for hero, next 9 for the news stream.
         var latest = await latestOrdered
-            .Skip(3)
+            .Skip(12)
             .Take(10)
             .Select(ToSummary)
             .ToListAsync(cancellationToken);
 
         // "Stream tin tổng hợp" — longer mixed-category feed of large cards.
         var streamItems = await latestOrdered
-            .Take(10)
+            .Skip(3)
+            .Take(9)
             .Select(ToSummary)
             .ToListAsync(cancellationToken);
 

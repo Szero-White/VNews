@@ -1,0 +1,11 @@
+@{
+    ViewData["Title"] = "Bài đã lưu";
+    ViewData["Description"] = "Các bài viết bạn đã lưu trên thiết bị này.";
+}
+<div class="container listing-page editorial-listing">
+    <nav class="breadcrumb"><a asp-controller="Home" asp-action="Index">Trang chủ</a> &rsaquo; Đã lưu</nav>
+    <h1 class="listing-page__title">Bài viết đã lưu</h1>
+    <p class="listing-page__description">Danh sách này lưu trên trình duyệt của bạn, không đồng bộ với tài khoản.</p>
+    <div id="saved-articles-list" class="saved-articles-list" data-article-base="@Url.Action("Detail", "Article", new { slug = "__slug__" })"></div>
+    <p id="saved-empty" class="empty-state" hidden>Chưa có bài viết được lưu. Mở một bài báo rồi chọn “Lưu bài”.</p>
+</div>

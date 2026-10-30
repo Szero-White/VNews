@@ -16,6 +16,10 @@
                 <a class="pagination__item @(isCurrent ? "is-current" : "")"
                    asp-controller="@action" asp-action="Index" asp-route-slug="@slug" asp-route-page="@p">@p</a>
             }
+            else if (action == "Home")
+            {
+                <a class="pagination__item @(isCurrent ? "is-current" : "")" asp-controller="Home" asp-action="Latest" asp-route-page="@p" aria-current="@(isCurrent ? "page" : null)">@p</a>
+            }
             else
             {
                 <a class="pagination__item @(isCurrent ? "is-current" : "")"

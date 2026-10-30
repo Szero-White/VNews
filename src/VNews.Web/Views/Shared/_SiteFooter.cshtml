@@ -20,6 +20,8 @@
                 <h3>Khám phá</h3>
                 <ul>
                     <li><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+                    <li><a asp-controller="Home" asp-action="Latest">Tin mới nhất</a></li>
+                    <li><a asp-controller="Home" asp-action="Saved">Bài đã lưu</a></li>
                     <li><a asp-controller="Search" asp-action="Index">Tìm kiếm</a></li>
                     @foreach (var c in footerCategories.Skip(6).Take(4))
                     {
