@@ -2,20 +2,31 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using VNews.Application.Interfaces;
 using VNews.Web.Models;
+using VNews.Web.Testing;
 
 namespace VNews.Web.Controllers;
 
 public class HomeController : Controller
 {
     private readonly IArticleQueryService _articleQueryService;
+    private readonly IWebHostEnvironment _environment;
 
-    public HomeController(IArticleQueryService articleQueryService)
+    public HomeController(IArticleQueryService articleQueryService, IWebHostEnvironment environment)
     {
         _articleQueryService = articleQueryService;
+        _environment = environment;
     }
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
+        // Visual-regression fixture: fixed titles/images/counts for pixel-comparable Playwright
+        // captures. Gated to Development + explicit query flag; never used for real traffic and
+        // never reads/writes SQL Server.
+        if (_environment.IsDevelopment() && Request.Query["visualFixture"] == "1")
+        {
+            return View(VisualFixtureHomePageData.Build());
+        }
+
         var data = await _articleQueryService.GetHomePageDataAsync(cancellationToken);
         return View(data);
     }

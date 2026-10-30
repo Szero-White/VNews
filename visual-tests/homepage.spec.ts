@@ -9,7 +9,7 @@ const TARGETS = {
   mastheadHeight: 61,      // y331 - y270
   navHeight: 50,           // y381 - y331
   contentTopY: 111,        // mastheadHeight + navHeight (where main content starts)
-  heroImageWidth: 552,
+  heroImageWidth: 520,    // re-measured this round via visual-tests/measure-columns.js: x[170,690] on the 1440x900 reference
   heroImageAspect: 5 / 3,  // width/height, from site.css comment
   heroGap: 24,
   heroTextColumnMinWidth: 200,
