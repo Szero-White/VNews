@@ -104,15 +104,6 @@ html { scroll-behavior: smooth; }
   .news-home--v3 .today-digest { margin-bottom:0; }
 }
 @media (max-width:600px) {
-  .masthead__inner { position:relative; min-height:68px; }
-  .masthead__identity { position:absolute; left:50%; transform:translateX(-50%); align-items:center; }
-  .masthead__brand { font-size:26px; }
-  .masthead__motto { font-size:9px; white-space:nowrap; }
-  .masthead__right { margin-left:auto; margin-right:41px; }
-  .masthead__right .masthead__utility-link { display:none; }
-  .masthead__menu-toggle { position:absolute; left:8px; top:20px; margin:0; order:initial; }
-  .masthead__search { margin-left:0; }
-  .masthead__search-form { right:-44px; }
   .news-home--v3 { padding-left:0; padding-right:0; }
   .news-home--v3 .front-page { width:100%; margin:0; }
   .news-home--v3 .hero-lead { grid-template-columns:minmax(0,1fr); gap:0; }

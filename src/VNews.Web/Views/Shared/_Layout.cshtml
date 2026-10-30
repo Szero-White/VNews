@@ -1,3 +1,4 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -14,16 +15,34 @@
     <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
     <header class="masthead">
         <div class="masthead__inner">
+            <button class="masthead__menu-toggle" type="button" aria-label="Mở menu tiện ích" aria-controls="utility-drawer" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+
+            <details class="masthead__search masthead__search--mobile-left">
+                <summary aria-label="Mở tìm kiếm" title="Tìm kiếm">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+                        <circle cx="10.8" cy="10.8" r="6.7"></circle>
+                        <path d="m16 16 4.5 4.5"></path>
+                    </svg>
+                </summary>
+                <form class="masthead__search-form" asp-controller="Search" asp-action="Index" method="get" role="search">
+                    <input type="search" name="q" placeholder="Tìm kiếm bài viết..." value="@Context.Request.Query["q"]" aria-label="Tìm kiếm bài viết" required />
+                    <button type="submit">Tìm</button>
+                </form>
+            </details>
+
             <div class="masthead__identity">
                 <a class="masthead__brand" asp-controller="Home" asp-action="Index" aria-label="VNews - Trang chủ">V<span>News</span></a>
                 <span class="masthead__motto">Bản tin dành cho người thích khám phá</span>
             </div>
 
             <div class="masthead__right">
+                <span class="masthead__hide-mobile">@await Component.InvokeAsync("WeatherWidget")</span>
                 <span id="today-date" class="masthead__date masthead__hide-mobile"></span>
                 <span class="masthead__separator masthead__hide-mobile" aria-hidden="true"></span>
                 <a class="masthead__utility-link masthead__hide-mobile" asp-controller="Home" asp-action="Latest">Tin mới nhất</a>
-                <span class="masthead__separator" aria-hidden="true"></span>
+                <span class="masthead__separator masthead__hide-mobile" aria-hidden="true"></span>
                 <a class="masthead__utility-link masthead__hide-mobile" asp-controller="Home" asp-action="Saved">Đã lưu</a>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
@@ -33,34 +52,36 @@
                 {
                     <a class="masthead__utility-link" asp-controller="Account" asp-action="Login">Đăng nhập</a>
                 }
-                <details class="masthead__search">
-                    <summary aria-label="Mở tìm kiếm" title="Tìm kiếm">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
-                            <circle cx="10.8" cy="10.8" r="6.7"></circle>
-                            <path d="m16 16 4.5 4.5"></path>
-                        </svg>
-                    </summary>
-                    <form class="masthead__search-form" asp-controller="Search" asp-action="Index" method="get" role="search">
-                        <input type="search" name="q" placeholder="Tìm kiếm bài viết..." value="@Context.Request.Query["q"]" aria-label="Tìm kiếm bài viết" required />
-                        <button type="submit">Tìm</button>
-                    </form>
-                </details>
             </div>
-
-            <button class="masthead__menu-toggle" type="button" aria-label="Mở danh mục" aria-controls="primary-nav" aria-expanded="false">
-                <span></span><span></span><span></span>
-            </button>
         </div>
     </header>
 
-    <div id="primary-nav" class="primary-nav">
+    <div id="utility-drawer" class="utility-drawer">
+        <div class="utility-drawer__inner">
+            <a asp-controller="Home" asp-action="Latest">Tin mới nhất</a>
+            <a asp-controller="Home" asp-action="Saved">Đã lưu</a>
+        </div>
+    </div>
+
+    <div class="mobile-weather-row">
+        @await Component.InvokeAsync("WeatherWidget")
+    </div>
+
+    <nav id="primary-nav" class="primary-nav">
         <div class="primary-nav__inner">
             <a class="primary-nav__home" asp-controller="Home" asp-action="Index" aria-label="Trang chủ" title="Trang chủ">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3 2 11h2v10h6v-7h4v7h6V11h2L12 3z" /></svg>
             </a>
             @await Component.InvokeAsync("CategoryNav")
         </div>
-    </div>
+    </nav>
+
+    @if (Configuration.GetValue("Features:ShowDemoAdSlot", true))
+    {
+        <div class="ad-slot ad-slot--leaderboard" aria-hidden="true">
+            <span class="ad-slot__label">Vị trí quảng cáo (demo)</span>
+        </div>
+    }
 
     <main class="site-main" id="main-content">
         @RenderBody()
@@ -72,5 +93,6 @@
 
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

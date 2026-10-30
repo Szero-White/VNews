@@ -9,12 +9,12 @@
   }
 
   var toggle = document.querySelector('.masthead__menu-toggle');
-  var nav = document.getElementById('primary-nav');
+  var nav = document.getElementById('utility-drawer');
   if (toggle && nav) {
     toggle.addEventListener('click', function () {
       var open = nav.classList.toggle('is-open');
       toggle.setAttribute('aria-expanded', String(open));
-      toggle.setAttribute('aria-label', open ? 'Đóng danh mục' : 'Mở danh mục');
+      toggle.setAttribute('aria-label', open ? 'Đóng menu tiện ích' : 'Mở menu tiện ích');
     });
     nav.addEventListener('click', function (e) {
       if (e.target.closest('a') && nav.classList.contains('is-open')) {

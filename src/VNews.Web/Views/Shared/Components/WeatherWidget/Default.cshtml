@@ -1,0 +1,10 @@
+@using VNews.Application.DTOs
+@model WeatherSnapshotDto?
+
+@if (Model is not null)
+{
+    <span class="masthead__weather" title="Nguồn: @Model.Source">
+        <span class="masthead__weather-location">@Model.LocationName</span>
+        <span class="masthead__weather-temp">@Model.TemperatureCelsius.ToString("0")&deg;</span>
+    </span>
+}

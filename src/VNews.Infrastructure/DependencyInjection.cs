@@ -45,6 +45,12 @@ public static class DependencyInjection
         services.AddScoped<ICategoryCommandService, CategoryCommandService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
 
+        services.AddMemoryCache();
+        services.AddHttpClient<IWeatherService, WeatherService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5);
+        });
+
         return services;
     }
 }
