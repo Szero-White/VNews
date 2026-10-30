@@ -7,27 +7,45 @@
 @switch (Model.Layout)
 {
     case ArticleCardLayout.HeroLead:
-        <article class="hero-lead">
-            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="hero-lead__image-link" aria-label="Đọc bài: @a.Title">
-                <img src="@imageUrl" alt="@a.Title" fetchpriority="high" decoding="async" />
-            </a>
-            <div class="hero-lead__content">
-                <span class="hero-lead__category">@a.CategoryName</span>
-                @if (Model.UsePageHeading)
-                {
+        @if (Model.UsePageHeading)
+        {
+            @* Homepage hero only (UsePageHeading=true): category sits with the byline/date
+               at the bottom of the block, matching the real reference's article-topstory,
+               where the category link lives inside .meta-news after the description, not
+               above the title. Kept scoped to the homepage hero so Category/Index.cshtml's
+               reuse of this same HeroLead case is untouched. *@
+            <article class="hero-lead">
+                <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="hero-lead__image-link" aria-label="Đọc bài: @a.Title">
+                    <img src="@imageUrl" alt="@a.Title" fetchpriority="high" decoding="async" />
+                </a>
+                <div class="hero-lead__content">
                     <h1 class="hero-lead__title"><a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a></h1>
-                }
-                else
-                {
-                    <h3 class="hero-lead__title"><a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a></h3>
-                }
-                <p class="hero-lead__summary">@a.Summary</p>
-                <div class="article-meta hero-lead__meta">
-                    <span>@a.AuthorName</span>
-                    <span>@a.PublishedAt?.ToString("dd/MM/yyyy")</span>
+                    <p class="hero-lead__summary">@a.Summary</p>
+                    <div class="article-meta hero-lead__meta">
+                        <span class="hero-lead__category">@a.CategoryName</span>
+                        <span>@a.AuthorName</span>
+                        <span>@a.PublishedAt?.ToString("dd/MM/yyyy")</span>
+                    </div>
                 </div>
-            </div>
-        </article>
+            </article>
+        }
+        else
+        {
+            <article class="hero-lead">
+                <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="hero-lead__image-link" aria-label="Đọc bài: @a.Title">
+                    <img src="@imageUrl" alt="@a.Title" fetchpriority="high" decoding="async" />
+                </a>
+                <div class="hero-lead__content">
+                    <span class="hero-lead__category">@a.CategoryName</span>
+                    <h3 class="hero-lead__title"><a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a></h3>
+                    <p class="hero-lead__summary">@a.Summary</p>
+                    <div class="article-meta hero-lead__meta">
+                        <span>@a.AuthorName</span>
+                        <span>@a.PublishedAt?.ToString("dd/MM/yyyy")</span>
+                    </div>
+                </div>
+            </article>
+        }
         break;
 
     case ArticleCardLayout.HeroSide:

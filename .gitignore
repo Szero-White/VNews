@@ -21,3 +21,5 @@ visual-tests/test-results/
 visual-tests/playwright-report/
 # Local UI backups (not source of truth, not meant for version control)
 _ui_backup/
+# Local research snapshots (e.g. MHTML captures of third-party sites) — never pushed/committed
+experiments/
