@@ -63,10 +63,6 @@
         </div>
     </div>
 
-    <div class="mobile-weather-row">
-        @await Component.InvokeAsync("WeatherWidget")
-    </div>
-
     <nav id="primary-nav" class="primary-nav">
         <div class="primary-nav__inner">
             <a class="primary-nav__home" asp-controller="Home" asp-action="Index" aria-label="Trang chủ" title="Trang chủ">
@@ -75,6 +71,10 @@
             @await Component.InvokeAsync("CategoryNav")
         </div>
     </nav>
+
+    <div class="mobile-weather-row">
+        @await Component.InvokeAsync("WeatherWidget")
+    </div>
 
     @if (Configuration.GetValue("Features:ShowDemoAdSlot", true))
     {
