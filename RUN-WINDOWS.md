@@ -25,7 +25,7 @@ dotnet run
 ```
 Khi khởi động, `Program.cs` gọi `DbInitializer.SeedAsync` sẽ:
 1. Áp dụng migration EF Core (`Database.MigrateAsync()`) — tự tạo database `VNewsDb` nếu chưa có.
-2. Seed idempotent 10 chuyên mục + 50 bài viết demo tiếng Việt (chỉ seed nếu bảng đang trống).
+2. Seed idempotent 10 chuyên mục + 52 bài viết demo tiếng Việt (chỉ seed nếu bảng đang trống; riêng chuyên mục Công nghệ có 7 bài nội dung/ảnh biên soạn riêng, không dùng công thức lặp).
 
 Mặc định ứng dụng lắng nghe tại `https://localhost:xxxx` / `http://localhost:xxxx` (xem log console). Mở trình duyệt vào URL đó.
 
