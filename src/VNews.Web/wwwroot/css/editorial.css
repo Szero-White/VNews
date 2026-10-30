@@ -207,6 +207,8 @@ html { scroll-behavior: smooth; }
 @media (max-width: 480px) {
   .article-detail__title { font-size: 29px; }
   .article-detail__body { font-size: 17px; }
+  .article-tools { flex-wrap: nowrap; overflow-x: auto; gap: 6px; -webkit-overflow-scrolling: touch; }
+  .article-tool { flex: 0 0 auto; padding: 7px 9px; font-size: 12px; white-space: nowrap; }
   .editorial-listing .listing-feature .hero-lead { flex-direction: column; }
   .editorial-listing__articles .story-row__image-link { flex: 0 0 110px; }
   .editorial-listing__articles .story-row__title { font-size: 16px; }
