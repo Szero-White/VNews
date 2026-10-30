@@ -8,6 +8,24 @@
     dateEl.textContent = days[now.getDay()] + ', ' + now.toLocaleDateString('vi-VN');
   }
 
+  // Category nav scroll-with-arrow: matches the reference's scrollable strip + round
+  // "next" button that appears once the list overflows and advances it on click.
+  var categoryList = document.querySelector('.category-nav__list');
+  var navArrow = document.getElementById('primary-nav-next');
+  if (categoryList && navArrow) {
+    var updateArrow = function () {
+      var overflowing = categoryList.scrollWidth > categoryList.clientWidth + 1;
+      var atEnd = categoryList.scrollLeft + categoryList.clientWidth >= categoryList.scrollWidth - 1;
+      navArrow.hidden = !overflowing || atEnd;
+    };
+    navArrow.addEventListener('click', function () {
+      categoryList.scrollBy({ left: 220, behavior: 'smooth' });
+    });
+    categoryList.addEventListener('scroll', updateArrow);
+    window.addEventListener('resize', updateArrow);
+    updateArrow();
+  }
+
   var toggle = document.querySelector('.masthead__menu-toggle');
   var nav = document.getElementById('utility-drawer');
   if (toggle && nav) {

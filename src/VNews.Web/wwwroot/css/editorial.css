@@ -38,8 +38,14 @@ html { scroll-behavior: smooth; }
 .news-home--v3 .hero-side__eyebrow { color:#9d1741; margin-bottom:8px; font-weight:700; }
 .news-home--v3 .hero-side__aside-copy { margin:4px 0 0; color:#696969; }
 /* Real editorial flow: latest stories remain beside EVERY category block, not just the first. */
-.news-home--v3 .home-parallel { width:1100px; max-width:100%; display:grid; grid-template-columns: minmax(0,380px) minmax(0,680px); gap:40px; align-items:start; margin:32px 0 48px; }
-.news-home--v3 .home-parallel__stream, .news-home--v3 .home-parallel__content { min-width:0; }
+/* Real measured columns (vnexpress.net .col-left.col-small / .col-right.col-medium at
+   1440px): 400px + 700px = 1100px, flush adjacent with NO grid-gap — the visual
+   separation comes from each column's own inner padding (confirmed: col-left has
+   padding-right:20px, col-right has padding-left:20px, 40px combined), not a gap
+   property. Replicated the same way instead of faking it with grid-gap. */
+.news-home--v3 .home-parallel { width:1100px; max-width:100%; display:grid; grid-template-columns: 400px 700px; gap:0; align-items:start; margin:32px 0 48px; }
+.news-home--v3 .home-parallel__stream { min-width:0; padding-right:20px; }
+.news-home--v3 .home-parallel__content { min-width:0; padding-left:20px; }
 .news-home--v3 .editorial-heading { display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:0 0 11px; margin-bottom:17px; border-bottom:1px solid #ddd; }
 .news-home--v3 .editorial-heading .section-title, .news-home--v3 .section-title { border:0; padding:0; margin:0; font:700 18px/28.8px Merriweather,Georgia,serif; }
 .news-home--v3 .editorial-heading .section-title a { color:inherit; }
@@ -105,6 +111,7 @@ html { scroll-behavior: smooth; }
 .news-home--v3 .section-note { margin:-3px 0 17px; color:#757575; font-size:13px; }
 @media (max-width:1120px) {
   .news-home--v3 .home-parallel { grid-template-columns:minmax(0,35%) minmax(0,1fr); gap:27px; }
+  .news-home--v3 .home-parallel__stream, .news-home--v3 .home-parallel__content { padding-left:0; padding-right:0; }
 }
 @media (max-width:800px) {
   .news-home--v3 .home-parallel { grid-template-columns:minmax(0,1fr); gap:26px; }
@@ -132,7 +139,7 @@ html { scroll-behavior: smooth; }
   .news-home--v3 .hero-side__title { font-size:18px; margin:0 0 10px; }
   .news-home--v3 .hero-side__aside-copy { display:none; }
   .news-home--v3 .home-parallel { width:100%; display:flex; flex-direction:column; gap:30px; margin:20px 0 40px; padding:0 16px; }
-  .news-home--v3 .home-parallel__stream, .news-home--v3 .home-parallel__content { width:100%; }
+  .news-home--v3 .home-parallel__stream, .news-home--v3 .home-parallel__content { width:100%; padding-left:0; padding-right:0; }
   .news-home--v3 .stream-list { display:block; }
   .news-home--v3 .stream-compact { gap:11px; }
   .news-home--v3 .stream-compact__image-link { flex:0 0 108px; max-width:108px; }

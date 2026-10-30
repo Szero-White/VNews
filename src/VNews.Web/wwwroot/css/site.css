@@ -441,7 +441,6 @@ body {
 
 .container,
 .masthead__inner,
-.primary-nav__inner,
 .site-footer__inner {
   width: 100%;
   max-width: var(--vn-max-width);
@@ -452,8 +451,12 @@ body {
 /* Masthead uses a narrow news-brand + right utilities composition. */
 .masthead { background: #fff; border-bottom: 1px solid var(--vn-border); }
 .masthead__inner {
-  min-height: 72px;
-  padding: 8px 0;
+  /* Real measured header height on vnexpress.net at 1440px is 62px (desktop) — see
+     experiments/vnexpress-snapshot/. Tightened padding and the identity block below
+     so the two-line VNews brand+motto fits inside that height instead of forcing it
+     taller via min-height. */
+  min-height: 62px;
+  padding: 5px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -463,21 +466,21 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  line-height: 1.15;
+  line-height: 1.1;
   flex-shrink: 0;
 }
 .masthead__brand {
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 31px;
+  font-size: 26px;
   font-weight: 800;
-  letter-spacing: -1.6px;
+  letter-spacing: -1.4px;
   color: var(--vn-accent);
 }
 .masthead__brand span { color: #555; }
 .masthead__brand:hover,
 .masthead__brand:hover span { color: var(--vn-accent); }
 .masthead__motto {
-  margin-top: 2px;
+  margin-top: 1px;
   font-size: 10px;
   color: #6d6d6d;
   letter-spacing: 0.05px;
@@ -572,14 +575,38 @@ body {
 }
 
 /* Single-line editorial navigation with a real Home link. */
-.primary-nav { background: #fff; }
+/* Real measured nav on vnexpress.net at 1440px: full-bleed 50px-tall bar (not centered
+   to the 1180px container like the header/footer), its scrollable category list
+   starting flush at padding-left:20px, with a round "next" arrow button overlaid on
+   the right edge once the list overflows — see experiments/vnexpress-snapshot/. */
+.primary-nav { background: #fff; position: relative; }
 .primary-nav__inner {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 47px;
-  padding: 0;
+  min-height: 50px;
+  padding: 0 44px 0 20px;
 }
+.primary-nav__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--vn-border);
+  background: #fff;
+  color: #555;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+.primary-nav__arrow:hover { color: var(--vn-accent); border-color: var(--vn-accent); }
+.primary-nav__arrow[hidden] { display: none; }
 .primary-nav__inner .category-nav { flex: 1; min-width: 0; }
 .primary-nav__home {
   width: 25px; height: 25px;
@@ -633,7 +660,7 @@ body {
 /* Desktop safety margin; alignment remains centered at 1180px. */
 @media (max-width: 1220px) {
   .container, .masthead__inner,
-  .primary-nav__inner, .site-footer__inner { padding-left: 18px; padding-right: 18px; }
+  .site-footer__inner { padding-left: 18px; padding-right: 18px; }
 }
 
 @media (max-width: 900px) {
@@ -665,6 +692,7 @@ body {
 
   /* Category strip stays visible as a horizontal-scroll bar, same as the reference site, not hidden behind the hamburger. */
   .primary-nav__inner { padding: 0 16px; }
+  .primary-nav__arrow { display: none; }
   .primary-nav__home { margin-top: 0; flex-shrink: 0; }
   .category-nav__list li a { padding: 11px 0; font-size: 13px; }
   .ad-slot--leaderboard { width: 320px; height: 50px; max-width: calc(100% - 32px); }

@@ -127,22 +127,10 @@
             </div>
         }
 
-        @if (Model.PhotoHighlights.Any())
-        {
-            <section class="photo-section media-zone" aria-label="Góc ảnh">
-                <div class="editorial-heading">
-                    <h2 class="section-title">Ảnh</h2>
-                    <a asp-controller="Home" asp-action="Latest">Tin mới →</a>
-                </div>
-                <div class="photo-gallery-v2">
-                    @foreach (var article in Model.PhotoHighlights.Take(4))
-                    {
-                        @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.PhotoGrid })
-                    }
-                </div>
-            </section>
-        }
-
+        @* Order below the stream+category zone follows the reference's real DOM order
+           (confirmed via experiments/vnexpress-snapshot/): its multimedia-ish sections
+           (video/vnego) come first, with the photo section appearing late, right before
+           the footer — not right after the category zone like the previous order here. *@
         @if (Model.Spotlight.Any())
         {
             <section class="spotlight-section media-zone" aria-label="Tiêu điểm">
@@ -166,6 +154,22 @@
                     @foreach (var article in Model.PodcastDemoItems.Take(4))
                     {
                         @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.ImageTop })
+                    }
+                </div>
+            </section>
+        }
+
+        @if (Model.PhotoHighlights.Any())
+        {
+            <section class="photo-section media-zone" aria-label="Góc ảnh">
+                <div class="editorial-heading">
+                    <h2 class="section-title">Ảnh</h2>
+                    <a asp-controller="Home" asp-action="Latest">Tin mới →</a>
+                </div>
+                <div class="photo-gallery-v2">
+                    @foreach (var article in Model.PhotoHighlights.Take(4))
+                    {
+                        @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.PhotoGrid })
                     }
                 </div>
             </section>
