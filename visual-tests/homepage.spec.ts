@@ -2,18 +2,21 @@ import { test, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 
-// Target measurements derived from pixel analysis of references/vnexpress-desktop.png
-// (see analyze-reference.js / measure-reference.js). Both the reference and VNews now
-// place a leaderboard ad banner ABOVE the masthead, and that ad's height is not a fixed
-// structural signal (a real ad slot varies), so it is excluded from these targets: every
-// Y value below is a relative offset/gap, never an absolute viewport position.
+// Target measurements: the mastheadHeight/navHeight/heroImageAspect/heroGap targets were
+// re-measured directly from https://vnexpress.net/'s own rendered DOM via computed styles
+// and getBoundingClientRect() at a real 1440x900 viewport (header 62px, nav 50px, hero
+// thumbnail 520x312 = 5:3, hero-side thumbnail 250x150 = 5:3, ~20px column gap). Both the
+// live site and VNews place a leaderboard ad banner ABOVE the masthead, and that ad's
+// height is not a fixed structural signal (a real ad slot varies), so it is excluded from
+// these targets: every Y value below is a relative offset/gap, never an absolute viewport
+// position.
 const TARGETS = {
-  mastheadHeight: 61,      // y331 - y270
-  navHeight: 50,           // y381 - y331
+  mastheadHeight: 62,
+  navHeight: 50,
   mainContentGap: 0,      // <main> should abut the nav directly; its own padding-top handles spacing
-  heroImageWidth: 520,    // re-measured this round via visual-tests/measure-columns.js: x[170,690] on the 1440x900 reference
-  heroImageAspect: 5 / 3,  // width/height, from site.css comment
-  heroGap: 24,
+  heroImageWidth: 520,    // live-measured: .col-left-top-home-v2 .thumb-art is 520x312 at 1440px
+  heroImageAspect: 5 / 3,  // live-measured aspect ratio, also VNews's own existing site-wide convention
+  heroGap: 20,
   heroTextColumnMinWidth: 200,
 };
 const TOLERANCE_PX = 12;
