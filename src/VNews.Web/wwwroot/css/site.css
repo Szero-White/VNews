@@ -48,51 +48,6 @@ img {
   padding: 0 16px;
 }
 
-/* Masthead */
-.masthead {
-  border-bottom: 1px solid var(--vn-border);
-}
-
-.masthead__inner {
-  max-width: var(--vn-max-width);
-  margin: 0 auto;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.masthead__brand {
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--vn-accent);
-  letter-spacing: -0.5px;
-  flex-shrink: 0;
-}
-
-.masthead__search {
-  flex: 1;
-  display: flex;
-  max-width: 420px;
-}
-
-.masthead__search input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--vn-border);
-  border-radius: 4px 0 0 4px;
-  font-size: 0.95rem;
-}
-
-.masthead__search button {
-  padding: 8px 16px;
-  background: var(--vn-accent);
-  color: white;
-  border: none;
-  border-radius: 0 4px 4px 0;
-  cursor: pointer;
-}
-
 .masthead__menu-toggle {
   display: none;
   margin-left: auto;

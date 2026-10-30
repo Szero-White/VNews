@@ -40,7 +40,7 @@ Phương pháp: đo DOM/CSS computed **thật** trên `https://vnexpress.net/` b
 | Vị trí | NGAY DƯỚI hero, trong cùng cột trái (không phải bên cạnh hero) | Giống — `.hero-side` nằm dưới `.hero-lead`, trong `.front-page__main` |
 | Số cột | 3 cột, mỗi cột ~250px, gap **20px** (440−170−250=20) | 3 cột `grid-template-columns: repeat(3,1fr)`, gap **20px** — khớp chính xác |
 | Cột 1–2 | ảnh 250×150 = tỉ lệ **5:3** | TRƯỚC: `aspect-ratio:16/9` (sai, 1.778 vs 1.667 thật) → **ĐÃ SỬA** thành `5/3` |
-| Cột 3 ("Góc nhìn") | có ảnh nhỏ 72×72 bên cạnh tiêu đề (không chỉ text) | TRƯỚC: không có ảnh (chỉ text) → **ĐÃ SỬA**: thêm ảnh nhỏ 56×56 float-left (`.hero-side__opinion-image`) |
+| Cột 3 ("Góc nhìn") | có ảnh nhỏ 72×72 bên cạnh tiêu đề (không chỉ text) | **ĐÃ SỬA (Milestone 1):** ảnh `.hero-side__opinion-image` nay đúng 72×72 (trước đó 56×56, lệch so với số đo DOM thật đã ghi ở bảng này) |
 | Mobile (390px) | gộp vào dòng tin chung, không còn là khối 3-cột riêng biệt | VNews giữ khối riêng nhưng ẩn ảnh/mô tả, chỉ còn danh sách tiêu đề (đơn giản hoá tương đương, không sai lệch nội dung) |
 
 ## 5. Hero + tin phụ (mobile 390px)
@@ -67,6 +67,11 @@ Phương pháp: đo DOM/CSS computed **thật** trên `https://vnexpress.net/` b
 
 ## 8. Khác biệt còn lại (không che giấu)
 
-- Số mục nav (10 vs 21) — do giới hạn dữ liệu category thật, không sửa.
+- Số mục nav (10 vs 21–22) — do giới hạn dữ liệu category thật, không sửa.
 - VnExpress có "box-category" bên phải hero (320px, nội dung rỗng khi đo — có thể là vùng quảng cáo/động) — VNews không có khối tương đương, chủ động bỏ qua vì không rõ nội dung thật và không thuộc phạm vi "tin phụ".
 - Mobile: khối tin phụ của VnExpress thật ra hoà vào dòng tin chung (không còn là khối 3-cột riêng) khi thu nhỏ; VNews chọn giữ khối riêng (chỉ còn danh sách tiêu đề) để không mất thông tin — một lựa chọn thiết kế hợp lý hơn là sai lệch, ghi nhận minh bạch.
+- **Vị trí `.ad-slot` (demo):** VnExpress có banner quảng cáo thật ở TRÊN masthead (đã loại trừ khỏi mọi số đo ở tài liệu này, xem mục 1). VNews đặt `.ad-slot` demo GIỮA nav và hero — quyết định có chủ đích, không phải sai sót: (1) banner thật của VnExpress là nội dung bên thứ 3 không thể/không nên tái tạo; (2) đặt phía trên masthead sẽ đẩy toàn bộ header xuống, phá vỡ các số đo "masthead y=0" đã dùng làm gốc cho mọi phép đo khác trong tài liệu này; (3) vị trí hiện tại vẫn minh hoạ đúng khái niệm "có chỗ dành cho quảng cáo" mà không giả mạo thương hiệu/nội dung quảng cáo thật. Giữ nguyên vị trí.
+
+## 9. Milestone 1 — dọn CSS chồng chéo (2026-10-30)
+
+Rà soát `site.css` khu vực masthead, phát hiện 6 rule block **chết/chồng chéo hoàn toàn** còn sót lại từ bản masthead đời đầu (trước khi tái cấu trúc thành bố cục hiện tại): `.masthead` (chỉ có `border-bottom`, đã được rule mới tại dòng ~498 khai báo lại cùng giá trị + thêm `background`), `.masthead__inner` (toàn bộ thuộc tính bị ghi đè bởi rule dùng chung `.container, .masthead__inner, .primary-nav__inner, .site-footer__inner` + rule `.masthead__inner` mới), `.masthead__brand` (font-size/letter-spacing/color bị ghi đè, `flex-shrink` vô nghĩa vì không còn là flex item cần co giãn), `.masthead__search` + `.masthead__search input` + `.masthead__search button` (nhắm vào cấu trúc `<input>`/`<button>` nằm trực tiếp trong `.masthead__search`, nhưng HTML hiện tại dùng `<details><summary>` + `.masthead__search-form`, mọi thuộc tính hữu ích đã được khai báo lại đầy đủ ở `.masthead__search-form input/button`). Đã xác minh từng thuộc tính bị ghi đè hoàn toàn trước khi xoá (không phải suy đoán) — xem lịch sử git commit dọn dẹp. Xoá 6 block này, không còn selector nào match 0 phần tử trong phạm vi masthead/nav/ad-slot sau khi rà bằng grep đối chiếu `Views/`.
