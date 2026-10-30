@@ -31,14 +31,15 @@
         break;
 
     case ArticleCardLayout.HeroSide:
+        @* Title above image, matching the reference: the two secondary hero items read
+           headline-first with the thumbnail below it, not image-first. *@
         <article class="hero-side__item">
-            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="hero-side__image-link">
-                <img src="@imageUrl" alt="@a.Title" loading="lazy" decoding="async" />
-            </a>
             <h2 class="hero-side__title">
                 <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
             </h2>
-            <span class="hero-side__category">@a.CategoryName</span>
+            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="hero-side__image-link">
+                <img src="@imageUrl" alt="@a.Title" loading="lazy" decoding="async" />
+            </a>
         </article>
         break;
 
@@ -130,10 +131,9 @@
 
 
     case ArticleCardLayout.TextOnly:
+        @* No thumbnail by design: matches the reference's third hero-side slot (e.g. "Góc nhìn"),
+           which is plain eyebrow+title+summary text with no image. *@
         <article class="hero-side__opinion">
-            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="hero-side__opinion-image" aria-hidden="true" tabindex="-1">
-                <img src="@imageUrl" alt="" loading="lazy" decoding="async" />
-            </a>
             @if (!string.IsNullOrWhiteSpace(Model.Eyebrow))
             {
                 <span class="hero-side__eyebrow">@Model.Eyebrow</span>
