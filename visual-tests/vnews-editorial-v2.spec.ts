@@ -6,10 +6,12 @@ test('homepage has multiple editorial layouts and linked sections', async ({ pag
   await expect(page.locator('.front-page')).toBeVisible();
   await expect(page.locator('.home-parallel')).toBeVisible();
   await expect(page.locator('.today-digest')).toBeVisible();
-  await expect(page.locator('.topic-block').first()).toBeVisible();
+  await expect(page.locator('.home-parallel__content > .topic-spotlight').first()).toBeVisible();
   await expect(page.locator('.photo-gallery-v2')).toBeVisible();
   await expect(page.locator('.podcast-grid')).toBeVisible();
-  await expect(page.locator('.topic-block')).toHaveCount(9); // 10 categories total, first panel above
+  // All 10 seeded categories now stack as .topic-spotlight boxes in the home-parallel
+  // right column (see commit on content-architecture restructuring), not just the first.
+  await expect(page.locator('.home-parallel__content > .topic-spotlight')).toHaveCount(10);
 });
 
 test('latest page is real and article links open', async ({ page }) => {

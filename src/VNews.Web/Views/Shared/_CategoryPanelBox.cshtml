@@ -1,0 +1,40 @@
+@using System.Linq
+@using VNews.Application.Common
+@model CategoryPanel
+@{
+    var lead = Model.Articles.FirstOrDefault();
+    var sideItem = Model.Articles.Skip(1).FirstOrDefault();
+    var row2 = Model.Articles.Skip(2).Take(3).ToList();
+}
+@* One stacked "category box" in the home-parallel right column — reused for every
+   category, not just the first, matching the reference's section_stream_home, where a
+   single continuous stream column runs beside many stacked category boxes. *@
+@if (lead is not null)
+{
+    <section class="home-parallel__category topic-spotlight" aria-label="@Model.Category.Name">
+        <div class="editorial-heading">
+            <h2 class="section-title"><a asp-controller="Category" asp-action="Index" asp-route-slug="@Model.Category.Slug">@Model.Category.Name</a></h2>
+            <a asp-controller="Category" asp-action="Index" asp-route-slug="@Model.Category.Slug">Xem thêm →</a>
+        </div>
+        <div class="category-panel__row1">
+            <div class="topic-spotlight__lead">
+                @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = lead, Layout = ArticleCardLayout.CategoryLead })
+            </div>
+            @if (sideItem is not null)
+            {
+                <ul class="topic-spotlight__related">
+                    @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = sideItem, Layout = ArticleCardLayout.ListItem })
+                </ul>
+            }
+        </div>
+        @if (row2.Any())
+        {
+            <ul class="category-panel__row2 topic-spotlight__secondary">
+                @foreach (var article in row2)
+                {
+                    @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.ListItem })
+                }
+            </ul>
+        }
+    </section>
+}

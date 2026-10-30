@@ -149,6 +149,44 @@ test('first category block: lead + side item side-by-side, then a 3-column list 
   expect(xs[0], 'row 2 items must be at different X positions (horizontal layout)').toBeLessThan(xs[2]);
 });
 
+test('at least 3 category blocks stack in the right column beside one continuous stream (desktop 1440px)', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+
+  const stream = page.locator('.home-parallel__stream');
+  const content = page.locator('.home-parallel__content');
+  const panels = content.locator(':scope > .topic-spotlight, :scope > .home-parallel__category');
+
+  const panelCount = await panels.count();
+  expect(panelCount, 'at least 3 category blocks must render in the right column, not just the first one').toBeGreaterThanOrEqual(3);
+
+  const streamBox = await stream.boundingBox();
+  expect(streamBox, 'stream column must exist').not.toBeNull();
+
+  const boxes = await Promise.all([0, 1, 2].map(i => panels.nth(i).boundingBox()));
+  expect(boxes.every(b => b !== null), 'first 3 category blocks must each have a bounding box').toBeTruthy();
+
+  // Every one of the first 3 panels must sit in the SAME column (same x), to the right of
+  // the stream — proving they are stacked vertically inside one column, not fallen back to
+  // separate full-width sections below the stream.
+  const xs = boxes.map(b => Math.round(b!.x));
+  expect(new Set(xs).size, `all sampled panels must share the same X position, got [${xs}]`).toBe(1);
+  expect(xs[0], 'category column must sit to the right of the stream column').toBeGreaterThan(Math.round(streamBox!.x + streamBox!.width));
+
+  // Panels must be stacked top-to-bottom in document order (each strictly below the previous).
+  for (let i = 1; i < boxes.length; i++) {
+    expect(boxes[i]!.y, `panel ${i} must be below panel ${i - 1} (y=${boxes[i - 1]!.y})`).toBeGreaterThan(boxes[i - 1]!.y);
+  }
+
+  // The stream column itself must span (at least roughly) the combined height of those
+  // first 3 stacked panels, confirming it runs continuously beside them rather than
+  // ending after just the first one.
+  const lastOfThree = boxes[2]!;
+  const threePanelsBottom = lastOfThree.y + lastOfThree.height;
+  const streamBottom = streamBox!.y + streamBox!.height;
+  expect(streamBottom, 'stream column must extend at least as far down as the first 3 stacked category blocks').toBeGreaterThanOrEqual(threePanelsBottom - 40);
+});
+
 test('no horizontal overflow at 390px and 768px after the redesign', async ({ page }) => {
   for (const width of [390, 768]) {
     await page.setViewportSize({ width, height: 900 });

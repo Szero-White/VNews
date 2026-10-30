@@ -3,7 +3,6 @@
 @{
     ViewData["Title"] = "Tin tức mới nhất";
     ViewData["Description"] = "VNews - Tin mới, thời sự, kinh doanh, công nghệ và đời sống.";
-    var topicPanels = Model.CategoryPanels.Skip(1).ToList();
     // Editorial feed: merge the two existing query results without repeating the same article.
     var newsFeed = Model.StreamItems.Concat(Model.Latest)
         .Where(article => article.Slug != Model.Hero?.Slug)
@@ -37,8 +36,10 @@
 
         @if (Model.CategoryPanels.Any())
         {
-            var firstPanel = Model.CategoryPanels[0];
-            var firstLead = firstPanel.Articles.FirstOrDefault();
+            @* Matches the reference's section_stream_home: ONE continuous-height stream
+               column on the left, beside EVERY category box stacked in the right column
+               (not just the first, with the rest falling back to separate full-width
+               sections like the old .topic-block/.topic-collection markup did). *@
             <div class="home-parallel" aria-label="Dòng tin và chuyên mục">
                 <aside class="home-parallel__stream stream-section" aria-label="Dòng tin mới nhất">
                     <div class="editorial-heading">
@@ -64,65 +65,10 @@
                 </aside>
 
                 <div class="home-parallel__content">
-                    <section class="home-parallel__category topic-spotlight" aria-label="@firstPanel.Category.Name">
-                        <div class="editorial-heading">
-                            <h2 class="section-title"><a asp-controller="Category" asp-action="Index" asp-route-slug="@firstPanel.Category.Slug">@firstPanel.Category.Name</a></h2>
-                            <a asp-controller="Category" asp-action="Index" asp-route-slug="@firstPanel.Category.Slug">Xem thêm →</a>
-                        </div>
-                        @if (firstLead is not null)
-                        {
-                            <div class="category-panel__row1">
-                                <div class="topic-spotlight__lead">
-                                    @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = firstLead, Layout = ArticleCardLayout.CategoryLead })
-                                </div>
-                                <ul class="topic-spotlight__related">
-                                    @foreach (var article in firstPanel.Articles.Skip(1).Take(1))
-                                    {
-                                        @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.ListItem })
-                                    }
-                                </ul>
-                            </div>
-                            <ul class="category-panel__row2 topic-spotlight__secondary">
-                                @foreach (var article in firstPanel.Articles.Skip(2).Take(3))
-                                {
-                                    @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.ListItem })
-                                }
-                            </ul>
-                        }
-                    </section>
-
-                    <div class="topic-collection" aria-label="Tin theo chuyên mục">
-                        @foreach (var panel in topicPanels)
-                        {
-                            var lead = panel.Articles.FirstOrDefault();
-                            <section class="topic-block" aria-label="@panel.Category.Name">
-                                <div class="editorial-heading">
-                                    <h2 class="section-title"><a asp-controller="Category" asp-action="Index" asp-route-slug="@panel.Category.Slug">@panel.Category.Name</a></h2>
-                                    <a asp-controller="Category" asp-action="Index" asp-route-slug="@panel.Category.Slug">Xem thêm →</a>
-                                </div>
-                                @if (lead is not null)
-                                {
-                                    <div class="topic-block__split">
-                                        <div class="topic-block__lead">
-                                            @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = lead, Layout = ArticleCardLayout.CategoryLead })
-                                        </div>
-                                        <ul class="topic-block__side">
-                                            @foreach (var article in panel.Articles.Skip(1).Take(3))
-                                            {
-                                                @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.ListItemThumbnail })
-                                            }
-                                        </ul>
-                                    </div>
-                                    <ul class="topic-block__headline-list">
-                                        @foreach (var article in panel.Articles.Skip(4).Take(2))
-                                        {
-                                            @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.ListItem })
-                                        }
-                                    </ul>
-                                }
-                            </section>
-                        }
-                    </div>
+                    @foreach (var panel in Model.CategoryPanels)
+                    {
+                        @await Html.PartialAsync("_CategoryPanelBox", panel)
+                    }
                 </div>
             </div>
         }
