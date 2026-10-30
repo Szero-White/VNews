@@ -733,9 +733,12 @@ body {
 .news-home .hero-side__image-link { display: block; }
 .news-home .hero-side__image-link img {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 5 / 3;
   object-fit: cover;
 }
+/* NOTE: .news-home--v3 rules in editorial.css (loaded after this file) override
+   the block above on the real homepage markup (class="news-home news-home--v3").
+   Kept here only as the base/fallback for any page using .news-home without v3. */
 .news-home .hero-side__eyebrow {
   display: block;
   margin-bottom: 7px;

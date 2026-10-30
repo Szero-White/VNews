@@ -20,9 +20,11 @@ html { scroll-behavior: smooth; }
 .news-home--v3 .hero-lead__meta { font-size:12px; color:#858585; }
 .news-home--v3 .hero-side { display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:18px; padding:19px 0 0; margin-top:19px; border-top:1px solid #e5e5e5; }
 .news-home--v3 .hero-side__title { font:700 16px/1.43 Arial,Helvetica,sans-serif; margin:0 0 12px; }
-.news-home--v3 .hero-side__image-link img { width:100%; aspect-ratio: 16/9; object-fit:cover; border-radius:0; }
+.news-home--v3 .hero-side__image-link img { width:100%; aspect-ratio: 5/3; object-fit:cover; border-radius:0; }
 .news-home--v3 .hero-side__eyebrow { color:#9d1741; margin-bottom:8px; font-weight:700; }
 .news-home--v3 .hero-side__aside-copy { margin:4px 0 0; color:#696969; }
+.news-home--v3 .hero-side__opinion-image { display:block; width:56px; height:56px; float:left; margin:1px 12px 0 0; overflow:hidden; }
+.news-home--v3 .hero-side__opinion-image img { width:100%; height:100%; object-fit:cover; }
 /* Real editorial flow: latest stories remain beside EVERY category block, not just the first. */
 .news-home--v3 .home-parallel { width:1100px; max-width:100%; display:grid; grid-template-columns: minmax(0,380px) minmax(0,680px); gap:40px; align-items:start; margin:32px 0 48px; }
 .news-home--v3 .home-parallel__stream, .news-home--v3 .home-parallel__content { min-width:0; }
@@ -121,7 +123,7 @@ html { scroll-behavior: smooth; }
   .news-home--v3 .hero-side { display:block; padding:0 18px; margin:0; border-top:0; }
   .news-home--v3 .hero-side__item, .news-home--v3 .hero-side__opinion { padding:17px 0; margin:0; border-top:1px solid #ddd; }
   .news-home--v3 .hero-side__title { font-size:18px; margin:0; }
-  .news-home--v3 .hero-side__image-link, .news-home--v3 .hero-side__aside-copy { display:none; }
+  .news-home--v3 .hero-side__image-link, .news-home--v3 .hero-side__aside-copy, .news-home--v3 .hero-side__opinion-image { display:none; }
   .news-home--v3 .home-parallel { width:100%; display:flex; flex-direction:column; gap:30px; margin:20px 0 40px; padding:0 16px; }
   .news-home--v3 .home-parallel__stream, .news-home--v3 .home-parallel__content { width:100%; }
   .news-home--v3 .stream-list { display:block; }

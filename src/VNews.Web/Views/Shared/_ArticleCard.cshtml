@@ -130,6 +130,9 @@
 
     case ArticleCardLayout.TextOnly:
         <article class="hero-side__opinion">
+            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="hero-side__opinion-image" aria-hidden="true" tabindex="-1">
+                <img src="@imageUrl" alt="" loading="lazy" decoding="async" />
+            </a>
             @if (!string.IsNullOrWhiteSpace(Model.Eyebrow))
             {
                 <span class="hero-side__eyebrow">@Model.Eyebrow</span>
