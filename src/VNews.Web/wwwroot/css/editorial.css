@@ -8,184 +8,6 @@ html { scroll-behavior: smooth; }
 .back-to-top[hidden], .site-toast[hidden] { display: none; }
 .site-toast { position: fixed; z-index: 130; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 11px 20px; color: #fff; background: #242424; border-radius: 6px; box-shadow: 0 8px 25px rgba(0,0,0,.2); max-width: min(92vw,420px); text-align: center; }
 .masthead__right .masthead__utility-link:hover { color: var(--vn-accent); }
-/* Intro / hero: 780px editorial column (measured live from vnexpress.net's own
-   .col-left-top-home-v2 at 1440px: x170 w780) + a blank 320px advertising rail, matching
-   its real .col-right-top width — left intentionally empty, no fabricated ad content. */
-.news-home--v3 .front-page { width: 780px; max-width: 100%; margin: 0 0 24px; }
-.news-home--v3 .front-page__main { width: 100%; }
-/* Desktop-only: widen the homepage container's own side padding so the hero image's left
-   edge lands at x=170 (measured on references/vnexpress-desktop.png), without touching the
-   shared .container padding used by the masthead/nav or other pages. Left unchanged below
-   1221px, where .container already switches to a narrower 18px gutter for small viewports. */
-@media (min-width: 1221px) {
-  .news-home--v3 { padding-left: 40px; padding-right: 40px; }
-}
-.news-home--v3 .hero-lead { display: grid; grid-template-columns: minmax(0, 520px) minmax(0,1fr); gap: 20px; }
-.news-home--v3 .hero-lead__image-link img { width:100%; aspect-ratio: 5/3; object-fit: cover; border-radius:0; }
-.news-home--v3 .hero-lead__content { min-width:0; padding-top:2px; }
-/* Inline in .hero-lead__meta (bottom of the block, beside author/date) on the homepage
-   hero, matching the reference's .meta-news category link position — see the
-   UsePageHeading branch in _ArticleCard.cshtml. Category/Index.cshtml's reuse of
-   HeroLead keeps the older above-title placement via site.css's .hero-lead__category. */
-.news-home--v3 .hero-lead__meta .hero-lead__category { color: #ad2450; font-weight: 700; }
-.news-home--v3 .hero-lead__title { font: 700 20px/32px Merriweather,Georgia,serif; margin:0 0 11px; letter-spacing:0; }
-.news-home--v3 .hero-lead__summary { font: 14px/1.5 Arial,Helvetica,sans-serif; color:#555; margin:0 0 10px; }
-.news-home--v3 .hero-lead__meta { font-size:12px; color:#858585; }
-.news-home--v3 .hero-side { display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:18px; padding:19px 0 0; margin-top:19px; border-top:1px solid #e5e5e5; }
-.news-home--v3 .hero-side__image-link { display:block; margin:0 0 10px; }
-.news-home--v3 .hero-side__image-link img { width:100%; aspect-ratio:5/3; object-fit:cover; border-radius:0; }
-.news-home--v3 .hero-side__title { font:700 15px/24px Merriweather,Georgia,serif; margin:0 0 12px; }
-.news-home--v3 .hero-side__eyebrow { color:#9d1741; margin-bottom:8px; font-weight:700; }
-.news-home--v3 .hero-side__aside-copy { margin:4px 0 0; color:#696969; }
-.news-home--v3 .hero-side__item:hover .hero-side__title a,
-.news-home--v3 .hero-lead__title a:hover { color:var(--vn-accent); }
-
-/* Real editorial flow: latest stories remain beside EVERY category block, not just the first. */
-/* Real measured columns (vnexpress.net .col-left.col-small / .col-right.col-medium at
-   1440px): 400px + 700px = 1100px, flush adjacent with NO grid-gap — the visual
-   separation comes from each column's own inner padding (confirmed: col-left has
-   padding-right:20px, col-right has padding-left:20px, 40px combined), not a gap
-   property. Replicated the same way instead of faking it with grid-gap. */
-.news-home--v3 .home-parallel { width:1100px; max-width:100%; display:grid; grid-template-columns: 400px 700px; gap:0; align-items:start; margin:32px 0 48px; }
-.news-home--v3 .home-parallel__stream { min-width:0; padding-right:20px; }
-.news-home--v3 .home-parallel__content { min-width:0; padding-left:20px; }
-.news-home--v3 .editorial-heading { display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:0 0 11px; margin-bottom:17px; border-bottom:1px solid #ddd; }
-.news-home--v3 .editorial-heading .section-title, .news-home--v3 .section-title { border:0; padding:0; margin:0; font:700 18px/28.8px Merriweather,Georgia,serif; }
-.news-home--v3 .editorial-heading .section-title a { color:inherit; }
-.news-home--v3 .editorial-heading > a { font: 12px/1.35 Arial,Helvetica,sans-serif; color:#9c1d46; white-space:nowrap; }
-.news-home--v3 .stream-list { display:block; padding:0; margin:0; list-style:none; }
-.news-home--v3 .stream-compact { display:flex; align-items:flex-start; gap:12px; padding:16px 0; margin:0; border-bottom:1px solid #e6e6e6; }
-.news-home--v3 .stream-compact:first-child { padding-top:0; }
-.news-home--v3 .stream-compact__image-link { flex:0 0 125px; max-width:125px; }
-.news-home--v3 .stream-compact__image-link img { width:125px; aspect-ratio: 5/3; object-fit:cover; border-radius:0; }
-.news-home--v3 .stream-compact__title { font:700 15px/24px Merriweather,Georgia,serif; margin:0 0 7px; }
-.news-home--v3 .stream-compact__summary { font:13px/1.45 Arial,Helvetica,sans-serif; color:#6b6b6b; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-.news-home--v3 .view-more-link { display:inline-block; margin:18px 0 25px; color:#9c1d46; font-weight:700; }
-.news-home--v3 .today-digest { border-top:1px solid #e3e3e3; padding-top:20px; margin:0; }
-.news-home--v3 .today-digest .section-title { margin-bottom:11px; }
-.news-home--v3 .today-digest .most-viewed { list-style:none; margin:0; padding:0; counter-reset:viewed; }
-.news-home--v3 .today-digest li { display:flex; gap:12px; border-bottom:1px solid #eee; padding:12px 0; font:600 14px/1.45 Arial,Helvetica,sans-serif; }
-.news-home--v3 .today-digest li::before { counter-increment:viewed; content:counter(viewed); font:28px/1 Georgia,serif; color:#bbb; }
-/* Category panel: lead image on the left / title on the right; side headline; lower
-   3-column row. Stacked once per category inside .home-parallel__content (see
-   _CategoryPanelBox.cshtml); only the first one in that stack drops its top
-   border/padding, the rest get the separator. */
-.news-home--v3 .topic-spotlight { padding:18px 0 21px; margin:0; background:#fff; border:0; border-top:1px solid #dedede; border-radius:0; box-shadow:none; }
-.news-home--v3 .home-parallel__content > .topic-spotlight:first-child { padding-top:0; border-top:0; }
-.news-home--v3 .category-panel__row1 { display:grid; grid-template-columns:minmax(0,2.3fr) minmax(0,1fr); gap:18px; align-items:start; }
-.news-home--v3 .category-panel__row1 .category-lead { display:grid; grid-template-columns: minmax(0,49%) minmax(0,1fr); gap:15px; align-items:start; }
-.news-home--v3 .category-panel__row1 .category-lead__image-link img { width:100%; aspect-ratio:5/3; object-fit:cover; }
-.news-home--v3 .category-panel__row1 .category-lead__title { font:700 17px/1.34 Merriweather,Georgia,serif; margin:0 0 8px; }
-.news-home--v3 .category-panel__row1 .category-lead__summary { font:13px/1.5 Arial,Helvetica,sans-serif; color:#656565; margin:0; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; }
-.news-home--v3 .topic-spotlight__related { list-style:none; padding:0 0 0 17px; margin:0; border-left:1px solid #e2e2e2; }
-.news-home--v3 .topic-spotlight__related .list-item { padding:0; }
-.news-home--v3 .topic-spotlight__related .list-item__link { font:700 15px/24px Merriweather,Georgia,serif; }
-.news-home--v3 .category-panel__row2 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; list-style:none; padding:15px 0 0; margin:18px 0 0; border-top:1px solid #e5e5e5; }
-.news-home--v3 .category-panel__row2 .list-item { border:0; padding:0; }
-.news-home--v3 .category-panel__row2 .list-item__link { font:700 14px/22.4px Merriweather,Georgia,serif; }
-/* Deliberate editorial variety: alternate visual hierarchy, without creating a
-   separate Razor component or duplicating data for every one of ten topics. */
-.news-home--v3 .home-parallel__content > .topic-spotlight:nth-child(3n+2) .category-panel__row1 {
-  grid-template-columns: minmax(0,1fr) minmax(0,165px);
-}
-.news-home--v3 .home-parallel__content > .topic-spotlight:nth-child(3n+2) .category-panel__row1 .category-lead {
-  grid-template-columns: minmax(0,1fr); gap:9px;
-}
-.news-home--v3 .home-parallel__content > .topic-spotlight:nth-child(3n+2) .category-lead__image-link img { aspect-ratio: 16/8; }
-.news-home--v3 .home-parallel__content > .topic-spotlight:nth-child(3n) .category-panel__row1 {
-  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
-}
-.news-home--v3 .home-parallel__content > .topic-spotlight:nth-child(3n) .category-panel__row1 .category-lead {
-  grid-template-columns: minmax(0,41%) minmax(0,1fr);
-}
-.news-home--v3 .home-topics-directory { margin:19px 0 40px; padding:20px 0; border-top:2px solid #ddd; border-bottom:1px solid #eee; }
-.news-home--v3 .home-topics-directory__links { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 24px; list-style:none; padding:0; margin:0; }
-.news-home--v3 .home-topics-directory__links a { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 0; border-bottom:1px solid #eee; font:700 16px/1.3 Merriweather,Georgia,serif; }
-.news-home--v3 .home-topics-directory__links a span { color:var(--vn-accent); font:400 16px Arial,sans-serif; }
-
-/* Large media modules deliberately use distinct compositions. */
-.news-home--v3 .media-zone { width:1100px; max-width:100%; margin:0 0 46px; }
-.news-home--v3 .photo-gallery-v2 { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
-.news-home--v3 .photo-grid__item { display:block; position:relative; overflow:hidden; aspect-ratio:4/3; background:#222; }
-.news-home--v3 .photo-grid__item img { width:100%; height:100%; object-fit:cover; transition:transform .2s ease; }
-.news-home--v3 .photo-grid__item:hover img { transform:scale(1.025); }
-.news-home--v3 .photo-grid__caption { position:absolute; left:0; right:0; bottom:0; padding:30px 10px 11px; background:linear-gradient(transparent,rgba(0,0,0,.83)); color:#fff; font:700 14px/1.35 Arial,Helvetica,sans-serif; }
-.news-home--v3 .spotlight-section { padding:24px; background:#f7f7f7; border-top:3px solid #a51d45; }
-.news-home--v3 .spotlight-feature { display:flex; gap:24px; align-items:center; max-width:100%; }
-.news-home--v3 .spotlight-feature__body { min-width:0; }
-
-.news-home--v3 .spotlight-feature__image-link { flex:0 0 53%; }
-.news-home--v3 .spotlight-feature__image-link img { width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:0; }
-.news-home--v3 .spotlight-feature__title { font:700 24px/1.3 Merriweather,Georgia,serif; }
-.news-home--v3 .spotlight-list-v2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); list-style:none; gap:12px 24px; padding:17px 0 0; margin:16px 0 0; border-top:1px solid #e6e6e6; }
-.news-home--v3 .podcast-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:17px; }
-.news-home--v3 .podcast-grid .card img { width:100%; aspect-ratio:16/10; object-fit:cover; }
-.news-home--v3 .podcast-grid .card__title { font:700 16px/1.36 Merriweather,Georgia,serif; }
-.news-home--v3 .section-note { margin:-3px 0 17px; color:#757575; font-size:13px; }
-@media (max-width:1120px) {
-  .news-home--v3 .home-parallel { grid-template-columns:minmax(0,35%) minmax(0,1fr); gap:27px; }
-  .news-home--v3 .home-parallel__stream, .news-home--v3 .home-parallel__content { padding-left:0; padding-right:0; }
-}
-@media (max-width:800px) {
-  .news-home--v3 .home-parallel { grid-template-columns:minmax(0,1fr); gap:26px; }
-  .news-home--v3 .home-parallel__stream { order:1; }
-  .news-home--v3 .home-parallel__content { order:2; }
-  .news-home--v3 .home-parallel__content > .topic-spotlight:nth-child(n) .category-panel__row1 { grid-template-columns:minmax(0,1fr); }
-  .news-home--v3 .home-parallel__content > .topic-spotlight:nth-child(n) .category-panel__row1 .category-lead { grid-template-columns:minmax(0,42%) minmax(0,1fr); }
-  .news-home--v3 .home-parallel__content > .topic-spotlight:nth-child(n) .category-lead__image-link img { aspect-ratio:5/3; }
-
-  .news-home--v3 .stream-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:22px; }
-  .news-home--v3 .stream-compact__image-link { flex-basis:98px; max-width:98px; }
-  .news-home--v3 .stream-compact__image-link img { width:98px; }
-  .news-home--v3 .today-digest { margin-bottom:0; }
-}
-@media (max-width:600px) {
-  .news-home--v3 { padding-left:0; padding-right:0; }
-  .news-home--v3 .front-page { width:100%; margin:0; }
-  .news-home--v3 .hero-lead { grid-template-columns:minmax(0,1fr); gap:0; }
-  .news-home--v3 .hero-lead__image-link img { width:100%; aspect-ratio:390/235; }
-  .news-home--v3 .hero-lead__content { padding:16px 18px 19px; }
-  .news-home--v3 .hero-lead__title { font:700 20px/32px Merriweather,Georgia,serif; }
-  .news-home--v3 .hero-lead__summary { font-size:15px; line-height:1.5; }
-  /* Mobile reference's hero card shows no category/byline line at all (just
-     thumbnail, title, summary) — confirmed via the mobile MHTML snapshot's
-     article.top-story, which has only thumb/title/short_intro as children. */
-  .news-home--v3 .hero-lead__meta { display:none; }
-  .news-home--v3 .hero-side { display:block; padding:0 18px; margin:0; border-top:0; }
-  .news-home--v3 .hero-side__item, .news-home--v3 .hero-side__opinion { padding:17px 0; margin:0; border-top:1px solid #ddd; }
-  .news-home--v3 .hero-side__title { font-size:18px; margin:0 0 10px; }
-  .news-home--v3 .hero-side__aside-copy { display:none; }
-  .news-home--v3 .home-parallel { width:100%; display:flex; flex-direction:column; gap:30px; margin:20px 0 40px; padding:0 16px; }
-  .news-home--v3 .home-parallel__stream, .news-home--v3 .home-parallel__content { width:100%; padding-left:0; padding-right:0; }
-  .news-home--v3 .stream-list { display:block; }
-  /* Four headlines before categories; the full feed remains one tap away. */
-  .news-home--v3 .stream-list > .stream-compact:nth-child(n+5) { display:none; }
-  .news-home--v3 .home-topics-directory__links { grid-template-columns:1fr; gap:0; }
-  .news-home--v3 .spotlight-section { padding:20px 16px; }
-  .news-home--v3 .stream-compact { gap:11px; }
-  .news-home--v3 .stream-compact__image-link { flex:0 0 108px; max-width:108px; }
-  .news-home--v3 .stream-compact__image-link img { width:108px; }
-  .news-home--v3 .stream-compact__title { font-size:15px; }
-  .news-home--v3 .stream-compact__summary { font-size:12px; }
-  .news-home--v3 .category-panel__row1 { grid-template-columns:1fr; gap:14px; }
-  .news-home--v3 .category-panel__row1 .category-lead { grid-template-columns: minmax(0,43%) minmax(0,1fr); gap:12px; }
-  .news-home--v3 .topic-spotlight__related { padding:11px 0 0; border:0; border-top:1px solid #eee; }
-  .news-home--v3 .category-panel__row2 { grid-template-columns:1fr; gap:8px; }
-  .news-home--v3 .media-zone { padding:0 16px; }
-  .news-home--v3 .photo-gallery-v2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .news-home--v3 .podcast-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .news-home--v3 .spotlight-feature { display:block; }
-  .news-home--v3 .spotlight-feature__image-link { display:block; }
-  .news-home--v3 .spotlight-feature__body { padding-top:13px; }
-  .news-home--v3 .spotlight-feature__title { font-size:19px; }
-  .news-home--v3 .spotlight-list-v2 { display:block; }
-  .news-home--v3 .spotlight-list-v2 .list-item { padding:8px 0; }
-}
-@media (prefers-reduced-motion:reduce) {
- html {scroll-behavior:auto;}
- .news-home--v3 .photo-grid__item img {transition:none;}
-}
-
 /* News article reading experience. */
 .article-layout { display: grid; grid-template-columns: minmax(0,760px) minmax(0,270px); gap: 54px; align-items: start; }
 .article-layout__main { max-width: none; min-width: 0; }
@@ -256,6 +78,19 @@ html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 /* Category page: one editorial feature + compact headline rail, then a readable feed. */
+/* Category-local navigation: real in-page anchors, no simulated interactions. */
+.editorial-listing .listing-sections {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin: 0 0 4px;
+  padding: 0 0 13px;
+  border-bottom: 1px solid var(--vn-border);
+  color: #606060;
+  font: 600 13px/1.5 Arial,Helvetica,sans-serif;
+}
+.editorial-listing .listing-sections a:hover { color: var(--vn-accent); }
+.editorial-listing__feature, .editorial-listing__feed { scroll-margin-top: 62px; }
 .editorial-listing__feature {
   display: grid;
   grid-template-columns: minmax(0, 780px) minmax(0, 280px);
@@ -285,7 +120,7 @@ html { scroll-behavior: smooth; }
 .editorial-listing__articles .story-row__title { font-family:Merriweather,Georgia,serif; }
 /* Consistent article presentation across desktop and small screens. */
 .article-detail__title { font-family:Merriweather,Georgia,serif; letter-spacing:-.015em; }
-.article-detail__summary { font-weight:500; }
+.article-detail__summary { font-weight:500; max-width:70ch; }
 .article-detail__meta { display:flex; gap:12px; flex-wrap:wrap; color:#777; }
 .article-detail__author { font-weight:600; color:#444; }
 .article-detail__body p { margin:0 0 1.15em; }
@@ -300,6 +135,8 @@ html { scroll-behavior: smooth; }
   .editorial-listing__briefings { border:0; border-top:1px solid var(--vn-border); padding:14px 0 0; margin-top:24px; grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media (max-width: 600px) {
+  .editorial-listing .listing-sections { gap: 17px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+  .editorial-listing .listing-sections::-webkit-scrollbar { display:none; }
   .editorial-listing__lead .hero-lead { display:block; }
   .editorial-listing__lead .hero-lead__content { padding:16px 0 0; }
   .editorial-listing__lead .hero-lead__title { font-size:23px; line-height:1.45; }

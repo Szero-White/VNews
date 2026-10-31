@@ -11,7 +11,7 @@
    single continuous stream column runs beside many stacked category boxes. *@
 @if (lead is not null)
 {
-    <section class="home-parallel__category topic-spotlight" aria-label="@Model.Category.Name">
+    <section class="home-parallel__category topic-spotlight topic-spotlight--@Model.Category.Slug" aria-label="@Model.Category.Name">
         <div class="editorial-heading">
             <h2 class="section-title"><a asp-controller="Category" asp-action="Index" asp-route-slug="@Model.Category.Slug">@Model.Category.Name</a></h2>
             <a asp-controller="Category" asp-action="Index" asp-route-slug="@Model.Category.Slug">Xem thêm →</a>

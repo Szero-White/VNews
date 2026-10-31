@@ -159,7 +159,10 @@
             <h2 class="hero-side__title">
                 <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
             </h2>
-            <p class="hero-side__aside-copy">Khám phá thêm những bài viết đang được bạn đọc chú ý.</p>
+            @if (!string.IsNullOrWhiteSpace(a.Summary))
+            {
+                <p class="hero-side__aside-copy">@a.Summary</p>
+            }
         </article>
         break;
 

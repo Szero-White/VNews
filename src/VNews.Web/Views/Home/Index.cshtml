@@ -3,9 +3,11 @@
 @{
     ViewData["Title"] = "Tin tức mới nhất";
     ViewData["Description"] = "VNews - Tin mới, thời sự, kinh doanh, công nghệ và đời sống.";
-    // Editorial feed: merge the two existing query results without repeating the same article.
+    // Deduplicate the first stories across hero, side features and latest stream.
+    var featuredSlugs = Model.SideFeatures.Take(2).Select(a => a.Slug)
+        .Append(Model.Hero?.Slug ?? string.Empty).ToHashSet(StringComparer.OrdinalIgnoreCase);
     var newsFeed = Model.StreamItems.Concat(Model.Latest)
-        .Where(article => article.Slug != Model.Hero?.Slug)
+        .Where(article => !featuredSlugs.Contains(article.Slug))
         .GroupBy(article => article.Slug)
         .Select(group => group.First())
         .Take(18)
@@ -15,7 +17,7 @@
     var featuredPanels = Model.CategoryPanels.Take(6).ToList();
     var additionalPanels = Model.CategoryPanels.Skip(6).ToList();
 }
-<div class="container news-home news-home--v3">
+<div class="container news-home news-home--v5">
     @if (Model.Hero is null)
     {
         <div class="empty-state"><p>Chưa có tin đã xuất bản. Hãy đăng bài từ CMS để bắt đầu.</p></div>
@@ -32,7 +34,7 @@
                     }
                     @foreach (var article in Model.MostViewed.Take(1))
                     {
-                        @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.TextOnly, Eyebrow = "Góc nhìn" })
+                        @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.TextOnly, Eyebrow = "Đọc nhiều" })
                     }
                 </div>
             </div>

@@ -20,7 +20,7 @@
                 <time datetime="@article.PublishedAt?.ToString("yyyy-MM-ddTHH:mm:ss")">@article.PublishedAt?.ToString("dd/MM/yyyy HH:mm")</time>
                 <span>@article.ViewCount lượt xem</span>
             </div>
-            <div class="article-tools" aria-label="Công cụ đọc bài">
+            <div class="article-tools" role="group" aria-label="Công cụ đọc bài">
                 <button type="button" class="article-tool" data-action="share" aria-label="Chia sẻ bài viết">Chia sẻ</button>
                 <button type="button" class="article-tool" data-action="save" aria-pressed="false">☆ Lưu bài</button>
                 <button type="button" class="article-tool" data-action="speak" aria-pressed="false">▶ Nghe tóm tắt</button>

@@ -28,6 +28,20 @@
         <a asp-controller="Home" asp-action="Latest">Tin mới nhất <span aria-hidden="true">→</span></a>
     </div>
 
+    @if (Model.Articles.Items.Count > 0)
+    {
+        <nav class="listing-sections" aria-label="Đi đến nội dung chuyên mục">
+            @if (lead is not null)
+            {
+                <a href="#category-lead">Nổi bật</a>
+            }
+            @if (articles.Count > 0)
+            {
+                <a href="#category-feed">Tin mới trong chuyên mục</a>
+            }
+            <a asp-controller="Home" asp-action="Saved">Bài đã lưu</a>
+        </nav>
+    }
     @if (Model.Articles.Items.Count == 0)
     {
         <div class="empty-state"><p>Chưa có bài viết trong chuyên mục này.</p></div>
@@ -36,7 +50,7 @@
     {
         @if (lead is not null)
         {
-            <section class="editorial-listing__feature" aria-label="Tin nổi bật trong chuyên mục">
+            <section id="category-lead" class="editorial-listing__feature" aria-label="Tin nổi bật trong chuyên mục">
                 <div class="editorial-listing__lead">
                     @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = lead, Layout = ArticleCardLayout.HeroLead })
                 </div>
@@ -62,7 +76,7 @@
         }
         @if (articles.Count > 0)
         {
-            <section class="editorial-listing__feed" aria-label="Danh sách bài viết">
+            <section id="category-feed" class="editorial-listing__feed" aria-label="Danh sách bài viết">
                 <div class="editorial-heading">
                     <h2 class="section-title">Tin trong chuyên mục</h2>
                 </div>
