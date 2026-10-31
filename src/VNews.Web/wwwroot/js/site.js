@@ -47,6 +47,36 @@
     });
   }
 
+  // Login dialog: header and mobile drawer links remain ordinary /Account/Login
+  // links when JavaScript or <dialog> is unsupported. Invalid credentials are
+  // handled by the existing Identity view with full server-side errors.
+  var readerDialog = document.getElementById('reader-login-dialog');
+  if (readerDialog && typeof readerDialog.showModal === 'function') {
+    var loginOpener = null;
+    document.addEventListener('click', function (event) {
+      var trigger = event.target.closest('[data-reader-login-open]');
+      if (!trigger) return;
+      event.preventDefault();
+      loginOpener = trigger;
+      if (nav && nav.classList.contains('is-open')) {
+        nav.classList.remove('is-open');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      }
+      readerDialog.showModal();
+      var emailField = readerDialog.querySelector('input[name="Email"]');
+      if (emailField) emailField.focus();
+    });
+    var closeReaderDialog = readerDialog.querySelector('[data-reader-login-close]');
+    if (closeReaderDialog) closeReaderDialog.addEventListener('click', function () { readerDialog.close(); });
+    readerDialog.addEventListener('click', function (event) {
+      if (event.target === readerDialog) readerDialog.close();
+    });
+    readerDialog.addEventListener('close', function () {
+      if (loginOpener && loginOpener.isConnected) loginOpener.focus();
+      loginOpener = null;
+    });
+  }
+
   var backTop = document.getElementById('back-to-top');
   var progress = document.getElementById('reading-progress');
   var article = document.querySelector('[data-news-article]');
@@ -75,8 +105,14 @@
   onScroll();
   if (backTop) backTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
 
-  // Bookmarks are explicitly local to the browser; no authentication or server persistence.
+  // Guests save locally; signed-in readers use the SQL-backed bookmarks API.
   var key = 'vnews.saved.v1';
+  var accountBookmarks = !!document.querySelector('meta[name="vnews-bookmarks-mode"][content="account"]');
+  var csrfMeta = document.querySelector('meta[name="vnews-csrf-token"]');
+  var csrf = csrfMeta ? csrfMeta.content : '';
+  var accountSaved = [];
+  var savedLoaded = false;
+
   function readSaved() {
     try {
       var data = JSON.parse(localStorage.getItem(key) || '[]');
@@ -88,16 +124,46 @@
     catch (_) { toast('Trình duyệt không cho phép lưu bài.'); return false; }
   }
   function articleInfo() {
-    return article ? { slug: article.dataset.newsSlug || '', title: article.dataset.newsTitle || '', image: article.dataset.newsImage || '' } : null;
+    return article ? {
+      id: Number(article.dataset.newsId) || 0,
+      slug: article.dataset.newsSlug || '',
+      title: article.dataset.newsTitle || '',
+      image: article.dataset.newsImage || ''
+    } : null;
+  }
+  function savedRows() { return accountBookmarks ? accountSaved : readSaved(); }
+  async function refreshAccountSaved() {
+    if (!accountBookmarks) return;
+    var response = await fetch('/api/me/bookmarks', { credentials: 'same-origin', cache: 'no-store' });
+    if (!response.ok) throw new Error('Không thể tải các bài đã lưu.');
+    accountSaved = await response.json();
+    savedLoaded = true;
+  }
+  async function changeAccountBookmark(id, remove) {
+    var response = await fetch('/api/me/bookmarks/' + id, {
+      method: remove ? 'DELETE' : 'POST',
+      credentials: 'same-origin',
+      headers: { 'RequestVerificationToken': csrf }
+    });
+    if (!response.ok) throw new Error('Không thể cập nhật bài đã lưu.');
+    await refreshAccountSaved();
   }
   var savedButton = document.querySelector('[data-action="save"]');
   function updateSaveButton() {
     if (!savedButton || !article) return;
-    var saved = readSaved().some(function (x) { return x.slug === article.dataset.newsSlug; });
+    var id = Number(article.dataset.newsId);
+    var saved = savedRows().some(function (x) { return accountBookmarks ? x.id === id : x.slug === article.dataset.newsSlug; });
     savedButton.setAttribute('aria-pressed', String(saved));
     savedButton.textContent = saved ? '★ Đã lưu' : '☆ Lưu bài';
   }
-  updateSaveButton();
+  if (accountBookmarks && savedButton) {
+    savedButton.disabled = true;
+    refreshAccountSaved().then(function () { updateSaveButton(); })
+      .catch(function () { toast('Không thể tải trạng thái lưu bài.'); })
+      .finally(function () { savedButton.disabled = false; });
+  } else {
+    updateSaveButton();
+  }
 
   function shareArticle() {
     var payload = { title: document.title, url: location.href };
@@ -132,9 +198,20 @@
     if (action === 'save') {
       var info = articleInfo();
       if (!info || !/^[a-z0-9-]{1,180}$/.test(info.slug)) return;
-      var data = readSaved(); var current = data.some(function (x) { return x.slug === info.slug; });
-      data = current ? data.filter(function (x) { return x.slug !== info.slug; }) : [info].concat(data);
-      if (writeSaved(data)) { updateSaveButton(); toast(current ? 'Đã bỏ lưu bài viết.' : 'Đã lưu bài viết trên thiết bị.'); }
+      if (accountBookmarks) {
+        if (!info.id || button.disabled) return;
+        button.disabled = true;
+        var wasSaved = accountSaved.some(function (x) { return x.id === info.id; });
+        changeAccountBookmark(info.id, wasSaved).then(function () {
+          updateSaveButton();
+          toast(wasSaved ? 'Đã bỏ lưu bài viết.' : 'Đã lưu vào tài khoản của bạn.');
+        }).catch(function () { toast('Không thể lưu bài lúc này. Vui lòng thử lại.'); })
+          .finally(function () { button.disabled = false; });
+      } else {
+        var data = readSaved(); var current = data.some(function (x) { return x.slug === info.slug; });
+        data = current ? data.filter(function (x) { return x.slug !== info.slug; }) : [info].concat(data);
+        if (writeSaved(data)) { updateSaveButton(); toast(current ? 'Đã bỏ lưu bài viết.' : 'Đã lưu trên thiết bị. Đăng nhập để đồng bộ.'); }
+      }
     }
     if (action === 'speak') toggleSpeech(button);
     if (action === 'font-up' || action === 'font-down') {
@@ -146,13 +223,13 @@
   });
   window.addEventListener('pagehide', function () { if (speaking && 'speechSynthesis' in window) speechSynthesis.cancel(); });
 
-  // Saved-page rendering uses DOM text nodes, not innerHTML, to avoid XSS through storage.
+  // Saved-page cards are built with textContent, never unsanitized HTML.
   var savedList = document.getElementById('saved-articles-list');
   if (savedList) {
     var empty = document.getElementById('saved-empty');
     function renderSaved() {
       savedList.replaceChildren();
-      var rows = readSaved();
+      var rows = savedRows();
       if (empty) empty.hidden = rows.length > 0;
       rows.forEach(function (row) {
         var item = document.createElement('article'); item.className = 'saved-article';
@@ -165,10 +242,27 @@
         var link = document.createElement('a'); link.href = href; link.className = 'saved-article__title'; link.textContent = row.title || row.slug;
         var br = document.createElement('div');
         var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'saved-article__delete'; remove.textContent = 'Bỏ lưu';
-        remove.addEventListener('click', function () { writeSaved(readSaved().filter(function (x) { return x.slug !== row.slug; })); renderSaved(); });
+        remove.addEventListener('click', function () {
+          if (accountBookmarks) {
+            remove.disabled = true;
+            changeAccountBookmark(row.id, true).then(renderSaved)
+              .catch(function () { toast('Không thể bỏ lưu lúc này.'); })
+              .finally(function () { remove.disabled = false; });
+          } else {
+            if (writeSaved(readSaved().filter(function (x) { return x.slug !== row.slug; }))) renderSaved();
+          }
+        });
         br.appendChild(remove); content.append(link, br); item.appendChild(content); savedList.appendChild(item);
       });
     }
-    renderSaved();
+    if (accountBookmarks) {
+      if (empty) { empty.hidden = false; empty.textContent = 'Đang tải bài đã lưu...'; }
+      refreshAccountSaved().then(function () {
+        if (empty) empty.textContent = 'Bạn chưa lưu bài viết nào.';
+        renderSaved();
+      }).catch(function () {
+        if (empty) empty.textContent = 'Không thể tải bài đã lưu. Vui lòng tải lại trang.';
+      });
+    } else renderSaved();
   }
 })();

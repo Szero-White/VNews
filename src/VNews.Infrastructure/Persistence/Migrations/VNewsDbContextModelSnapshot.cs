@@ -433,6 +433,25 @@ namespace VNews.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("VNews.Domain.Entities.SavedArticle", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("ArticleId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SavedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("UserId", "ArticleId");
+
+                    b.HasIndex("ArticleId");
+
+                    b.ToTable("SavedArticles", (string)null);
+                });
+
             modelBuilder.Entity("VNews.Infrastructure.Persistence.ProcedureResults.ArticleByCategoryResult", b =>
                 {
                     b.Property<int>("ArticleId")
@@ -568,6 +587,23 @@ namespace VNews.Infrastructure.Persistence.Migrations
                     b.Navigation("Article");
 
                     b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("VNews.Domain.Entities.SavedArticle", b =>
+                {
+                    b.HasOne("VNews.Domain.Entities.Article", "Article")
+                        .WithMany()
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VNews.Domain.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Article");
                 });
 
             modelBuilder.Entity("VNews.Domain.Entities.Article", b =>

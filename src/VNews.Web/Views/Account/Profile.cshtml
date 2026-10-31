@@ -1,0 +1,22 @@
+@model ProfileViewModel
+@{
+    ViewData["Title"] = "Tài khoản của tôi";
+    Layout = "_ReaderAuthLayout";
+}
+<section class="reader-auth__card" aria-labelledby="profile-title">
+    <p class="reader-auth__kicker">HỒ SƠ ĐỘC GIẢ</p>
+    <h1 id="profile-title">Xin chào, @Model.DisplayName</h1>
+    <p class="reader-auth__lead">Tài khoản của bạn trên VNews.</p>
+    <dl class="reader-auth__profile">
+        <dt>Tên hiển thị</dt><dd>@Model.DisplayName</dd>
+        <dt>Email</dt><dd>@Model.Email</dd>
+    </dl>
+    <a class="reader-auth__submit reader-auth__button-link" asp-controller="Home" asp-action="Saved">Xem bài đã lưu</a>
+    @if (Model.IsStaff)
+    {
+        <a class="reader-auth__secondary" asp-controller="CmsArticles" asp-action="Index">Đi đến CMS</a>
+    }
+    <form asp-controller="Account" asp-action="Logout" method="post">
+        <button type="submit" class="reader-auth__secondary reader-auth__logout">Đăng xuất</button>
+    </form>
+</section>

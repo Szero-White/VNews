@@ -22,7 +22,7 @@ using (var scope = app.Services.CreateScope())
 
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    await IdentitySeeder.SeedAsync(roleManager, userManager);
+    await IdentitySeeder.SeedAsync(roleManager, userManager, seedDemoAccounts: app.Environment.IsDevelopment());
 }
 
 // Configure the HTTP request pipeline.
@@ -71,6 +71,24 @@ app.MapControllerRoute(
     name: "account-login",
     pattern: "tai-khoan/dang-nhap",
     defaults: new { controller = "Account", action = "Login" })
+    .WithStaticAssets();
+
+app.MapControllerRoute(
+    name: "account-register",
+    pattern: "tai-khoan/dang-ky",
+    defaults: new { controller = "Account", action = "Register" })
+    .WithStaticAssets();
+
+app.MapControllerRoute(
+    name: "account-profile",
+    pattern: "tai-khoan/ho-so",
+    defaults: new { controller = "Account", action = "Profile" })
+    .WithStaticAssets();
+
+app.MapControllerRoute(
+    name: "cms-login",
+    pattern: "cms/dang-nhap",
+    defaults: new { controller = "Account", action = "CmsLogin" })
     .WithStaticAssets();
 
 app.MapControllerRoute(

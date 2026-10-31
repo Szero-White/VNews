@@ -1,4 +1,5 @@
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -7,6 +8,11 @@
     <title>@ViewData["Title"] - VNews</title>
     <meta name="description" content="@(ViewData["Description"] ?? "VNews - Website tin tức minh họa và portfolio ASP.NET Core MVC.")" />
     <meta name="theme-color" content="#a3123a" />
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <meta name="vnews-csrf-token" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
+        <meta name="vnews-bookmarks-mode" content="account" />
+    }
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Merriweather (SIL Open Font License, free for any use): headline typeface, matched to the
@@ -14,16 +20,27 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/editorial.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/reader-login-dialog.css" asp-append-version="true" />
 </head>
 <body>
     <a class="skip-link" href="#main-content">Bỏ qua điều hướng, đến nội dung</a>
     <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 
+    @* Original VNews house campaign occupies the same top-of-page position as a
+       typical publisher masthead promotion. No third-party ad or copied creative. *@
     @if (Configuration.GetValue("Features:ShowDemoAdSlot", true))
     {
-        <div class="ad-slot ad-slot--leaderboard" aria-hidden="true">
-            <span class="ad-slot__label">Vị trí quảng cáo (demo)</span>
-        </div>
+        <aside class="house-promo" aria-label="Giới thiệu VNews">
+            <div class="house-promo__inner">
+                <div class="house-promo__copy">
+                    <span class="house-promo__eyebrow">VNEWS · KHÁM PHÁ MỖI NGÀY</span>
+                    <strong class="house-promo__headline">Thêm một góc nhìn<br />về thế giới quanh ta.</strong>
+                    <span class="house-promo__support">Thời sự · Kinh doanh · Công nghệ · Đời sống</span>
+                    <a asp-controller="Home" asp-action="Latest" class="house-promo__link">Đọc tin mới nhất <span aria-hidden="true">→</span></a>
+                </div>
+                <div class="house-promo__art" aria-hidden="true"><span></span><span></span><span></span></div>
+            </div>
+        </aside>
     }
 
     <header class="masthead">
@@ -59,11 +76,15 @@
                 <a class="masthead__utility-link masthead__hide-mobile" asp-controller="Home" asp-action="Saved">Đã lưu</a>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <a class="masthead__utility-link" asp-controller="CmsArticles" asp-action="Index">Quản lý bài viết</a>
+                    @if (User.IsInRole("Admin") || User.IsInRole("Editor") || User.IsInRole("Author"))
+                    {
+                        <a class="masthead__utility-link masthead__hide-mobile" asp-controller="CmsArticles" asp-action="Index">Tòa soạn</a>
+                    }
+                    <a class="masthead__utility-link" asp-controller="Account" asp-action="Profile">Tài khoản</a>
                 }
                 else
                 {
-                    <a class="masthead__utility-link" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                    <a class="masthead__utility-link" asp-controller="Account" asp-action="Login" data-reader-login-open>Đăng nhập</a>
                 }
             </div>
         </div>
@@ -73,6 +94,19 @@
         <div class="utility-drawer__inner">
             <a asp-controller="Home" asp-action="Latest">Tin mới nhất</a>
             <a asp-controller="Home" asp-action="Saved">Đã lưu</a>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="Account" asp-action="Profile">Tài khoản của tôi</a>
+                @if (User.IsInRole("Admin") || User.IsInRole("Editor") || User.IsInRole("Author"))
+                {
+                    <a asp-controller="CmsArticles" asp-action="Index">Tòa soạn</a>
+                }
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" data-reader-login-open>Đăng nhập</a>
+                <a asp-controller="Account" asp-action="Register">Đăng ký</a>
+            }
         </div>
     </div>
 
@@ -81,6 +115,7 @@
             <a class="primary-nav__home" asp-controller="Home" asp-action="Index" aria-label="Trang chủ" title="Trang chủ">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3 2 11h2v10h6v-7h4v7h6V11h2L12 3z" /></svg>
             </a>
+            <a class="primary-nav__latest" asp-controller="Home" asp-action="Latest">Mới nhất</a>
             @await Component.InvokeAsync("CategoryNav")
         </div>
         <button type="button" id="primary-nav-next" class="primary-nav__arrow primary-nav__arrow--next" aria-label="Xem thêm chuyên mục" hidden>
@@ -97,6 +132,10 @@
     </main>
 
     <partial name="_SiteFooter" />
+    @if (User.Identity?.IsAuthenticated != true)
+    {
+        <partial name="_ReaderLoginDialog" />
+    }
     <button id="back-to-top" class="back-to-top" type="button" aria-label="Lên đầu trang" hidden>↑</button>
     <div id="site-toast" class="site-toast" role="status" aria-live="polite" hidden></div>
 

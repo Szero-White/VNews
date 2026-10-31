@@ -1,3 +1,4 @@
+using VNews.Tests.Support;
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -7,14 +8,14 @@ using VNews.Application.DTOs;
 namespace VNews.Tests.Integration;
 
 /// <summary>
-/// Hits the real VNews.Web app over HTTP against the real SQL Server LocalDB database
-/// configured in appsettings.json. Requires SQL Server LocalDB to be available.
+/// Hits the real VNews.Web app over HTTP against the isolated temporary SQL Server LocalDB database
+/// created for this test fixture. Requires SQL Server LocalDB to be available.
 /// </summary>
-public class ArticlesApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class ArticlesApiIntegrationTests : IClassFixture<IsolatedDbWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public ArticlesApiIntegrationTests(WebApplicationFactory<Program> factory)
+    public ArticlesApiIntegrationTests(IsolatedDbWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }

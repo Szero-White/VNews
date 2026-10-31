@@ -1,30 +1,29 @@
 @model LoginViewModel
 @{
-    ViewData["Title"] = "Đăng nhập";
-    Layout = "_CmsLayout";
+    ViewData["Title"] = "Đăng nhập tài khoản";
+    Layout = "_ReaderAuthLayout";
 }
-
-<div class="cms-card" style="max-width:420px; margin: 40px auto;">
-    <h1>Đăng nhập VNews CMS</h1>
-    <form asp-controller="Account" asp-action="Login" method="post" class="cms-form">
+<section class="reader-auth__card" aria-labelledby="login-title">
+    <p class="reader-auth__kicker">TÀI KHOẢN ĐỘC GIẢ</p>
+    <h1 id="login-title">Chào mừng trở lại</h1>
+    <p class="reader-auth__lead">Đăng nhập để quản lý tài khoản và các bài báo bạn yêu thích.</p>
+    <form asp-controller="Account" asp-action="Login" method="post" class="reader-auth__form">
         <input type="hidden" asp-for="ReturnUrl" />
-        <div asp-validation-summary="ModelOnly" class="cms-validation"></div>
-
-        <label asp-for="Email">Email</label>
-        <input asp-for="Email" type="email" autocomplete="username" />
-        <span asp-validation-for="Email" class="cms-validation"></span>
-
-        <label asp-for="Password">Mật khẩu</label>
-        <input asp-for="Password" type="password" autocomplete="current-password" />
-        <span asp-validation-for="Password" class="cms-validation"></span>
-
-        <button type="submit" class="cms-btn" style="margin-top:16px;">Đăng nhập</button>
+        <div asp-validation-summary="ModelOnly" class="reader-auth__errors" role="alert"></div>
+        <div class="reader-auth__field">
+            <label asp-for="Email">Email</label>
+            <input asp-for="Email" type="email" autocomplete="username" placeholder="tenban@example.com" />
+            <span asp-validation-for="Email" class="reader-auth__errors"></span>
+        </div>
+        <div class="reader-auth__field">
+            <label asp-for="Password">Mật khẩu</label>
+            <input asp-for="Password" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu" />
+            <span asp-validation-for="Password" class="reader-auth__errors"></span>
+        </div>
+        <label class="reader-auth__remember"><input asp-for="RememberMe" /> Ghi nhớ đăng nhập trên thiết bị này</label>
+        <button class="reader-auth__submit" type="submit">Đăng nhập</button>
     </form>
-    <p style="margin-top:16px; font-size:0.85rem; color:#666;">
-        Tài khoản demo: admin@vnews.local / editor@vnews.local / author@vnews.local — mật khẩu <code>Demo@12345</code> (chỉ dùng để trình diễn, không phải tài khoản thật).
-    </p>
-</div>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+    <p class="reader-auth__switch">Chưa có tài khoản? <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Đăng ký miễn phí</a></p>
+    <p class="reader-auth__staff-link">Nhân viên tòa soạn? <a asp-controller="Account" asp-action="CmsLogin">Đăng nhập CMS</a></p>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

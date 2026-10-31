@@ -1,0 +1,37 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Đăng ký tài khoản";
+    Layout = "_ReaderAuthLayout";
+}
+<section class="reader-auth__card" aria-labelledby="register-title">
+    <p class="reader-auth__kicker">THAM GIA VNEWS</p>
+    <h1 id="register-title">Tạo tài khoản</h1>
+    <p class="reader-auth__lead">Đăng ký tài khoản độc giả miễn phí, độc lập với quyền quản trị tòa soạn.</p>
+    <form asp-controller="Account" asp-action="Register" method="post" class="reader-auth__form">
+        <input type="hidden" asp-for="ReturnUrl" />
+        <div asp-validation-summary="ModelOnly" class="reader-auth__errors" role="alert"></div>
+        <div class="reader-auth__field">
+            <label asp-for="DisplayName">Tên hiển thị</label>
+            <input asp-for="DisplayName" autocomplete="name" placeholder="Tên của bạn" maxlength="80" />
+            <span asp-validation-for="DisplayName" class="reader-auth__errors"></span>
+        </div>
+        <div class="reader-auth__field">
+            <label asp-for="Email">Email</label>
+            <input asp-for="Email" type="email" autocomplete="email" placeholder="tenban@example.com" />
+            <span asp-validation-for="Email" class="reader-auth__errors"></span>
+        </div>
+        <div class="reader-auth__field">
+            <label asp-for="Password">Mật khẩu</label>
+            <input asp-for="Password" type="password" autocomplete="new-password" placeholder="Ít nhất 8 ký tự, có chữ hoa và số" />
+            <span asp-validation-for="Password" class="reader-auth__errors"></span>
+        </div>
+        <div class="reader-auth__field">
+            <label asp-for="ConfirmPassword">Nhập lại mật khẩu</label>
+            <input asp-for="ConfirmPassword" type="password" autocomplete="new-password" placeholder="Nhập lại mật khẩu" />
+            <span asp-validation-for="ConfirmPassword" class="reader-auth__errors"></span>
+        </div>
+        <button class="reader-auth__submit" type="submit">Đăng ký tài khoản</button>
+    </form>
+    <p class="reader-auth__switch">Đã có tài khoản? <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Đăng nhập</a></p>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

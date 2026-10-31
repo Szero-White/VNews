@@ -1,3 +1,4 @@
+using VNews.Tests.Support;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -9,14 +10,13 @@ using VNews.Infrastructure.Persistence;
 namespace VNews.Tests.Integration;
 
 /// <summary>
-/// Exercises the real CMS login + draft workflow over HTTP against the real SQL Server LocalDB
-/// database (same as ArticlesApiIntegrationTests). No mocking of auth, DB, or antiforgery.
+/// Exercises the real CMS login + draft workflow over HTTP against a unique, isolated LocalDB test database. No mocking of auth or antiforgery.
 /// </summary>
-public class CmsWorkflowIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class CmsWorkflowIntegrationTests : IClassFixture<IsolatedDbWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly IsolatedDbWebApplicationFactory _factory;
 
-    public CmsWorkflowIntegrationTests(WebApplicationFactory<Program> factory)
+    public CmsWorkflowIntegrationTests(IsolatedDbWebApplicationFactory factory)
     {
         _factory = factory;
     }
@@ -36,7 +36,7 @@ public class CmsWorkflowIntegrationTests : IClassFixture<WebApplicationFactory<P
     {
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var loginPage = await client.GetAsync("/tai-khoan/dang-nhap");
+        var loginPage = await client.GetAsync("/cms/dang-nhap");
         var token = await ExtractAntiforgeryTokenAsync(loginPage);
 
         var form = new Dictionary<string, string>
@@ -46,7 +46,7 @@ public class CmsWorkflowIntegrationTests : IClassFixture<WebApplicationFactory<P
             ["__RequestVerificationToken"] = token
         };
 
-        var response = await client.PostAsync("/tai-khoan/dang-nhap", new FormUrlEncodedContent(form));
+        var response = await client.PostAsync("/cms/dang-nhap", new FormUrlEncodedContent(form));
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
 
         return client;
@@ -60,7 +60,7 @@ public class CmsWorkflowIntegrationTests : IClassFixture<WebApplicationFactory<P
         var response = await client.GetAsync("/cms");
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Contains("/tai-khoan/dang-nhap", response.Headers.Location!.ToString());
+        Assert.Contains("/cms/dang-nhap", response.Headers.Location!.ToString());
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class CmsWorkflowIntegrationTests : IClassFixture<WebApplicationFactory<P
     {
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var loginPage = await client.GetAsync("/tai-khoan/dang-nhap");
+        var loginPage = await client.GetAsync("/cms/dang-nhap");
         var token = await ExtractAntiforgeryTokenAsync(loginPage);
 
         var form = new Dictionary<string, string>
@@ -78,11 +78,18 @@ public class CmsWorkflowIntegrationTests : IClassFixture<WebApplicationFactory<P
             ["__RequestVerificationToken"] = token
         };
 
-        var response = await client.PostAsync("/tai-khoan/dang-nhap", new FormUrlEncodedContent(form));
+        var response = await client.PostAsync("/cms/dang-nhap", new FormUrlEncodedContent(form));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var html = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Email ho", html);
+        // The exact Vietnamese message differs between a failed password and a locked-out account.
+        // Require a visible server-side validation error instead of matching one text literal.
+        Assert.Contains("validation-summary-errors", html);
+
+        // Most importantly, the failed attempt must not create an authenticated CMS session.
+        var cmsResponse = await client.GetAsync("/cms");
+        Assert.Equal(HttpStatusCode.Redirect, cmsResponse.StatusCode);
+        Assert.Contains("/cms/dang-nhap", cmsResponse.Headers.Location!.ToString());
     }
 
     [Fact]

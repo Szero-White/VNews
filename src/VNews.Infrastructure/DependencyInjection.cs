@@ -36,6 +36,35 @@ public static class DependencyInjection
             options.LoginPath = "/tai-khoan/dang-nhap";
             options.AccessDeniedPath = "/tai-khoan/khong-co-quyen";
             options.LogoutPath = "/tai-khoan/dang-xuat";
+            options.Events.OnRedirectToLogin = context =>
+            {
+                if (context.Request.Path.StartsWithSegments("/cms"))
+                {
+                    var returnUrl = Uri.EscapeDataString(context.Request.Path.ToString() + context.Request.QueryString.ToString());
+                    context.Response.Redirect("/cms/dang-nhap?returnUrl=" + returnUrl);
+                }
+                else if (context.Request.Path.StartsWithSegments("/api"))
+                {
+                    context.Response.StatusCode = 401;
+                }
+                else
+                {
+                    context.Response.Redirect(context.RedirectUri);
+                }
+                return Task.CompletedTask;
+            };
+            options.Events.OnRedirectToAccessDenied = context =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api"))
+                {
+                    context.Response.StatusCode = 403;
+                }
+                else
+                {
+                    context.Response.Redirect(context.RedirectUri);
+                }
+                return Task.CompletedTask;
+            };
         });
 
         services.AddScoped<IArticleQueryService, ArticleQueryService>();

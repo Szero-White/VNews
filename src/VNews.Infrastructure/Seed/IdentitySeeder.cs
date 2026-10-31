@@ -11,7 +11,7 @@ public static class IdentitySeeder
 {
     private const string DemoPassword = "Demo@12345";
 
-    public static async Task SeedAsync(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager)
+    public static async Task SeedAsync(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, bool seedDemoAccounts = false)
     {
         foreach (var role in Roles.All)
         {
@@ -20,6 +20,8 @@ public static class IdentitySeeder
                 await roleManager.CreateAsync(new IdentityRole(role));
             }
         }
+
+        if (!seedDemoAccounts) return;
 
         await EnsureUserAsync(userManager, "admin@vnews.local", "Quản trị viên demo", Roles.Admin);
         await EnsureUserAsync(userManager, "editor@vnews.local", "Biên tập viên demo", Roles.Editor);

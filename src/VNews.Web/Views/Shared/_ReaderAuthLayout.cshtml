@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#a3123a" />
+    <title>@ViewData["Title"] · VNews</title>
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+</head>
+<body class="reader-auth">
+    <a class="reader-auth__skip" href="#auth-content">Bỏ qua điều hướng</a>
+    <header class="reader-auth__header">
+        <a class="reader-auth__logo" asp-controller="Home" asp-action="Index" aria-label="VNews - Trang chủ">V<span>News</span></a>
+        <a class="reader-auth__back" asp-controller="Home" asp-action="Index">← Trở về trang chủ</a>
+    </header>
+    <main id="auth-content" class="reader-auth__main">
+        <div class="reader-auth__form-wrap">@RenderBody()</div>
+    </main>
+    <footer class="reader-auth__footer">VNews · Dự án portfolio ASP.NET Core MVC, không liên kết với VnExpress.</footer>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

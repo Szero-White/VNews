@@ -1,37 +1,79 @@
 @model CategoryPageViewModel
+@using System.Linq
 @{
     ViewData["Title"] = Model.Category.Name;
     ViewData["Description"] = Model.Category.Description ?? $"Tin tức chuyên mục {Model.Category.Name} trên VNews.";
     ViewData["PaginationAction"] = "Category";
     ViewData["PaginationSlug"] = Model.Category.Slug;
+
+    var firstPage = Model.Articles.Page == 1;
+    var lead = firstPage ? Model.Articles.Items.FirstOrDefault() : null;
+    var briefings = firstPage ? Model.Articles.Items.Skip(1).Take(2).ToList() : Model.Articles.Items.Take(0).ToList();
+    var articles = Model.Articles.Items.Skip(firstPage ? 1 + briefings.Count : 0).ToList();
 }
 <div class="container listing-page editorial-listing">
-    <nav class="breadcrumb"><a asp-controller="Home" asp-action="Index">Trang chủ</a> &rsaquo; @Model.Category.Name</nav>
+    <nav class="breadcrumb" aria-label="Đường dẫn">
+        <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">@Model.Category.Name</span>
+    </nav>
     <div class="listing-heading">
-        <div><h1 class="listing-page__title">@Model.Category.Name</h1>
-            @if (!string.IsNullOrWhiteSpace(Model.Category.Description)) { <p class="listing-page__description">@Model.Category.Description</p> }
+        <div>
+            <h1 class="listing-page__title">@Model.Category.Name</h1>
+            @if (!string.IsNullOrWhiteSpace(Model.Category.Description))
+            {
+                <p class="listing-page__description">@Model.Category.Description</p>
+            }
         </div>
-        <a asp-controller="Home" asp-action="Latest">Tin mới nhất →</a>
+        <a asp-controller="Home" asp-action="Latest">Tin mới nhất <span aria-hidden="true">→</span></a>
     </div>
+
     @if (Model.Articles.Items.Count == 0)
     {
         <div class="empty-state"><p>Chưa có bài viết trong chuyên mục này.</p></div>
     }
     else
     {
-        var lead = Model.Articles.Items.First();
-        @if (Model.Articles.Page == 1)
+        @if (lead is not null)
         {
-            <div class="listing-feature">
-                @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = lead, Layout = ArticleCardLayout.HeroLead })
-            </div>
+            <section class="editorial-listing__feature" aria-label="Tin nổi bật trong chuyên mục">
+                <div class="editorial-listing__lead">
+                    @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = lead, Layout = ArticleCardLayout.HeroLead })
+                </div>
+                @if (briefings.Count > 0)
+                {
+                    <div class="editorial-listing__briefings" aria-label="Tin đáng chú ý">
+                        @foreach (var briefing in briefings)
+                        {
+                            <article class="listing-brief">
+                                @if (!string.IsNullOrWhiteSpace(briefing.CoverImageUrl))
+                                {
+                                    <a class="listing-brief__image" asp-controller="Article" asp-action="Detail" asp-route-slug="@briefing.Slug" aria-label="Đọc bài: @briefing.Title">
+                                        <img src="@briefing.CoverImageUrl" alt="" loading="lazy" decoding="async" />
+                                    </a>
+                                }
+                                <h2 class="listing-brief__title"><a asp-controller="Article" asp-action="Detail" asp-route-slug="@briefing.Slug">@briefing.Title</a></h2>
+                                <p class="listing-brief__summary">@briefing.Summary</p>
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
         }
-        <div class="editorial-listing__articles">
-            @foreach (var item in Model.Articles.Items.Skip(Model.Articles.Page == 1 ? 1 : 0))
-            {
-                @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = item, Layout = ArticleCardLayout.StoryRow })
-            }
-        </div>
+        @if (articles.Count > 0)
+        {
+            <section class="editorial-listing__feed" aria-label="Danh sách bài viết">
+                <div class="editorial-heading">
+                    <h2 class="section-title">Tin trong chuyên mục</h2>
+                </div>
+                <div class="editorial-listing__articles">
+                    @foreach (var item in articles)
+                    {
+                        @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = item, Layout = ArticleCardLayout.StoryRow })
+                    }
+                </div>
+            </section>
+        }
         @await Html.PartialAsync("_Pagination", Model.Articles)
     }
 </div>
