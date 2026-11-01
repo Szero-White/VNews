@@ -64,11 +64,17 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IArticleQueryService, ArticleQueryService>();
+        services.AddScoped<IHomePageQueryService, HomePageQueryService>();
         services.AddScoped<ICategoryQueryService, CategoryQueryService>();
         services.AddScoped<IArticleStoredProcedureService, ArticleStoredProcedureService>();
         services.AddScoped<IArticleCommandService, ArticleCommandService>();
+        services.AddScoped<IArticleCmsQueryService, ArticleCmsQueryService>();
+        services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
+        services.AddScoped<IUserAdministrationService, UserAdministrationService>();
+        services.AddScoped<ISavedArticleService, SavedArticleService>();
         services.AddScoped<ICategoryCommandService, CategoryCommandService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<ICommentService, CommentService>();
 
         services.AddMemoryCache();
         services.AddHttpClient<IWeatherService, WeatherService>(client =>

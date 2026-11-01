@@ -1,4 +1,3 @@
-using Ganss.Xss;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using VNews.Application.Common;
@@ -15,34 +14,12 @@ public class ArticleCommandService : IArticleCommandService
     private readonly VNewsDbContext _context;
     private readonly IAuditLogService _auditLog;
     private readonly ILogger<ArticleCommandService> _logger;
-    private static readonly HtmlSanitizer Sanitizer = BuildSanitizer();
 
     public ArticleCommandService(VNewsDbContext context, IAuditLogService auditLog, ILogger<ArticleCommandService> logger)
     {
         _context = context;
         _auditLog = auditLog;
         _logger = logger;
-    }
-
-    private static HtmlSanitizer BuildSanitizer()
-    {
-        var sanitizer = new HtmlSanitizer();
-        sanitizer.AllowedTags.Clear();
-        foreach (var tag in new[] { "p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li", "h2", "h3", "h4", "blockquote", "a", "img" })
-        {
-            sanitizer.AllowedTags.Add(tag);
-        }
-
-        sanitizer.AllowedAttributes.Clear();
-        sanitizer.AllowedAttributes.Add("href");
-        sanitizer.AllowedAttributes.Add("src");
-        sanitizer.AllowedAttributes.Add("alt");
-
-        sanitizer.AllowedSchemes.Clear();
-        sanitizer.AllowedSchemes.Add("http");
-        sanitizer.AllowedSchemes.Add("https");
-
-        return sanitizer;
     }
 
     /// <summary>
@@ -86,118 +63,33 @@ public class ArticleCommandService : IArticleCommandService
         throw new ArticleForbiddenException("Bạn chỉ có thể thao tác trên bài viết của chính mình.");
     }
 
+    /// <summary>
+    /// Who may edit what: drafts and returned articles by their author (or an editor/admin); published articles only by an editor/admin
+    /// (an author cannot change what is already public, even their own); articles waiting for review are locked.
+    /// </summary>
+    private void EnsureCanEdit(Article article, string actingUserId, bool canManageAll)
+    {
+        switch (article.Status)
+        {
+            case ArticleStatus.Draft or ArticleStatus.Rejected:
+                EnsureCanModify(article, actingUserId, canManageAll, "Update");
+                return;
+            case ArticleStatus.Published when canManageAll:
+                return;
+            case ArticleStatus.Published:
+                _logger.LogWarning("Forbidden UpdatePublished: user {UserId} tried to edit published article {ArticleId}.", actingUserId, article.Id);
+                throw new ArticleForbiddenException("Chỉ biên tập viên hoặc quản trị viên mới được sửa bài đã xuất bản.");
+            default:
+                throw new ArticleWorkflowException("Bài viết đang chờ duyệt nên không thể chỉnh sửa.");
+        }
+    }
+
     private async Task EnsureCategoryExistsAsync(int categoryId, CancellationToken cancellationToken)
     {
         if (!await _context.Categories.AnyAsync(c => c.Id == categoryId, cancellationToken))
         {
             throw new ArticleWorkflowException("Chuyên mục đã chọn không tồn tại.");
         }
-    }
-
-    // Accent- and case-insensitive matching, same idea as the public search (đ/Đ are replaced on the column side).
-    private const string SearchCollation = "Latin1_General_100_CI_AI";
-
-    public async Task<CmsStatsDto> GetCmsStatsAsync(string? authorUserId, CancellationToken cancellationToken = default)
-    {
-        var query = _context.Articles.AsNoTracking().AsQueryable();
-        if (!string.IsNullOrWhiteSpace(authorUserId))
-        {
-            query = query.Where(a => a.AuthorUserId == authorUserId);
-        }
-
-        var counts = await query.GroupBy(a => a.Status).Select(g => new { g.Key, Count = g.Count() }).ToListAsync(cancellationToken);
-        int Of(ArticleStatus status) => counts.FirstOrDefault(c => c.Key == status)?.Count ?? 0;
-        return new CmsStatsDto
-        {
-            Draft = Of(ArticleStatus.Draft),
-            PendingReview = Of(ArticleStatus.PendingReview),
-            Rejected = Of(ArticleStatus.Rejected),
-            Published = Of(ArticleStatus.Published),
-        };
-    }
-
-    public async Task<PagedResult<ArticleCmsListItemDto>> ListForCmsAsync(
-        string? statusFilter, string? authorUserId, int page, int pageSize, CancellationToken cancellationToken = default,
-        string? search = null, bool oldestFirst = false)
-    {
-        page = page < 1 ? 1 : page;
-        pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
-
-        var query = _context.Articles.Include(a => a.Category).AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(authorUserId))
-        {
-            query = query.Where(a => a.AuthorUserId == authorUserId);
-        }
-
-        if (!string.IsNullOrWhiteSpace(statusFilter) && Enum.TryParse<ArticleStatus>(statusFilter, true, out var status))
-        {
-            query = query.Where(a => a.Status == status);
-        }
-
-        foreach (var token in VNews.Application.Common.SearchText.Tokenize(search))
-        {
-            var pattern = $"%{token}%";
-            query = query.Where(a =>
-                EF.Functions.Like(EF.Functions.Collate(a.Title, SearchCollation).Replace("đ", "d"), pattern)
-                || EF.Functions.Like(EF.Functions.Collate(a.AuthorName, SearchCollation).Replace("đ", "d"), pattern));
-        }
-
-        var ordered = oldestFirst
-            ? query.OrderBy(a => a.UpdatedAt ?? a.CreatedAt).ThenBy(a => a.Id)
-            : query.OrderByDescending(a => a.UpdatedAt ?? a.CreatedAt).ThenByDescending(a => a.Id);
-
-        var totalCount = await ordered.CountAsync(cancellationToken);
-
-        var items = await ordered
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(a => new ArticleCmsListItemDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                Slug = a.Slug,
-                Status = a.Status.ToString(),
-                CategoryName = a.Category.Name,
-                AuthorName = a.AuthorName,
-                AuthorUserId = a.AuthorUserId,
-                CreatedAt = a.CreatedAt,
-                UpdatedAt = a.UpdatedAt,
-                PublishedAt = a.PublishedAt,
-                ReviewNote = a.ReviewNote,
-                CoverImageUrl = a.CoverImageUrl
-            })
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<ArticleCmsListItemDto>
-        {
-            Items = items,
-            Page = page,
-            PageSize = pageSize,
-            TotalCount = totalCount
-        };
-    }
-
-    public async Task<ArticleEditDto?> GetForEditAsync(int articleId, CancellationToken cancellationToken = default)
-    {
-        return await _context.Articles
-            .Where(a => a.Id == articleId)
-            .Select(a => new ArticleEditDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                Slug = a.Slug,
-                Summary = a.Summary,
-                Body = a.Body,
-                CoverImageUrl = a.CoverImageUrl,
-                AuthorName = a.AuthorName,
-                AuthorUserId = a.AuthorUserId,
-                Status = a.Status.ToString(),
-                ReviewNote = a.ReviewNote,
-                CategoryId = a.CategoryId,
-                RowVersion = a.RowVersion
-            })
-            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<int> CreateDraftAsync(ArticleSaveRequest request, string authorUserId, string authorDisplayName, CancellationToken cancellationToken = default)
@@ -213,7 +105,7 @@ public class ArticleCommandService : IArticleCommandService
                 Title = request.Title.Trim(),
                 Slug = slug,
                 Summary = request.Summary.Trim(),
-                Body = Sanitizer.Sanitize(request.Body),
+                Body = ArticleHtmlSanitizer.Sanitize(request.Body),
                 CoverImageUrl = request.CoverImageUrl,
                 CategoryId = request.CategoryId,
                 AuthorName = authorDisplayName,
@@ -233,7 +125,7 @@ public class ArticleCommandService : IArticleCommandService
         return id;
     }
 
-    public async Task UpdateDraftAsync(int articleId, ArticleSaveRequest request, byte[] rowVersion, string actingUserId, bool canManageAll = false, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(int articleId, ArticleSaveRequest request, byte[] rowVersion, string actingUserId, bool canManageAll = false, CancellationToken cancellationToken = default, string? actingUserName = null)
     {
         await EnsureCategoryExistsAsync(request.CategoryId, cancellationToken);
 
@@ -242,24 +134,26 @@ public class ArticleCommandService : IArticleCommandService
             var article = await _context.Articles.FirstOrDefaultAsync(a => a.Id == articleId, cancellationToken)
                 ?? throw new ArticleNotFoundException(articleId);
 
-            EnsureCanModify(article, actingUserId, canManageAll, "UpdateDraft");
-
-            if (article.Status is not ArticleStatus.Draft and not ArticleStatus.Rejected)
-            {
-                throw new ArticleWorkflowException("Chỉ có thể sửa bài viết ở trạng thái Nháp hoặc Bị từ chối.");
-            }
+            EnsureCanEdit(article, actingUserId, canManageAll);
+            var wasPublished = article.Status == ArticleStatus.Published;
+            var categoryChanged = article.CategoryId != request.CategoryId;
+            var coverChanged = !string.Equals(article.CoverImageUrl ?? string.Empty, request.CoverImageUrl ?? string.Empty, StringComparison.Ordinal);
 
             _context.Entry(article).Property(a => a.RowVersion).OriginalValue = rowVersion;
 
             article.Title = request.Title.Trim();
             article.Summary = request.Summary.Trim();
-            article.Body = Sanitizer.Sanitize(request.Body);
+            article.Body = ArticleHtmlSanitizer.Sanitize(request.Body);
             article.CoverImageUrl = request.CoverImageUrl;
             article.CategoryId = request.CategoryId;
             article.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);
-            await _auditLog.LogAsync(actingUserId, article.AuthorName, "Update", "Article", article.Id.ToString(), $"Cập nhật '{article.Title}'", cancellationToken);
+            // Slug, status and PublishedAt are deliberately untouched: a published article keeps its public address and publish time.
+            var detail = wasPublished
+                ? $"Sửa bài đã xuất bản '{article.Title}'" + (categoryChanged ? " (đổi chuyên mục)" : "") + (coverChanged ? " (đổi ảnh bìa)" : "")
+                : $"Cập nhật '{article.Title}'";
+            await _auditLog.LogAsync(actingUserId, actingUserName ?? article.AuthorName, wasPublished ? "UpdatePublished" : "Update", "Article", article.Id.ToString(), detail, cancellationToken);
         }, cancellationToken);
 
         _logger.LogInformation("Article {ArticleId} updated by user {UserId}.", articleId, actingUserId);

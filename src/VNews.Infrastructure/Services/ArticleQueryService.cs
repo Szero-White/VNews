@@ -4,6 +4,7 @@ using VNews.Application.Common;
 using VNews.Application.DTOs;
 using VNews.Application.Interfaces;
 using VNews.Domain.Entities;
+using VNews.Infrastructure.Common;
 using VNews.Infrastructure.Persistence;
 
 namespace VNews.Infrastructure.Services;
@@ -17,125 +18,12 @@ public class ArticleQueryService : IArticleQueryService
         _context = context;
     }
 
-    private static readonly Expression<Func<Article, ArticleSummaryDto>> ToSummary = a => new ArticleSummaryDto
-    {
-        Id = a.Id,
-        Title = a.Title,
-        Slug = a.Slug,
-        Summary = a.Summary,
-        CoverImageUrl = a.CoverImageUrl,
-        AuthorName = a.AuthorName,
-        PublishedAt = a.PublishedAt,
-        CategoryName = a.Category.Name,
-        CategorySlug = a.Category.Slug
-    };
+    private static readonly Expression<Func<Article, ArticleSummaryDto>> ToSummary = ArticleProjections.ToSummary;
 
     private IQueryable<Article> PublishedArticles() =>
         _context.Articles
             .Where(a => a.Status == ArticleStatus.Published)
             .Include(a => a.Category);
-
-    public async Task<HomePageData> GetHomePageDataAsync(CancellationToken cancellationToken = default)
-    {
-        var latestOrdered = PublishedArticles()
-            .OrderByDescending(a => a.PublishedAt);
-
-        var topArticles = await latestOrdered
-            .Take(6)
-            .Select(ToSummary)
-            .ToListAsync(cancellationToken);
-
-        var hero = topArticles.FirstOrDefault();
-        var sideFeatures = topArticles.Skip(1).Take(2).ToList();
-
-        // Keep homepage collections disjoint: top 3 for hero, next 9 for the news stream.
-        var latest = await latestOrdered
-            .Skip(12)
-            .Take(10)
-            .Select(ToSummary)
-            .ToListAsync(cancellationToken);
-
-        // "Stream tin tổng hợp" — longer mixed-category feed of large cards.
-        var streamItems = await latestOrdered
-            .Skip(3)
-            .Take(9)
-            .Select(ToSummary)
-            .ToListAsync(cancellationToken);
-
-        // "Ảnh" — photo-forward grid, most recently published articles with a cover image.
-        var photoHighlights = await PublishedArticles()
-            .Where(a => a.CoverImageUrl != null)
-            .OrderByDescending(a => a.PublishedAt)
-            .Take(8)
-            .Select(ToSummary)
-            .ToListAsync(cancellationToken);
-
-        var mostViewed = await PublishedArticles()
-            .OrderByDescending(a => a.ViewCount)
-            .Take(5)
-            .Select(ToSummary)
-            .ToListAsync(cancellationToken);
-
-        // "Spotlight" — large feature cards, highest view count.
-        var spotlight = await PublishedArticles()
-            .OrderByDescending(a => a.ViewCount)
-            .Take(3)
-            .Select(ToSummary)
-            .ToListAsync(cancellationToken);
-
-        // "Podcasts" demo section — reuses a slice of recent articles, clearly labeled
-        // as illustrative (no real audio) by the view, not the data.
-        var podcastDemoItems = await latestOrdered
-            .Skip(10)
-            .Take(4)
-            .Select(ToSummary)
-            .ToListAsync(cancellationToken);
-
-        var categories = await _context.Categories
-            .OrderBy(c => c.DisplayOrder)
-            .ToListAsync(cancellationToken);
-
-        var panels = new List<CategoryPanel>();
-        foreach (var category in categories)
-        {
-            var articles = await PublishedArticles()
-                .Where(a => a.CategoryId == category.Id)
-                .OrderByDescending(a => a.PublishedAt)
-                .Take(5)
-                .Select(ToSummary)
-                .ToListAsync(cancellationToken);
-
-            if (articles.Count == 0)
-            {
-                continue;
-            }
-
-            panels.Add(new CategoryPanel
-            {
-                Category = new CategoryDto
-                {
-                    Id = category.Id,
-                    Name = category.Name,
-                    Slug = category.Slug,
-                    Description = category.Description
-                },
-                Articles = articles
-            });
-        }
-
-        return new HomePageData
-        {
-            Hero = hero,
-            SideFeatures = sideFeatures,
-            Latest = latest,
-            CategoryPanels = panels,
-            MostViewed = mostViewed,
-            StreamItems = streamItems,
-            PhotoHighlights = photoHighlights,
-            Spotlight = spotlight,
-            PodcastDemoItems = podcastDemoItems
-        };
-    }
 
     public async Task<ArticleDetailDto?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
     {
@@ -171,6 +59,23 @@ public class ArticleQueryService : IArticleQueryService
         return article;
     }
 
+    public async Task<ArticleNeighborsDto> GetNeighborsAsync(int articleId, CancellationToken cancellationToken = default)
+    {
+        var current = await _context.Articles.AsNoTracking()
+            .Where(a => a.Id == articleId && a.Status == ArticleStatus.Published)
+            .Select(a => new { a.Id, a.CategoryId, a.PublishedAt })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (current?.PublishedAt is not DateTime at) return new ArticleNeighborsDto();
+
+        var sameCategory = PublishedArticles().AsNoTracking().Where(a => a.CategoryId == current.CategoryId && a.Id != current.Id && a.PublishedAt != null);
+        // Ties on the publish time fall back to the id so the order is total and the two links never point at the same article.
+        var previous = await sameCategory.Where(a => a.PublishedAt < at || (a.PublishedAt == at && a.Id < current.Id))
+            .OrderByDescending(a => a.PublishedAt).ThenByDescending(a => a.Id).Select(ToSummary).FirstOrDefaultAsync(cancellationToken);
+        var next = await sameCategory.Where(a => a.PublishedAt > at || (a.PublishedAt == at && a.Id > current.Id))
+            .OrderBy(a => a.PublishedAt).ThenBy(a => a.Id).Select(ToSummary).FirstOrDefaultAsync(cancellationToken);
+        return new ArticleNeighborsDto { Previous = previous, Next = next };
+    }
+
     public async Task<IReadOnlyList<ArticleSummaryDto>> GetMostViewedAsync(
         int count, int? excludeArticleId = null, CancellationToken cancellationToken = default)
     {
@@ -197,12 +102,45 @@ public class ArticleQueryService : IArticleQueryService
         return await ToPagedResultAsync(query, page, pageSize, cancellationToken);
     }
 
-    public async Task<PagedResult<ArticleSummaryDto>> GetByCategoryAsync(
-        string categorySlug, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<CategoryGroupDto>> GetSubCategoryGroupsAsync(
+        string parentSlug, int perGroup, IReadOnlyCollection<int> excludeIds, CancellationToken cancellationToken = default)
     {
+        var children = await _context.Categories.AsNoTracking()
+            .Where(c => c.Parent != null && c.Parent.Slug == parentSlug)
+            .OrderBy(c => c.DisplayOrder).ThenBy(c => c.Id)
+            .ToListAsync(cancellationToken);
+
+        var groups = new List<CategoryGroupDto>();
+        var alreadyShown = excludeIds.ToList();
+        foreach (var child in children)
+        {
+            var articles = await PublishedArticles().AsNoTracking()
+                .Where(a => a.CategoryId == child.Id && !alreadyShown.Contains(a.Id))
+                .OrderByDescending(a => a.PublishedAt).ThenByDescending(a => a.Id)
+                .Take(perGroup)
+                .Select(ToSummary)
+                .ToListAsync(cancellationToken);
+            if (articles.Count == 0) continue; // a sub-category with nothing new gets no empty block
+
+            alreadyShown.AddRange(articles.Select(a => a.Id)); // and no story appears in two groups
+            groups.Add(new CategoryGroupDto
+            {
+                Category = new CategoryDto { Id = child.Id, Name = child.Name, Slug = child.Slug, ParentId = child.ParentId, ParentSlug = parentSlug },
+                Articles = articles,
+            });
+        }
+        return groups;
+    }
+
+    public async Task<PagedResult<ArticleSummaryDto>> GetByCategoryAsync(
+        string categorySlug, int page, int pageSize, CancellationToken cancellationToken = default, IReadOnlyCollection<int>? excludeIds = null)
+    {
+        var excluded = excludeIds?.ToList() ?? new List<int>();
         var query = PublishedArticles()
-            .Where(a => a.Category.Slug == categorySlug)
-            .OrderByDescending(a => a.PublishedAt);
+            .Where(a => !excluded.Contains(a.Id))
+            // A parent category lists its own articles and those of its sub-categories; a sub-category lists only its own.
+            .Where(a => a.Category.Slug == categorySlug || (a.Category.Parent != null && a.Category.Parent.Slug == categorySlug))
+            .OrderByDescending(a => a.PublishedAt).ThenByDescending(a => a.Id);
 
         return await ToPagedResultAsync(query, page, pageSize, cancellationToken);
     }
