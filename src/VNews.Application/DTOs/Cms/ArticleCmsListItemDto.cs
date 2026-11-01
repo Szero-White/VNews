@@ -18,4 +18,8 @@ public class ArticleCmsListItemDto
 
     /// <summary>The cover image, so lists can show whether an article has one.</summary>
     public string? CoverImageUrl { get; set; }
+
+    /// <summary>When the article was moved to the trash, and the status it returns to on restore (trash list only).</summary>
+    public DateTime? DeletedAt { get; set; }
+    public string? StatusBeforeDeletion { get; set; }
 }

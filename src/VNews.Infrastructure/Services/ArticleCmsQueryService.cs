@@ -36,6 +36,7 @@ public class ArticleCmsQueryService : IArticleCmsQueryService
             PendingReview = Of(ArticleStatus.PendingReview),
             Rejected = Of(ArticleStatus.Rejected),
             Published = Of(ArticleStatus.Published),
+            Trashed = Of(ArticleStatus.Trashed),
         };
     }
 
@@ -56,6 +57,10 @@ public class ArticleCmsQueryService : IArticleCmsQueryService
         if (!string.IsNullOrWhiteSpace(statusFilter) && Enum.TryParse<ArticleStatus>(statusFilter, true, out var status))
         {
             query = query.Where(a => a.Status == status);
+        }
+        else
+        {
+            query = query.Where(a => a.Status != ArticleStatus.Trashed); // the trash is only ever shown when asked for
         }
 
         foreach (var token in SearchText.Tokenize(search))
@@ -88,7 +93,9 @@ public class ArticleCmsQueryService : IArticleCmsQueryService
                 UpdatedAt = a.UpdatedAt,
                 PublishedAt = a.PublishedAt,
                 ReviewNote = a.ReviewNote,
-                CoverImageUrl = a.CoverImageUrl
+                CoverImageUrl = a.CoverImageUrl,
+                DeletedAt = a.DeletedAt,
+                StatusBeforeDeletion = a.StatusBeforeDeletion == null ? null : a.StatusBeforeDeletion.ToString()
             })
             .ToListAsync(cancellationToken);
 

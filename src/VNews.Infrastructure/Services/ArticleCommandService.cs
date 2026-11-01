@@ -79,6 +79,8 @@ public class ArticleCommandService : IArticleCommandService
             case ArticleStatus.Published:
                 _logger.LogWarning("Forbidden UpdatePublished: user {UserId} tried to edit published article {ArticleId}.", actingUserId, article.Id);
                 throw new ArticleForbiddenException("Chỉ biên tập viên hoặc quản trị viên mới được sửa bài đã xuất bản.");
+            case ArticleStatus.Trashed:
+                throw new ArticleWorkflowException("Bài viết đang ở thùng rác. Hãy khôi phục trước khi chỉnh sửa.");
             default:
                 throw new ArticleWorkflowException("Bài viết đang chờ duyệt nên không thể chỉnh sửa.");
         }

@@ -29,6 +29,8 @@
         {
             <partial name="_ReviewActions" model="new ReviewActionsModel(article.Id, article.Title, Small: false)" />
         }
+        @{ var rowActions = CmsRowActions.For(article.Status, article.AuthorUserId == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, privileged); }
+        <partial name="_TrashActions" model="new TrashActionsModel(article.Id, article.Title, Small: false, rowActions.CanTrash, rowActions.CanRestore, Convert.ToBase64String(article.RowVersion))" />
     </div>
 </div>
 

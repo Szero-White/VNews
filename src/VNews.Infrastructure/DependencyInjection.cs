@@ -68,6 +68,7 @@ public static class DependencyInjection
         services.AddScoped<ICategoryQueryService, CategoryQueryService>();
         services.AddScoped<IArticleStoredProcedureService, ArticleStoredProcedureService>();
         services.AddScoped<IArticleCommandService, ArticleCommandService>();
+        services.AddScoped<IArticleTrashService, ArticleTrashService>();
         services.AddScoped<IArticleCmsQueryService, ArticleCmsQueryService>();
         services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
         services.AddScoped<IUserAdministrationService, UserAdministrationService>();

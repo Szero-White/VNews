@@ -18,6 +18,7 @@
         <p class="page-head__sub">Xin chào, <strong>@Model.DisplayName</strong> <span class="badge badge--@(Model.RoleLabel == "Quản trị viên" ? "admin" : privileged ? "editor" : "author")">@Model.RoleLabel</span></p>
     </div>
     <div class="page-head__actions">
+        <a asp-action="Index" asp-route-status="Trashed" class="btn btn--secondary" title="Bài đã xóa, có thể khôi phục">Thùng rác@(s.Trashed > 0 ? $" ({s.Trashed})" : "")</a>
         <a asp-action="Create" class="btn btn--primary"><svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>Viết bài mới</a>
     </div>
 </div>
@@ -167,6 +168,7 @@
                                     {
                                         <partial name="_ReviewActions" model="new ReviewActionsModel(a.Id, a.Title, Small: true)" />
                                     }
+                                    <partial name="_TrashActions" model="new TrashActionsModel(a.Id, a.Title, Small: true, act.CanTrash, act.CanRestore)" />
                                 </div>
                             </td>
                         </tr>

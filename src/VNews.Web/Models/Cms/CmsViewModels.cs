@@ -59,3 +59,6 @@ public sealed class AppPagerModel
 
 /// <summary>Input of the shared Publish / Reject buttons (list row and edit page), so the confirmation texts exist in one place.</summary>
 public sealed record ReviewActionsModel(int Id, string Title, bool Small);
+
+/// <summary>Input of the shared Move-to-trash / Restore buttons. RowVersion (base64) is optional and only sent from the edit page.</summary>
+public sealed record TrashActionsModel(int Id, string Title, bool Small, bool CanTrash, bool CanRestore, string? RowVersion = null);

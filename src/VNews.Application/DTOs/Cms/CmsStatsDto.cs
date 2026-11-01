@@ -7,5 +7,7 @@ public sealed class CmsStatsDto
     public int PendingReview { get; set; }
     public int Rejected { get; set; }
     public int Published { get; set; }
+    /// <summary>Articles in the trash; not part of <see cref="Total"/>.</summary>
+    public int Trashed { get; set; }
     public int Total => Draft + PendingReview + Rejected + Published;
 }

@@ -19,6 +19,11 @@ public class Article
     public string? ReviewNote { get; set; }
     public string? ReviewedByUserId { get; set; }
 
+    /// <summary>Set while <see cref="ArticleStatus.Trashed"/>: when, by whom, and the status to return to on restore.</summary>
+    public DateTime? DeletedAt { get; set; }
+    public string? DeletedByUserId { get; set; }
+    public ArticleStatus? StatusBeforeDeletion { get; set; }
+
     [System.ComponentModel.DataAnnotations.Timestamp]
     public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
