@@ -1,4 +1,7 @@
 using System.Collections.Concurrent;
+using System.Net;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using VNews.Application.Interfaces;
 using VNews.Infrastructure.Services;
@@ -80,4 +83,25 @@ public sealed class ListLogger<T> : ILogger<T>
 
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         => Entries.Add((logLevel, formatter(state, exception)));
+}
+
+/// <summary>
+/// TestServer has no real socket, so requests would carry no remote address. This gives every test request the loopback
+/// address a local browser would have, and lets one test pretend to come from elsewhere with the X-Test-Remote-IP header
+/// (the header exists only inside the test host).
+/// </summary>
+public sealed class TestRemoteAddressStartupFilter : IStartupFilter
+{
+    public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+    {
+        app.Use(async (context, nextMiddleware) =>
+        {
+            context.Connection.RemoteIpAddress =
+                context.Request.Headers.TryGetValue("X-Test-Remote-IP", out var value) && IPAddress.TryParse(value.ToString(), out var parsed)
+                    ? parsed
+                    : IPAddress.Loopback;
+            await nextMiddleware();
+        });
+        next(app);
+    };
 }

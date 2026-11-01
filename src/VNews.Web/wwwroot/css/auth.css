@@ -1,5 +1,5 @@
 /* Reader login/registration. Intentionally separate from the newsroom CMS styles. */
-:root { --auth-ink:#272727; --auth-muted:#696969; --auth-red:#a3123a; --auth-line:#e7e4e4; }
+:root { --auth-ink:#272727; --auth-muted:#696969; --auth-red:#a61b46; --auth-line:#e7e4e4; }
 * { box-sizing:border-box; }
 html,body { padding:0; margin:0; }
 body { min-height:100vh; display:flex; flex-direction:column; color:var(--auth-ink); font:15px/1.5 Arial,Helvetica,sans-serif; background:#f7f7f7; }
@@ -9,8 +9,7 @@ button,input { font:inherit; }
 .reader-auth__skip { position:absolute; left:10px; top:-90px; padding:9px; z-index:3; background:#fff; }
 .reader-auth__skip:focus { top:10px; }
 .reader-auth__header { min-height:66px; padding:12px max(20px, calc((100vw - 1100px)/2)); display:flex; justify-content:space-between; align-items:center; background:#fff; border-bottom:1px solid var(--auth-line); }
-.reader-auth__logo { font:800 28px Georgia,serif; letter-spacing:-.06em; color:var(--auth-red); }
-.reader-auth__logo span { color:#444; }
+.reader-auth__logo { --vn-logo-size:26px; }
 .reader-auth__back { font-size:13px; color:#555; }
 .reader-auth__main { width:100%; flex:1; display:flex; align-items:center; justify-content:center; padding:48px 18px; }
 .reader-auth__form-wrap { width:100%; max-width:462px; }
@@ -22,7 +21,7 @@ button,input { font:inherit; }
 .reader-auth__field { display:grid; gap:7px; }
 .reader-auth__field label { font-size:14px; font-weight:700; }
 .reader-auth__field input { width:100%; min-height:44px; background:#fff; border:1px solid #c9c9c9; border-radius:5px; padding:10px 12px; outline-offset:2px; }
-.reader-auth__field input:focus { border-color:var(--auth-red); outline:2px solid #a3123a20; }
+.reader-auth__field input:focus { border-color:var(--auth-red); outline:2px solid #a61b4620; }
 .reader-auth__remember { font-size:13px; display:flex; gap:9px; align-items:center; }
 .reader-auth__remember input { accent-color:var(--auth-red); }
 .reader-auth__submit { display:block; width:100%; text-align:center; border:0; border-radius:5px; padding:12px; background:var(--auth-red); color:white; font-weight:700; cursor:pointer; }
@@ -41,4 +40,4 @@ button,input { font:inherit; }
 .reader-auth__secondary { display:block; background:none; color:var(--auth-red); border:1px solid #ddd; border-radius:5px; padding:11px; text-align:center; width:100%; cursor:pointer; margin-top:10px; }
 .reader-auth__logout { margin-top:26px; }
 @media(max-width:600px) { .reader-auth__main { padding:26px 14px; align-items:flex-start; } .reader-auth__header { padding:10px 16px; } .reader-auth__card { padding:30px 23px 25px; } }
-@media(max-width:390px) { .reader-auth__logo { font-size:25px; } .reader-auth__back { font-size:12px; } }
+@media(max-width:390px) { .reader-auth__logo { --vn-logo-size:23px; } .reader-auth__back { font-size:12px; } }

@@ -30,7 +30,7 @@ public static class HttpHelpers
     public static async Task<HttpClient> LoginCmsAsync(this WebApplicationFactory<Program> factory, string email, string password = "Demo@12345")
     {
         var client = factory.NewClient();
-        var response = await client.PostFormAsync("/cms/dang-nhap", "/cms/dang-nhap",
+        var response = await client.PostFormAsync("/tai-khoan/dang-nhap", "/tai-khoan/dang-nhap",
             new Dictionary<string, string> { ["Email"] = email, ["Password"] = password });
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         return client;

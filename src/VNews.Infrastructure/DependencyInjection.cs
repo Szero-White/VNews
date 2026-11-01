@@ -38,12 +38,8 @@ public static class DependencyInjection
             options.LogoutPath = "/tai-khoan/dang-xuat";
             options.Events.OnRedirectToLogin = context =>
             {
-                if (context.Request.Path.StartsWithSegments("/cms"))
-                {
-                    var returnUrl = Uri.EscapeDataString(context.Request.Path.ToString() + context.Request.QueryString.ToString());
-                    context.Response.Redirect("/cms/dang-nhap?returnUrl=" + returnUrl);
-                }
-                else if (context.Request.Path.StartsWithSegments("/api"))
+                // One shared sign-in page for readers and staff; the framework appends a validated ReturnUrl.
+                if (context.Request.Path.StartsWithSegments("/api"))
                 {
                     context.Response.StatusCode = 401;
                 }

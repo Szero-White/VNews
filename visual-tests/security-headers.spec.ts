@@ -12,11 +12,12 @@ function watchViolations(page: Page) {
   return problems;
 }
 
+// The newsroom uses the shared sign-in page; the old /cms/dang-nhap address forwards to it.
 async function loginCms(page: Page, email: string) {
   await page.goto('/cms/dang-nhap');
   await page.locator('input[name="Email"]').fill(email);
   await page.locator('input[name="Password"]').fill('Demo@12345');
-  await page.locator('form button[type="submit"]').click();
+  await page.locator('.reader-auth__submit').click(); // the sign-in button (the page may also offer demo cards)
   await page.waitForURL(/\/cms/);
 }
 

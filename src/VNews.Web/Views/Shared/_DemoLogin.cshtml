@@ -1,0 +1,25 @@
+@using VNews.Web.Demo
+@* "Trải nghiệm sản phẩm": one-click demo sign-in cards. Rendered ONLY when the server-side gate allows the demo
+   (Development + DemoAuth:Enabled + a demo/test database + a local request). Each card is a normal POST form with an
+   anti-forgery token; the browser sends just a persona key, never an account, password or role. *@
+@model string
+@inject DemoAuthGate DemoGate
+@if (DemoGate.IsAvailable(Context))
+{
+    var variant = string.IsNullOrEmpty(Model) ? "page" : Model;
+    <section class="demo-login demo-login--@variant" aria-labelledby="demo-login-title-@variant" data-demo-login>
+        <h2 id="demo-login-title-@variant" class="demo-login__title">Trải nghiệm sản phẩm</h2>
+        <p class="demo-login__lead">Chế độ demo cục bộ: chọn một vai trò để vào ngay, không cần mật khẩu.</p>
+        <div class="demo-login__grid">
+            @foreach (var persona in DemoPersonas.All)
+            {
+                <form method="post" asp-controller="DemoAuth" asp-action="SignIn" class="demo-card demo-card--@persona.Key">
+                    <input type="hidden" name="role" value="@persona.Key" />
+                    <h3 class="demo-card__title">@persona.Title</h3>
+                    <p class="demo-card__desc">@persona.Description</p>
+                    <button type="submit" class="demo-card__button" data-demo-role="@persona.Key">@persona.ButtonLabel</button>
+                </form>
+            }
+        </div>
+    </section>
+}

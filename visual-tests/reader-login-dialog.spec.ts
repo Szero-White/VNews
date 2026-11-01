@@ -7,9 +7,11 @@ test('reader sign-in opens in a keyboard-accessible dialog without accessing CMS
   await login.click();
   const dialog = page.getByRole('dialog', { name: 'Đăng nhập tài khoản' });
   await expect(dialog).toBeVisible();
-  await expect(dialog.locator('form')).toHaveAttribute('method', 'post');
-  await expect(dialog.locator('form')).toHaveAttribute('action', /(?:Account\/Login|tai-khoan\/dang-nhap)/i);
-  await expect(dialog.locator('input[name="__RequestVerificationToken"]')).toHaveCount(1);
+  // The dialog's own sign-in form (when demo mode is on it also lists demo cards, which are separate forms).
+  const form = dialog.locator('form.reader-login-dialog__form');
+  await expect(form).toHaveAttribute('method', 'post');
+  await expect(form).toHaveAttribute('action', /(?:Account\/Login|tai-khoan\/dang-nhap)/i);
+  await expect(form.locator('input[name="__RequestVerificationToken"]')).toHaveCount(1);
   await expect(dialog.locator('input[name="Email"]')).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();

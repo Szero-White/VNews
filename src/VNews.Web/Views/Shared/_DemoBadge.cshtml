@@ -1,0 +1,13 @@
+@using VNews.Web.Demo
+@using VNews.Domain.Identity
+@* Shown while signed in with a demo account: makes the demo state obvious and offers a normal sign-out. *@
+@if (User.Identity?.IsAuthenticated == true && User.HasClaim(DemoPersonas.ClaimType, "true"))
+{
+    var label = User.IsInRole(Roles.Admin) ? "Quản trị viên" : User.IsInRole(Roles.Editor) ? "Biên tập viên" : User.IsInRole(Roles.Author) ? "Tác giả" : "Độc giả";
+    <aside class="demo-badge" role="status" aria-label="Đang dùng tài khoản demo">
+        <span class="demo-badge__text"><strong>DEMO</strong> · @label</span>
+        <form asp-controller="Account" asp-action="Logout" method="post" class="demo-badge__form">
+            <button type="submit" class="demo-badge__exit">Thoát demo</button>
+        </form>
+    </aside>
+}

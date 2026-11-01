@@ -4,12 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - VNews CMS</title>
+    <link rel="stylesheet" href="~/css/brand-logo.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/cms.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/demo-login.css" asp-append-version="true" />
 </head>
 <body class="cms-shell">
     <div class="cms-topbar">
         <div>
-            <a asp-controller="CmsArticles" asp-action="Index" class="cms-topbar__brand">VNews CMS</a>
+            <a asp-controller="CmsArticles" asp-action="Index" class="vn-logo vn-logo--on-dark cms-topbar__brand" style="--vn-logo-size:24px" aria-label="VNews CMS"><partial name="_BrandMark" /><span class="cms-topbar__label">CMS</span></a>
             <a asp-controller="CmsArticles" asp-action="Index">Bài viết</a>
             @if (User.IsInRole("Admin"))
             {
@@ -41,6 +43,7 @@
         @RenderBody()
     </div>
 
+    <partial name="_DemoBadge" />
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

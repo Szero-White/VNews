@@ -32,6 +32,9 @@ export default defineConfig({
         timeout: 180000,
         env: {
           ASPNETCORE_ENVIRONMENT: 'Development',
+          // One-click demo sign-in is ON only for this isolated server (Development + VNewsE2E database + loopback).
+          // It stays OFF everywhere else by default.
+          DemoAuth__Enabled: 'true',
           ConnectionStrings__DefaultConnection: `Server=(localdb)\\MSSQLLocalDB;Database=${e2eDatabase};Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True`,
           // Many specs sign in from one IP; keep the limiter from tripping them (the real limit is covered by .NET tests).
           RateLimiting__Auth__PermitLimit: '1000',

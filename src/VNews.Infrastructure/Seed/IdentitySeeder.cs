@@ -11,6 +11,9 @@ public static class IdentitySeeder
 {
     private const string DemoPassword = "Demo@12345";
 
+    /// <summary>The public demo password; it must never become the password of a real administrator.</summary>
+    public static bool IsPublicDemoPassword(string? password) => string.Equals(password, DemoPassword, StringComparison.Ordinal);
+
     public static async Task SeedAsync(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, bool seedDemoAccounts = false)
     {
         foreach (var role in Roles.All)
@@ -49,5 +52,29 @@ public static class IdentitySeeder
         {
             await userManager.AddToRoleAsync(user, role);
         }
+    }
+
+    public enum BootstrapAdminResult { NotConfigured, AdminAlreadyExists, Created, RejectedPublicPassword, Failed }
+
+    /// <summary>
+    /// The only way to get a first administrator outside the demo accounts: the operator supplies the e-mail and a
+    /// password through configuration that is NOT in source control (environment variables, user-secrets, a secret store).
+    /// It creates one Admin only when none exists yet (so it can never take over or reset an existing system), and it
+    /// refuses the public demo password. The password is never logged.
+    /// </summary>
+    public static async Task<BootstrapAdminResult> EnsureBootstrapAdminAsync(UserManager<ApplicationUser> userManager, string? email, string? password)
+    {
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password)) return BootstrapAdminResult.NotConfigured;
+        if ((await userManager.GetUsersInRoleAsync(Roles.Admin)).Count > 0) return BootstrapAdminResult.AdminAlreadyExists;
+        if (IsPublicDemoPassword(password)) return BootstrapAdminResult.RejectedPublicPassword;
+
+        var user = new ApplicationUser { UserName = email.Trim(), Email = email.Trim(), DisplayName = "Quản trị viên", EmailConfirmed = true };
+        if (!(await userManager.CreateAsync(user, password)).Succeeded) return BootstrapAdminResult.Failed;
+        if (!(await userManager.AddToRoleAsync(user, Roles.Admin)).Succeeded)
+        {
+            await userManager.DeleteAsync(user); // never leave a privilege-less half-created account behind
+            return BootstrapAdminResult.Failed;
+        }
+        return BootstrapAdminResult.Created;
     }
 }

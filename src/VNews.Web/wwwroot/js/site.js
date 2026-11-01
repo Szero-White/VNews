@@ -88,6 +88,42 @@
       if (loginOpener && loginOpener.isConnected) loginOpener.focus();
       loginOpener = null;
     });
+
+    // Sign in from the dialog without leaving the page: wrong credentials show their message right here.
+    // If fetch is unavailable or the request itself fails, the form simply submits normally (full-page fallback).
+    var loginForm = readerDialog.querySelector('.reader-login-dialog__form');
+    var loginError = readerDialog.querySelector('[data-reader-login-error]');
+    var loginSubmit = loginForm ? loginForm.querySelector('button[type="submit"]') : null;
+    if (loginForm && loginError && loginSubmit && window.fetch && window.FormData) {
+      var showLoginError = function (message) {
+        loginError.textContent = message;
+        loginError.hidden = false;
+        var passwordField = loginForm.querySelector('input[name="Password"]');
+        if (passwordField) { passwordField.value = ''; passwordField.focus(); }
+      };
+      loginForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        loginError.hidden = true;
+        loginSubmit.disabled = true;
+        loginSubmit.setAttribute('aria-busy', 'true');
+        fetch(loginForm.action, { method: 'POST', body: new FormData(loginForm), headers: { 'X-Requested-With': 'fetch', 'Accept': 'application/json' }, credentials: 'same-origin' })
+          .then(function (response) {
+            if (response.status === 429) { showLoginError('Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.'); return null; }
+            return response.json().then(function (data) { return { ok: response.ok, data: data }; });
+          })
+          .then(function (result) {
+            if (!result) return;
+            var target = result.data && result.data.redirect;
+            if (result.ok && typeof target === 'string' && target.charAt(0) === '/' && target.charAt(1) !== '/' && target.charAt(1) !== '\\') {
+              window.location.assign(target);
+              return;
+            }
+            showLoginError((result.data && result.data.error) || 'Không thể đăng nhập lúc này. Vui lòng thử lại.');
+          })
+          .catch(function () { loginForm.submit(); })
+          .then(function () { loginSubmit.disabled = false; loginSubmit.removeAttribute('aria-busy'); });
+      });
+    }
   }
 
   // An actual, on-device read history. No invented notifications or comments.

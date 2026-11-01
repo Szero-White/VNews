@@ -45,6 +45,7 @@ public class IsolatedDbWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
+            services.AddTransient<Microsoft.AspNetCore.Hosting.IStartupFilter, TestRemoteAddressStartupFilter>();
             services.AddSingleton(AuditFailure);
             services.AddScoped<AuditLogService>();
             services.AddScoped<IAuditLogService, SwitchableAuditLogService>();
@@ -80,6 +81,19 @@ public sealed class RateLimitedWebApplicationFactory : IsolatedDbWebApplicationF
 
 /// <summary>Runs the app as Production to verify production-only hardening (Secure cookies, error page).</summary>
 public sealed class ProductionWebApplicationFactory : IsolatedDbWebApplicationFactory
+{
+    protected override string EnvironmentName => "Production";
+}
+
+/// <summary>The one-click demo sign-in switched ON (Development, DemoAuth:Enabled=true, isolated test database).</summary>
+public class DemoAuthWebApplicationFactory : IsolatedDbWebApplicationFactory
+{
+    protected override IEnumerable<KeyValuePair<string, string?>> ExtraConfiguration =>
+        base.ExtraConfiguration.Append(new KeyValuePair<string, string?>("DemoAuth:Enabled", "true"));
+}
+
+/// <summary>Production with DemoAuth:Enabled=true on purpose: the environment gate alone must refuse it.</summary>
+public sealed class DemoAuthProductionWebApplicationFactory : DemoAuthWebApplicationFactory
 {
     protected override string EnvironmentName => "Production";
 }

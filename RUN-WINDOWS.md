@@ -71,6 +71,24 @@ dotnet test VNews.slnx
 - `/cms/CmsCategories`, `/cms/CmsUsers` — chỉ Admin
 - Quy trình: Author tạo **Nháp** → Gửi duyệt (**PendingReview**) → Editor/Admin **Xuất bản** hoặc **Từ chối** (kèm lý do) → bài Published mới hiển thị công khai.
 
+## Đăng nhập chung và Demo một cú nhấp
+- Một trang đăng nhập duy nhất cho độc giả và nhân viên: `/tai-khoan/dang-nhap` (cùng ASP.NET Core Identity). `/cms/dang-nhap` chỉ còn là đường dẫn cũ, tự chuyển về trang chung kèm `returnUrl=/cms`. Sau khi đăng nhập: Reader → trang công khai, Author → `/cms`, Editor → hàng chờ duyệt, Admin → `/cms/CmsUsers`; `returnUrl` ngoài site luôn bị bỏ qua.
+- **Demo một cú nhấp (mặc định TẮT).** Thẻ "Trải nghiệm sản phẩm" (Độc giả / Tác giả / Biên tập viên / Quản trị viên) chỉ xuất hiện và chỉ hoạt động khi **cả bốn** điều kiện đúng — server kiểm tra mọi request, không chỉ ẩn nút:
+  1. `ASPNETCORE_ENVIRONMENT=Development` (Production luôn từ chối, kể cả khi cấu hình sai);
+  2. `DemoAuth__Enabled=true` (không khai báo = tắt);
+  3. database có tên bắt đầu bằng `VNewsDemo`, `VNewsE2E` hoặc `VNewsTests_` (**không bao giờ** `VNewsDb` — chỉnh bằng `DemoAuth:AllowedDatabasePrefixes`);
+  4. request đến từ chính máy này (địa chỉ loopback, host `localhost`, không có header proxy `X-Forwarded-*`).
+- Chạy bản demo trên database riêng (PowerShell, trong thư mục dự án):
+  ```powershell
+  $env:ASPNETCORE_ENVIRONMENT = 'Development'
+  $env:DemoAuth__Enabled = 'true'
+  $env:ConnectionStrings__DefaultConnection = 'Server=(localdb)\MSSQLLocalDB;Database=VNewsDemo;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True'
+  dotnet run --project src/VNews.Web --urls http://localhost:5300
+  ```
+  Database `VNewsDemo` tự tạo và seed khi khởi động. Tắt demo: bỏ biến `DemoAuth__Enabled` (hoặc đặt `false`) rồi chạy lại.
+- Tài khoản demo là tài khoản riêng `demo.<vai trò>@demo.vnews.local`, tạo/sửa lại tự động khi bấm nút, mật khẩu ngẫu nhiên không lưu ở đâu cả (không thể đăng nhập bằng mật khẩu). Trong khi dùng demo có nhãn "DEMO · vai trò" ở góc trái dưới và nút "Thoát demo" (đăng xuất bình thường).
+- Kiểm thử tự động chạy trên database cô lập: `.NET` dùng `VNewsTests_<guid>`; Playwright tự khởi động server riêng với `VNewsE2E` (cổng 5399, đã bật demo). Nếu một server dev đang khóa `bin\Debug`, build bằng `dotnet build tests/VNews.Tests -c Verify` rồi chạy `E2E_BUILD_CONFIG=Verify npx playwright test` trong `visual-tests/`.
+
 ## Lưu ý
 - Không dùng mock/in-memory DB; toàn bộ nội dung public đọc từ SQL Server LocalDB qua EF Core.
 - Nếu muốn reset dữ liệu, xóa database `VNewsDb` bằng `sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "DROP DATABASE VNewsDb"` rồi chạy lại `dotnet run` (sẽ tự tạo và seed lại). **Chỉ thực hiện khi bạn chắc chắn muốn xóa dữ liệu.**

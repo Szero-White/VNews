@@ -109,7 +109,7 @@ public class HttpSecurityIntegrationTests : IClassFixture<IsolatedDbWebApplicati
     public async Task AuthCookie_IsHttpOnly_AndSameSiteLax()
     {
         var client = _factory.NewClient();
-        var response = await client.PostFormAsync("/cms/dang-nhap", "/cms/dang-nhap",
+        var response = await client.PostFormAsync("/tai-khoan/dang-nhap", "/tai-khoan/dang-nhap",
             new Dictionary<string, string> { ["Email"] = "author@vnews.local", ["Password"] = "Demo@12345" });
 
         var cookie = response.Headers.GetValues("Set-Cookie")
@@ -121,7 +121,7 @@ public class HttpSecurityIntegrationTests : IClassFixture<IsolatedDbWebApplicati
     // ---------- newsroom sign-in ----------
 
     [Fact]
-    public async Task ReaderCredentials_OnCmsLogin_NeverReceiveAuthCookie()
+    public async Task ReaderSignedInThroughTheSharedLogin_IsNeverSentIntoTheNewsroom()
     {
         var client = _factory.NewClient();
         var email = $"reader-{Guid.NewGuid():N}@example.test";
@@ -131,14 +131,20 @@ public class HttpSecurityIntegrationTests : IClassFixture<IsolatedDbWebApplicati
         });
         Assert.Equal(HttpStatusCode.Redirect, register.StatusCode);
 
-        var anonymous = _factory.NewClient(); // fresh client: no session carried over from registration
-        var response = await anonymous.PostFormAsync("/cms/dang-nhap", "/cms/dang-nhap",
-            new Dictionary<string, string> { ["Email"] = email, ["Password"] = "TestPassword123!" });
+        // Even when the return URL points at the CMS, a reader lands on the public site...
+        var anonymous = _factory.NewClient();
+        var response = await anonymous.PostFormAsync("/tai-khoan/dang-nhap", "/tai-khoan/dang-nhap",
+            new Dictionary<string, string> { ["Email"] = email, ["Password"] = "TestPassword123!", ["ReturnUrl"] = "/cms" });
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal("/", response.Headers.Location!.OriginalString);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.False(HttpHelpers.SetsAuthCookie(response), "a reader must not get an auth cookie from the newsroom login");
-        Assert.Contains("không có quyền", WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync()));
-        Assert.Equal(HttpStatusCode.Redirect, (await anonymous.GetAsync("/cms")).StatusCode);
+        // ...and every newsroom area refuses them (access denied, never the CMS page itself).
+        foreach (var path in new[] { "/cms", "/cms/CmsArticles/Create", "/cms/CmsUsers", "/cms/CmsCategories" })
+        {
+            var cms = await anonymous.GetAsync(path);
+            Assert.Equal(HttpStatusCode.Redirect, cms.StatusCode);
+            Assert.Contains("/tai-khoan/khong-co-quyen", cms.Headers.Location!.ToString());
+        }
     }
 
     [Fact]
@@ -290,14 +296,14 @@ public class HttpSecurityIntegrationTests : IClassFixture<IsolatedDbWebApplicati
     public async Task Logs_NeverContainPasswords_AndRecordFailedSignIn()
     {
         var client = _factory.NewClient();
-        await client.PostFormAsync("/cms/dang-nhap", "/cms/dang-nhap",
+        await client.PostFormAsync("/tai-khoan/dang-nhap", "/tai-khoan/dang-nhap",
             new() { ["Email"] = "author@vnews.local", ["Password"] = "Wrong-Password-XYZ-987" });
         await _factory.LoginCmsAsync("author@vnews.local", "Demo@12345");
 
         var everything = string.Join("\n", _factory.Logs.Entries.Select(e => $"{e.Message} {e.State} {e.Exception}"));
         Assert.DoesNotContain("Wrong-Password-XYZ-987", everything);
         Assert.DoesNotContain("Demo@12345", everything);
-        Assert.Contains(_factory.Logs.Entries, e => e.Level == LogLevel.Warning && e.Message.StartsWith("CMS sign-in failed"));
+        Assert.Contains(_factory.Logs.Entries, e => e.Level == LogLevel.Warning && e.Message.StartsWith("Sign-in failed"));
         Assert.Contains(_factory.Logs.Entries, e => e.Level == LogLevel.Information && e.Message.Contains("signed in"));
     }
 }

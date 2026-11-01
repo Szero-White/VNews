@@ -1,7 +1,9 @@
 /* VNews CMS — minimal functional admin styling */
 
 .cms-shell {
-  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  /* Same typography as the public site and the sign-in pages: Arial for text, Merriweather for headings. */
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
   color: #1a1a1a;
   background: #f4f5f7;
   min-height: 100vh;
@@ -29,11 +31,10 @@
   text-decoration: underline;
 }
 
-.cms-topbar__brand {
-  font-weight: 800;
-  font-size: 1.1rem;
-  color: #e6476b !important;
-}
+/* The generic ".cms-topbar a" size must not shrink the logo: it scales with --vn-logo-size like everywhere else. */
+.cms-topbar a.vn-logo { font-size: var(--vn-logo-size); }
+.cms-topbar__brand { display: inline-flex; align-items: center; gap: 10px; margin-right: 22px; }
+.cms-topbar__label { padding: 2px 7px; border: 1px solid rgba(255,255,255,.55); border-radius: 3px; font: 700 11px/1.4 Arial, sans-serif; letter-spacing: .12em; color: #fff; }
 
 .cms-container {
   max-width: 1100px;
@@ -78,7 +79,7 @@
 .cms-badge--draft { background: #e5e5e5; color: #444; }
 .cms-badge--pendingreview { background: #fff3cd; color: #8a6400; }
 .cms-badge--published { background: #d4edda; color: #1d6e34; }
-.cms-badge--rejected { background: #f8d7da; color: #a3123a; }
+.cms-badge--rejected { background: #f8d7da; color: #a61b46; }
 
 .cms-form label {
   display: block;
@@ -111,7 +112,7 @@
   padding: 8px 16px;
   border-radius: 4px;
   border: none;
-  background: #a3123a;
+  background: #a61b46;
   color: #fff;
   cursor: pointer;
   font-size: 0.9rem;
@@ -131,12 +132,14 @@
 }
 
 .cms-alert--success { background: #d4edda; color: #1d6e34; }
-.cms-alert--error { background: #f8d7da; color: #a3123a; }
+.cms-alert--error { background: #f8d7da; color: #a61b46; }
 
 .cms-validation {
-  color: #a3123a;
+  color: #a61b46;
   font-size: 0.85rem;
   margin-top: 4px;
 }
 
 .cms-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.cms-shell h1, .cms-shell h2 { font-family: Merriweather, "Times New Roman", Georgia, serif; letter-spacing: -.01em; }

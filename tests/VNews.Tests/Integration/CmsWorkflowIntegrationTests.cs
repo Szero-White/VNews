@@ -36,7 +36,7 @@ public class CmsWorkflowIntegrationTests : IClassFixture<IsolatedDbWebApplicatio
     {
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var loginPage = await client.GetAsync("/cms/dang-nhap");
+        var loginPage = await client.GetAsync("/tai-khoan/dang-nhap");
         var token = await ExtractAntiforgeryTokenAsync(loginPage);
 
         var form = new Dictionary<string, string>
@@ -46,7 +46,7 @@ public class CmsWorkflowIntegrationTests : IClassFixture<IsolatedDbWebApplicatio
             ["__RequestVerificationToken"] = token
         };
 
-        var response = await client.PostAsync("/cms/dang-nhap", new FormUrlEncodedContent(form));
+        var response = await client.PostAsync("/tai-khoan/dang-nhap", new FormUrlEncodedContent(form));
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
 
         return client;
@@ -60,7 +60,9 @@ public class CmsWorkflowIntegrationTests : IClassFixture<IsolatedDbWebApplicatio
         var response = await client.GetAsync("/cms");
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Contains("/cms/dang-nhap", response.Headers.Location!.ToString());
+        // One shared sign-in page, carrying a local return URL back to the newsroom.
+        Assert.Contains("/tai-khoan/dang-nhap", response.Headers.Location!.ToString());
+        Assert.Contains("returnurl=%2fcms", response.Headers.Location!.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -68,7 +70,7 @@ public class CmsWorkflowIntegrationTests : IClassFixture<IsolatedDbWebApplicatio
     {
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var loginPage = await client.GetAsync("/cms/dang-nhap");
+        var loginPage = await client.GetAsync("/tai-khoan/dang-nhap");
         var token = await ExtractAntiforgeryTokenAsync(loginPage);
 
         var form = new Dictionary<string, string>
@@ -78,7 +80,7 @@ public class CmsWorkflowIntegrationTests : IClassFixture<IsolatedDbWebApplicatio
             ["__RequestVerificationToken"] = token
         };
 
-        var response = await client.PostAsync("/cms/dang-nhap", new FormUrlEncodedContent(form));
+        var response = await client.PostAsync("/tai-khoan/dang-nhap", new FormUrlEncodedContent(form));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var html = await response.Content.ReadAsStringAsync();
@@ -89,7 +91,7 @@ public class CmsWorkflowIntegrationTests : IClassFixture<IsolatedDbWebApplicatio
         // Most importantly, the failed attempt must not create an authenticated CMS session.
         var cmsResponse = await client.GetAsync("/cms");
         Assert.Equal(HttpStatusCode.Redirect, cmsResponse.StatusCode);
-        Assert.Contains("/cms/dang-nhap", cmsResponse.Headers.Location!.ToString());
+        Assert.Contains("/tai-khoan/dang-nhap", cmsResponse.Headers.Location!.ToString());
     }
 
     [Fact]

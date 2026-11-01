@@ -17,6 +17,12 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 
+// One-click demo sign-in: OFF unless DemoAuth:Enabled=true, and even then Development + a demo/test database + loopback only.
+builder.Services.Configure<VNews.Web.Demo.DemoAuthOptions>(builder.Configuration.GetSection(VNews.Web.Demo.DemoAuthOptions.SectionName));
+builder.Services.AddSingleton<VNews.Web.Demo.DemoAuthGate>();
+builder.Services.AddScoped<VNews.Web.Demo.DemoAccountService>();
+builder.Services.AddScoped<VNews.Web.Demo.RequireDemoAuthFilter>();
+
 // Auth/antiforgery cookies: never readable by script, never sent cross-site on POST. Secure is
 // forced outside Development; Development (plain http://localhost) keeps working.
 var cookieSecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
@@ -70,6 +76,14 @@ using (var scope = app.Services.CreateScope())
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     await IdentitySeeder.SeedAsync(roleManager, userManager, seedDemoAccounts: app.Environment.IsDevelopment());
+
+    // First administrator for a real deployment: only from secret configuration (Bootstrap:AdminEmail / Bootstrap:AdminPassword,
+    // e.g. environment variables or user-secrets), only when no Admin exists, never with the public demo password.
+    var bootstrap = await IdentitySeeder.EnsureBootstrapAdminAsync(userManager, app.Configuration["Bootstrap:AdminEmail"], app.Configuration["Bootstrap:AdminPassword"]);
+    var startupLog = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("VNews.Bootstrap");
+    if (bootstrap == IdentitySeeder.BootstrapAdminResult.Created) startupLog.LogWarning("Bootstrap administrator created from configuration. Remove Bootstrap:AdminPassword from configuration now.");
+    else if (bootstrap == IdentitySeeder.BootstrapAdminResult.RejectedPublicPassword) startupLog.LogError("Bootstrap administrator refused: the configured password is the public demo password.");
+    else if (bootstrap == IdentitySeeder.BootstrapAdminResult.Failed) startupLog.LogError("Bootstrap administrator could not be created (check the e-mail and the password policy).");
 }
 
 // Configure the HTTP request pipeline.

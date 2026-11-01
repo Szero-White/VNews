@@ -108,3 +108,9 @@ VERIFICATION (đã chạy thật, không bịa kết quả):
 - `sqlcmd -S "(localdb)\MSSQLLocalDB" -d VNewsDb -Q "SELECT COUNT(*) FROM Categories; SELECT COUNT(*) FROM Articles"` → 10 Categories, 50 Articles (Published).
 - HTTP smoke test: `/` → 200, `/chuyen-muc/cong-nghe` → 200, `/tin/{slug-thật-từ-db}` → 200 (hiển thị đúng tiêu đề bài viết), `/tim-kiem?q=the%20thao` → 200, `/tin/khong-ton-tai` → 404.
 - `dotnet test VNews.slnx` → 1/1 test pass (scaffold xUnit, chưa có test nghiệp vụ — sẽ bổ sung ở M4).
+
+- **Điều hướng, mega menu, đăng nhập hợp nhất, Demo (2026-11-01):**
+  - Header: bỏ banner house-promo trên mọi trang trừ trang chủ; header 62px / nav 50px khớp tham chiếu; nút "Tất cả chuyên mục" mở mega menu (overlay, Escape, focus trap, khóa cuộn); `aria-current` + chuyên mục đang xem tự cuộn vào khung; menu mobile liệt kê đủ 10 chuyên mục.
+  - Đăng nhập: một trang chung (Identity), `/cms/dang-nhap` chuyển hướng an toàn; chuyển đúng khu vực theo role; popup đăng nhập hiện lỗi ngay trong popup; logo dùng chung (`_BrandMark` + `brand-logo.css`).
+  - Demo một cú nhấp: `DemoAuthGate` (Development + `DemoAuth:Enabled` + DB demo/test + loopback) → `POST /tai-khoan/demo/dang-nhap` (anti-forgery, rate limit); chi tiết ở `RUN-WINDOWS.md`.
+  - Kiểm chứng: `dotnet test` 245/245; Playwright 120/120 (VNewsE2E). Không chạm `VNewsDb`.

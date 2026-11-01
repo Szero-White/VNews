@@ -3,24 +3,27 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#a3123a" />
+    <meta name="theme-color" content="#a61b46" />
     <title>@ViewData["Title"] · VNews</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     @* Same headline face as the main layout. Georgia lacks the precomposed glyphs for
        ấ ầ ắ ằ ế ề ố ồ, so a user-supplied display name in the h1 would render detached accents. *@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap" />
+    <link rel="stylesheet" href="~/css/brand-logo.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/demo-login.css" asp-append-version="true" />
 </head>
 <body class="reader-auth">
     <a class="reader-auth__skip" href="#auth-content">Bỏ qua điều hướng</a>
     <header class="reader-auth__header">
-        <a class="reader-auth__logo" asp-controller="Home" asp-action="Index" aria-label="VNews - Trang chủ">V<span>News</span></a>
+        <a class="vn-logo reader-auth__logo" asp-controller="Home" asp-action="Index" aria-label="VNews - Trang chủ"><partial name="_BrandMark" /></a>
         <a class="reader-auth__back" asp-controller="Home" asp-action="Index">← Trở về trang chủ</a>
     </header>
     <main id="auth-content" class="reader-auth__main">
         <div class="reader-auth__form-wrap">@RenderBody()</div>
     </main>
+    <partial name="_DemoBadge" />
     <footer class="reader-auth__footer">VNews · Dự án portfolio ASP.NET Core MVC, không liên kết với VnExpress.</footer>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
