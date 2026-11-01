@@ -16,8 +16,12 @@ const buildConfig = process.env.E2E_BUILD_CONFIG ?? 'Debug';
 
 export default defineConfig({
   testDir: '.',
+  // The sub-category specs create parent/child categories and many articles, which would change the numbers other specs assert about the
+  // seeded 10 categories. They run in their own server + database: `npx playwright test -c playwright.subcategories.config.ts`.
+  testIgnore: /category-submenu\.spec\.ts/,
   globalSetup: './global-setup.ts',
   timeout: 30000,
+  workers: 2, // the owner's machine overheats with more; use --workers=1 for diagnostics
   reporter: [['list']],
   use: {
     baseURL: externalBaseUrl ?? `http://localhost:${port}`,

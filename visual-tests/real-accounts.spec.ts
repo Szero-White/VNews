@@ -1,33 +1,12 @@
 import { test, expect, Page } from '@playwright/test';
+import { SEEDED, demoLogin, realLogin, registerReader, Role, watchProblems as watch } from './support/auth';
+
+const REAL = SEEDED;
 
 // Final QA: REAL accounts (signed in through the normal form) must get the same UI as the demo accounts, with no demo
 // badge; every role page must run without JavaScript exceptions or console errors; the floating demo badge must never
 // cover a control. Isolated VNewsE2E database.
 
-type Role = 'reader' | 'author' | 'editor' | 'admin';
-const REAL: Record<Exclude<Role, 'reader'>, string> = { author: 'author@vnews.local', editor: 'editor@vnews.local', admin: 'admin@vnews.local' };
-const PASSWORD = 'Demo@12345';
-
-function watch(page: Page) {
-  const problems: string[] = [];
-  page.on('pageerror', (e) => problems.push('pageerror: ' + e.message));
-  // Network-level failures (a blocked or slow third-party font host) are not application errors; a missing local file would be a 404.
-  const networkNoise = /net::ERR_(SOCKET_NOT_CONNECTED|NAME_NOT_RESOLVED|INTERNET_DISCONNECTED|CONNECTION_w+|TIMED_OUT|NETWORK_CHANGED)/;
-  page.on('console', (m) => { if (m.type() === 'error' && !networkNoise.test(m.text())) problems.push('console: ' + m.text()); });
-  return problems;
-}
-async function realLogin(page: Page, email: string, password = PASSWORD) {
-  await page.goto('/tai-khoan/dang-nhap');
-  await page.locator('input[name="Email"]').fill(email);
-  await page.locator('input[name="Password"]').fill(password);
-  await page.locator('.reader-auth__submit').click();
-  await page.waitForURL((u) => !u.pathname.includes('dang-nhap'));
-}
-async function demoLogin(page: Page, role: Role) {
-  await page.goto('/tai-khoan/dang-nhap');
-  await page.locator(`.demo-login--page [data-demo-role="${role}"]`).click();
-  await page.waitForURL((u) => !u.pathname.includes('dang-nhap'));
-}
 const sidebar = async (page: Page) => (await page.locator('.app-sidebar .app-nav__link').allInnerTexts()).map((t) => t.trim());
 const PAGES: Record<Role, string[]> = {
   reader: ['/tai-khoan/ho-so', '/tai-khoan/bai-da-luu'],

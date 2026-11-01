@@ -63,7 +63,7 @@ test('many results paginate without repeating an article and the keyword survive
   expect(new Set(seen).size).toBe(total);
 
   await page.goto('/tim-kiem?q=bai+viet');
-  await page.locator('.pagination__item', { hasText: '2' }).click();
+  await page.locator('.pagination__item', { hasText: /^\s*2\s*$/ }).click();
   await expect(page).toHaveURL(/q=bai(\+|%20)viet.*page=2|page=2.*q=bai(\+|%20)viet/);
   await expect(page.locator('#page-search')).toHaveValue('bai viet');
 });

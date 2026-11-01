@@ -38,7 +38,7 @@ test('article page: scripts (save/share/font size) still run under the policy', 
   await page.locator('.hero-lead__title a').first().click();
   await page.waitForLoadState('networkidle');
   expect(problems).toEqual([]);
-  // site.js is an external same-origin script; it must have executed (it fills the date label).
+  // the site scripts (js/site/*.js) are external same-origin files; they must have executed (it fills the date label).
   await expect(page.locator('#today-date')).not.toBeEmpty();
 });
 

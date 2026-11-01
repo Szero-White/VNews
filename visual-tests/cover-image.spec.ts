@@ -1,4 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
+import { Role, demoLogin, watchProblems as watch } from './support/auth';
+
+const login = (page: Page, role: Role = 'author') => demoLogin(page, role); // most specs here sign in as the author
 
 // Article cover image experience in the CMS form: current image preview, new-file preview + name, replace, remove/undo,
 // list markers, alignment, no JS errors. Isolated VNewsE2E database.
@@ -6,19 +9,6 @@ import { test, expect, Page } from '@playwright/test';
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
 const VIEWPORTS = [{ width: 1440, height: 900 }, { width: 1536, height: 864 }, { width: 768, height: 1024 }, { width: 390, height: 844 }];
 
-function watch(page: Page) {
-  const problems: string[] = [];
-  page.on('pageerror', (e) => problems.push('pageerror: ' + e.message));
-  // Network-level failures (a blocked or slow third-party font host) are not application errors; a missing local file would be a 404.
-  const networkNoise = /net::ERR_(SOCKET_NOT_CONNECTED|NAME_NOT_RESOLVED|INTERNET_DISCONNECTED|CONNECTION_w+|TIMED_OUT|NETWORK_CHANGED)/;
-  page.on('console', (m) => { if (m.type() === 'error' && !networkNoise.test(m.text())) problems.push('console: ' + m.text()); });
-  return problems;
-}
-async function login(page: Page, role: 'author' | 'admin' = 'author') {
-  await page.goto('/tai-khoan/dang-nhap');
-  await page.locator(`.demo-login--page [data-demo-role="${role}"]`).click();
-  await page.waitForURL((u) => !u.pathname.includes('dang-nhap'));
-}
 async function fillArticle(page: Page, title: string) {
   await page.locator('#Title').fill(title);
   await page.locator('#CategoryId').selectOption({ index: 1 });
@@ -102,17 +92,39 @@ test('a failed upload keeps the previous image and says why; the save button is 
   await expect(page.getByRole('button', { name: 'Tạo bản nháp' })).toBeEnabled();
 });
 
-test('a published article opens read-only with its cover shown and no upload controls', async ({ page }) => {
+test('an admin can edit a published article from the list: the form is unlocked with its cover, and saving keeps the public address', async ({ page }) => {
   await login(page, 'admin');
   // a seeded article that has a cover (category filter: other specs publish cover-less test articles into the newest slots of the first category)
-  const items = (await (await page.request.get('/api/v1/articles?category=cong-nghe&pageSize=50')).json()).items as { title: string; coverImageUrl?: string }[];
-  const withCover = items.find((i) => i.coverImageUrl)!;
-  await page.goto('/cms?status=Published&q=' + encodeURIComponent(withCover.title));
-  await page.locator('tr:has(img.article-cell__thumb) a.table__title').first().click();
+  const items = (await (await page.request.get('/api/v1/articles?category=cong-nghe&pageSize=50')).json()).items as { title: string; slug: string; coverImageUrl?: string }[];
+  const target = items.find((i) => i.coverImageUrl)!;
+  await page.goto('/cms?status=Published&q=' + encodeURIComponent(target.title));
+  const row = page.locator('tr', { hasText: target.title }).first();
+  await expect(row.getByRole('link', { name: 'Xem', exact: true })).toBeVisible();   // public view
+  await row.getByRole('link', { name: 'Sửa', exact: true }).click();                 // and a real edit action
+
+  await expect(page.getByRole('heading', { name: 'Sửa bài viết', level: 1 })).toBeVisible();
+  await expect(page.locator('.app-alert--info')).toContainText('Đường dẫn và ngày xuất bản được giữ nguyên');
   await expect(cover(page).locator('[data-cover-img]')).toBeVisible();
   await expect(cover(page).locator('[data-cover-state]')).toHaveText('Ảnh hiện tại');
-  await expect(page.locator('#coverFile')).toHaveCount(0);
-  await expect(cover(page).getByRole('button', { name: 'Bỏ ảnh' })).toHaveCount(0);
+  await expect(page.locator('#coverFile')).toHaveCount(1);
+  await expect(page.getByRole('link', { name: 'Hủy' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Gửi duyệt' })).toHaveCount(0);       // it is already published
+
+  const newTitle = `${target.title.replace(/ \(đã chỉnh sửa \d+\)$/, '')} (đã chỉnh sửa ${Date.now()})`; // the suffix is replaced, not stacked, so the title never grows across runs
+  await page.locator('#Title').fill(newTitle);
+  await page.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(page.locator('.app-alert--success')).toContainText('Đã lưu thay đổi');
+  await expect(page.locator('#Title')).toHaveValue(newTitle);                          // the form shows what is stored
+
+  // the public page at the SAME address shows the new title
+  await page.goto('/tin/' + target.slug);
+  await expect(page.locator('h1.article-detail__title')).toHaveText(newTitle);
+});
+
+test('an author sees no edit action for published articles', async ({ page }) => {
+  await login(page, 'author');
+  await page.goto('/cms?status=Published');
+  await expect(page.getByRole('link', { name: 'Sửa', exact: true })).toHaveCount(0);
 });
 
 for (const vp of VIEWPORTS) {
@@ -176,4 +188,52 @@ test('an article without a cover shows no empty status pill over the placeholder
   await page.goto('/cms/CmsArticles/Create');
   await expect(cover(page).locator('[data-cover-placeholder]')).toBeVisible();
   await expect(cover(page).locator('[data-cover-state]')).toBeHidden();
+});
+
+test('admin: the unused-uploads page opens from the sidebar, explains the quarantine and has no horizontal scroll', async ({ page }) => {
+  await login(page, 'admin');
+  await page.locator('.app-sidebar').getByRole('link', { name: 'Ảnh tải lên' }).click();
+  await expect(page.getByRole('heading', { name: 'Ảnh tải lên', level: 1 })).toBeVisible();
+  await expect(page.getByText('không bị xóa')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+});
+
+test('races: a slow upload that finishes late can neither overwrite a newer choice nor undo "Bỏ ảnh"', async ({ page }) => {
+  await login(page);
+  await page.goto('/cms/CmsArticles/Create');
+  let release!: () => void;
+  const gate = new Promise<void>((r) => { release = r; });
+  let calls = 0;
+  await page.route('**/CmsArticles/UploadCoverImage', async (route) => {
+    calls++;
+    if (calls === 1) { await gate; await route.continue().catch(() => undefined); } // the first upload is held back and finishes last
+    else await route.continue();
+  });
+
+  // A is chosen (held), then B is chosen and finishes: the field must show B
+  await page.locator('#coverFile').setInputFiles({ name: 'a.png', mimeType: 'image/png', buffer: PNG });
+  await expect(cover(page).locator('[data-cover-state]')).toContainText('đang tải lên');
+  await page.locator('#coverFile').setInputFiles({ name: 'b.png', mimeType: 'image/png', buffer: PNG });
+  await expect(page.locator('#uploadStatus')).toContainText('Đã tải lên');
+  const urlB = await hiddenValue(page);
+  expect(urlB).toMatch(/^\/uploads\//);
+  await expect(cover(page).locator('[data-cover-file-name]')).toHaveText('b.png');
+  release(); // A answers now, late
+  await page.waitForTimeout(400);
+  expect(await hiddenValue(page)).toBe(urlB);
+  await expect(page.getByRole('button', { name: 'Tạo bản nháp' })).toBeEnabled();
+
+  // remove while a new upload is in flight: the removal wins, and Save is released
+  calls = 0;
+  const gate2 = new Promise<void>((r) => { release = r; });
+  await page.unroute('**/CmsArticles/UploadCoverImage');
+  await page.route('**/CmsArticles/UploadCoverImage', async (route) => { await gate2; await route.continue().catch(() => undefined); });
+  await page.locator('#coverFile').setInputFiles({ name: 'c.png', mimeType: 'image/png', buffer: PNG });
+  await expect(page.getByRole('button', { name: 'Tạo bản nháp' })).toBeDisabled();           // locked while the current upload runs
+  await cover(page).getByRole('button', { name: 'Bỏ ảnh' }).click();
+  await expect(page.getByRole('button', { name: 'Tạo bản nháp' })).toBeEnabled();
+  release();
+  await page.waitForTimeout(400);
+  expect(await hiddenValue(page)).toBe('');                                                   // the late answer did not bring the image back
+  await expect(cover(page).locator('[data-cover-state]')).toHaveText('Sẽ bỏ ảnh bìa khi lưu');
 });

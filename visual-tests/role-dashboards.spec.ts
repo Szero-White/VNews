@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { demoLogin, registerReader, Role } from './support/auth';
 
 // Role dashboards (Reader / Author / Editor / Admin) through the real UI. Demo and real accounts share one UI; the
 // demo login is only a faster way in. Isolated VNewsE2E database (see playwright.config.ts).
@@ -6,13 +7,6 @@ import { test, expect, Page } from '@playwright/test';
 const VIEWPORTS = [
   { width: 1440, height: 900 }, { width: 1536, height: 864 }, { width: 768, height: 1024 }, { width: 390, height: 844 },
 ];
-type Role = 'reader' | 'author' | 'editor' | 'admin';
-
-async function demoLogin(page: Page, role: Role) {
-  await page.goto('/tai-khoan/dang-nhap');
-  await page.locator(`.demo-login--page [data-demo-role="${role}"]`).click();
-  await page.waitForURL((u) => !u.pathname.includes('dang-nhap')); // the sign-in redirect has completed
-}
 const overflow = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 const sidebarLinks = async (page: Page) => {
   await page.locator('.app-sidebar .app-nav__link').first().waitFor(); // allInnerTexts() does not wait for the page
@@ -42,7 +36,7 @@ test('sidebar shows only the entries a role may use, with the right one active',
 
   await page.context().clearCookies();
   await demoLogin(page, 'admin');
-  expect(await sidebarLinks(page)).toEqual(['Tổng quan', 'Tất cả bài viết', 'Hàng chờ duyệt', 'Viết bài mới', 'Người dùng', 'Chuyên mục', 'Nhật ký hoạt động', 'Hồ sơ của tôi', 'Bài đã lưu', 'Xem trang tin']);
+  expect(await sidebarLinks(page)).toEqual(['Tổng quan', 'Tất cả bài viết', 'Hàng chờ duyệt', 'Viết bài mới', 'Người dùng', 'Chuyên mục', 'Ảnh tải lên', 'Nhật ký hoạt động', 'Hồ sơ của tôi', 'Bài đã lưu', 'Xem trang tin']);
   await expect(page.locator('.app-nav__link.is-active')).toHaveText('Tổng quan');
 
   await page.context().clearCookies();
