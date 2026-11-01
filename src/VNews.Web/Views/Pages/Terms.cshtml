@@ -1,0 +1,32 @@
+@{
+    ViewData["Title"] = "Điều khoản sử dụng";
+    ViewData["Description"] = "Điều khoản sử dụng trang tin minh hoạ VNews.";
+}
+<div class="container static-page">
+    <nav class="breadcrumb" aria-label="Đường dẫn">
+        <a asp-controller="Home" asp-action="Index">Trang chủ</a> <span aria-hidden="true">/</span> Điều khoản sử dụng
+    </nav>
+    <h1 class="static-page__title">Điều khoản sử dụng</h1>
+    <p class="static-page__lead">Khi truy cập VNews, bạn đồng ý với các điều khoản dưới đây. VNews là dự án học tập, các điều khoản này nhằm làm rõ phạm vi sử dụng.</p>
+
+    <h2>1. Tính chất của trang</h2>
+    <p>VNews là trang tin minh hoạ phục vụ học tập và portfolio. Nội dung không phải tin tức chính thức, không nên dùng làm căn cứ ra quyết định.</p>
+
+    <h2>2. Nội dung và bản quyền</h2>
+    <p>Bài viết do dự án tự soạn để minh hoạ. Hình ảnh dùng theo giấy phép Unsplash License. Bạn không được sao chép nội dung của VNews để mạo danh một cơ quan báo chí.</p>
+
+    <h2>3. Tài khoản</h2>
+    <p>Bạn chịu trách nhiệm bảo mật mật khẩu của mình. Tài khoản độc giả chỉ dùng để lưu bài và không có quyền truy cập khu vực toà soạn. VNews có thể khoá tài khoản khi phát hiện hành vi đăng nhập bất thường hoặc lạm dụng.</p>
+
+    <h2>4. Hành vi bị cấm</h2>
+    <ul>
+        <li>Tìm cách truy cập trái phép khu vực toà soạn hoặc dữ liệu của người dùng khác.</li>
+        <li>Gửi tệp độc hại hoặc nội dung vi phạm pháp luật qua các chức năng của trang.</li>
+        <li>Gây quá tải hệ thống bằng các yêu cầu tự động liên tục.</li>
+    </ul>
+
+    <h2>5. Giới hạn trách nhiệm</h2>
+    <p>VNews được cung cấp nguyên trạng, không có bảo đảm về tính liên tục hay độ chính xác của nội dung. Dự án có thể thay đổi hoặc ngừng hoạt động mà không báo trước.</p>
+
+    <p class="static-page__links">Xem thêm: <a asp-controller="Pages" asp-action="Privacy">Chính sách bảo mật</a> · <a asp-controller="Pages" asp-action="About">Giới thiệu</a></p>
+</div>

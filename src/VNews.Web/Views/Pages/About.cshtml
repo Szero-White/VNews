@@ -1,0 +1,30 @@
+@{
+    ViewData["Title"] = "Giới thiệu";
+    ViewData["Description"] = "VNews là trang tin minh hoạ xây dựng bằng ASP.NET Core MVC, phục vụ mục đích học tập và portfolio.";
+}
+<div class="container static-page">
+    <nav class="breadcrumb" aria-label="Đường dẫn">
+        <a asp-controller="Home" asp-action="Index">Trang chủ</a> <span aria-hidden="true">/</span> Giới thiệu
+    </nav>
+    <h1 class="static-page__title">Giới thiệu VNews</h1>
+    <p class="static-page__lead">VNews là một trang tin tức minh hoạ, được xây dựng như dự án học tập và portfolio cá nhân. VNews không phải cơ quan báo chí và không liên kết với bất kỳ toà soạn nào.</p>
+
+    <h2>Dự án này là gì?</h2>
+    <p>Mục tiêu của VNews là dựng một trang tin có bố cục, trải nghiệm đọc và quy trình biên tập gần với một trang tin điện tử thực tế, dùng nội dung minh hoạ do dự án tự soạn.</p>
+
+    <h2>Những gì bạn có thể thử</h2>
+    <ul>
+        <li>Đọc tin theo chuyên mục, xem tin mới nhất và tìm kiếm bài viết.</li>
+        <li>Chia sẻ, lưu bài đọc sau, nghe tóm tắt bằng giọng đọc của trình duyệt và chỉnh cỡ chữ.</li>
+        <li>Đăng ký tài khoản độc giả để đồng bộ danh sách bài đã lưu.</li>
+        <li>Khu vực toà soạn (CMS) cho tác giả, biên tập viên và quản trị viên với quy trình: nháp, gửi duyệt, xuất bản hoặc từ chối.</li>
+    </ul>
+
+    <h2>Công nghệ</h2>
+    <p>ASP.NET Core MVC (.NET 10), Razor, Entity Framework Core, SQL Server, ASP.NET Core Identity, kiến trúc phân tầng Domain, Application, Infrastructure và Web, cùng bộ kiểm thử xUnit và Playwright.</p>
+
+    <h2>Về nội dung và hình ảnh</h2>
+    <p>Bài viết là nội dung minh hoạ. Ảnh minh hoạ dùng theo giấy phép Unsplash License. Thông tin thời tiết hiển thị ở đầu trang lấy từ dịch vụ Open-Meteo.</p>
+
+    <p class="static-page__links">Xem thêm: <a asp-controller="Pages" asp-action="Terms">Điều khoản sử dụng</a> · <a asp-controller="Pages" asp-action="Privacy">Chính sách bảo mật</a></p>
+</div>

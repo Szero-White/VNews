@@ -34,6 +34,11 @@
     <link rel="stylesheet" href="~/css/reader-login-dialog.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/reader-news-panel.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/top-ad-banner.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site-footer.css" asp-append-version="true" />
+    @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Pages")
+    {
+        <link rel="stylesheet" href="~/css/static-pages.css" asp-append-version="true" />
+    }
 </head>
 <body class="@(isHomepage ? "page-home" : "")">
     <a class="skip-link" href="#main-content">Bỏ qua điều hướng, đến nội dung</a>

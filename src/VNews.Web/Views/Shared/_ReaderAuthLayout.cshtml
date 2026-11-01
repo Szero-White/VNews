@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#a3123a" />
     <title>@ViewData["Title"] · VNews</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    @* Same headline face as the main layout. Georgia lacks the precomposed glyphs for
+       ấ ầ ắ ằ ế ề ố ồ, so a user-supplied display name in the h1 would render detached accents. *@
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap" />
     <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
 </head>
 <body class="reader-auth">

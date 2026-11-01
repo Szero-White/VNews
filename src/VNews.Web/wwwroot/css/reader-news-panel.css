@@ -22,7 +22,7 @@
 .reader-news-panel__content[hidden] { display:none; }
 .reader-news-panel__list { padding:0; margin:0; list-style:none; }
 .reader-news-panel__list li { padding:13px 0; border-bottom:1px solid #eee; }
-.reader-news-panel__list li a { display:block; color:#262626; font:700 15px/1.5 Georgia,serif; text-decoration:none; }
+.reader-news-panel__list li a { display:block; color:#262626; font:700 15px/1.5 Merriweather,"Times New Roman",Georgia,serif; text-decoration:none; }
 .reader-news-panel__list li a:hover { color:#a31440; }
 .reader-news-panel__category { display:block; color:#989898; font:12px/1.3 Arial,sans-serif; margin-bottom:5px; }
 .reader-news-panel__footlink { display:block; padding:15px 0 2px; text-align:center; font:600 13px/1.3 Arial,sans-serif; color:#a31440; }

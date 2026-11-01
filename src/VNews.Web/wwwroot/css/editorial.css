@@ -151,3 +151,35 @@ html { scroll-behavior: smooth; }
   .article-layout__aside { border-top-width:2px; }
   .article-tools { scrollbar-width:thin; }
 }
+
+/* Article page, layout reference: vnexpress.net article (breadcrumb + dateline row, serif headline,
+   sign-off, tags, related stories, "Xem nhiều" sidebar). */
+.article-topbar { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin: 4px 0 14px; }
+.article-topbar .breadcrumb { margin: 0; }
+.article-topbar__date { font: 13px/1.4 Arial,Helvetica,sans-serif; color: #757575; white-space: nowrap; }
+.article-detail__body { font-size: 18px; line-height: 1.7; }
+.article-signoff { margin: 26px 0 0; text-align: right; }
+.article-signoff__name { font: 700 16px/1.4 Arial,Helvetica,sans-serif; color: #222; }
+.article-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee; }
+.article-tags__label { font: 700 13px Arial,Helvetica,sans-serif; color: #222; margin-right: 4px; }
+.article-tags__item { display: inline-block; padding: 5px 12px; border: 1px solid #ddd; border-radius: 16px; background: #fff; color: #444; font: 600 13px/1.3 Arial,Helvetica,sans-serif; }
+.article-tags__item:hover { color: var(--vn-accent); border-color: var(--vn-accent); }
+.article-bottom-actions { border-top: 1px solid #eee; padding-top: 16px; margin-top: 24px; }
+.article-back-link { display: inline-block; padding: 6px 0; }
+.article-related { margin-top: 34px; border-top: 3px solid var(--vn-accent); padding-top: 14px; }
+.article-related h2 { font: 700 19px Arial,Helvetica,sans-serif; margin: 0 0 14px; }
+.article-related__grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 20px 22px; }
+.article-related__card { display: block; font: 700 15px/1.45 Merriweather,"Times New Roman",Georgia,serif; color: #222; }
+.article-related__card img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; margin-bottom: 8px; background: #eee; }
+.article-related__card:hover { color: var(--vn-accent); }
+.most-viewed { list-style: none; margin: 0; padding: 0; counter-reset: mv; }
+.most-viewed li { counter-increment: mv; display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--vn-border); }
+.most-viewed li::before { content: counter(mv); flex: 0 0 auto; font: 700 24px/1 Merriweather,"Times New Roman",Georgia,serif; color: var(--vn-accent); min-width: 20px; }
+.most-viewed__item { font: 600 14px/1.45 Arial,sans-serif; color: #222; }
+.most-viewed__item:hover { color: var(--vn-accent); }
+@media (max-width: 600px) {
+  .article-detail__body { font-size: 17px; line-height: 1.7; }
+  .article-related__grid { gap: 16px 12px; }
+  .article-related__card { font-size: 14px; }
+  .article-topbar { flex-direction: column; gap: 2px; }
+}

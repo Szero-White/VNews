@@ -13,4 +13,11 @@ public class ArticleDetailDto
     public int ViewCount { get; set; }
     public string CategoryName { get; set; } = string.Empty;
     public string CategorySlug { get; set; } = string.Empty;
+    public IReadOnlyList<TagDto> Tags { get; set; } = Array.Empty<TagDto>();
+}
+
+public class TagDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
 }

@@ -27,10 +27,12 @@ public class ArticleController : Controller
         }
 
         var related = await _articleQueryService.GetByCategoryAsync(article.CategorySlug, 1, 8, cancellationToken);
+        var mostViewed = await _articleQueryService.GetMostViewedAsync(5, article.Id, cancellationToken);
         return View(new ArticleDetailPageViewModel
         {
             Article = article,
-            RelatedArticles = related.Items.Where(item => item.Id != article.Id).Take(4).ToArray()
+            RelatedArticles = related.Items.Where(item => item.Id != article.Id).Take(4).ToArray(),
+            MostViewed = mostViewed
         });
     }
 }

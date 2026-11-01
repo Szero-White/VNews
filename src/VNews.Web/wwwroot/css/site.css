@@ -75,7 +75,7 @@ img {
 .house-promo__inner { width:min(1100px,calc(100% - 36px)); height:100%; margin:auto; display:flex; align-items:center; justify-content:space-between; }
 .house-promo__copy { display:flex; flex-direction:column; align-items:flex-start; max-width:650px; }
 .house-promo__eyebrow { font:700 12px/1.4 Arial,sans-serif; letter-spacing:.18em; color:#f5d7d9; }
-.house-promo__headline { font:700 clamp(33px,3.5vw,49px)/1.17 Georgia,serif; letter-spacing:-.02em; margin:12px 0 8px; text-shadow:0 2px 9px rgba(0,0,0,.15); }
+.house-promo__headline { font:700 clamp(33px,3.5vw,49px)/1.17 Merriweather,"Times New Roman",Georgia,serif; letter-spacing:-.02em; margin:12px 0 8px; text-shadow:0 2px 9px rgba(0,0,0,.15); }
 .house-promo__support { font:14px/1.6 Arial,sans-serif; color:#f6f6f6; }
 .house-promo__link { display:inline-flex; align-items:center; gap:12px; margin-top:15px; border:1px solid rgba(255,255,255,.75); padding:8px 13px; font:700 12px/1.5 Arial,sans-serif; }
 .house-promo__link:hover { color:#303030; background:#fff; }
@@ -341,23 +341,6 @@ img {
   padding: 48px 0;
   text-align: center;
   color: var(--vn-muted);
-}
-
-/* Footer */
-.site-footer {
-  background: #f8f8f8;
-  color: #555;
-}
-
-.site-footer__inner {
-  max-width: var(--vn-max-width);
-  margin: 0 auto;
-  padding: 24px 16px;
-  font-size: 0.85rem;
-}
-
-.site-footer a {
-  color: #555;
 }
 
 /* Responsive: tablet */
@@ -654,16 +637,6 @@ body {
 /* Homepage layout lives in homepage-v5.css and is loaded only on Home/Index;
    shared reading/category/CMS styles do not inherit its composition rules. */
 
-/* Footer — 3-column link layout. */
-.site-footer { background:#f8f8f8; color:#555; border-top:2px solid #ececec; }
-.site-footer__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 32px 0 20px; }
-.site-footer__col h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #333; margin: 0 0 10px; }
-.site-footer__col ul { list-style: none; margin: 0; padding: 0; }
-.site-footer__col li { margin-bottom: 8px; font-size: 13px; }
-.site-footer__col a { color: #555; }
-.site-footer__col a:hover { color: var(--vn-accent); }
-.site-footer__legal { border-top: 1px solid #ddd; padding: 16px 0 24px; font-size: 12px; color: #999; }
-.site-footer__legal p { margin: 0 0 6px; }
 
 /* Desktop safety margin; alignment remains centered at 1180px. */
 @media (max-width: 1220px) {
@@ -716,7 +689,6 @@ body {
   .primary-nav__latest { display:inline-flex; font-size:13px; }
   .site-main { padding-top: 0; }
   .site-main { padding-top: 15px; }
-  .site-footer__grid { grid-template-columns: 1fr; gap: 20px; padding: 24px 0 16px; }
 }
 
 @media (max-width: 480px) {

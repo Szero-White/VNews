@@ -153,7 +153,11 @@ public class ArticleQueryService : IArticleQueryService
                 PublishedAt = a.PublishedAt,
                 ViewCount = a.ViewCount,
                 CategoryName = a.Category.Name,
-                CategorySlug = a.Category.Slug
+                CategorySlug = a.Category.Slug,
+                Tags = a.ArticleTags
+                    .OrderBy(at => at.Tag.Name)
+                    .Select(at => new TagDto { Name = at.Tag.Name, Slug = at.Tag.Slug })
+                    .ToList()
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -165,6 +169,23 @@ public class ArticleQueryService : IArticleQueryService
         }
 
         return article;
+    }
+
+    public async Task<IReadOnlyList<ArticleSummaryDto>> GetMostViewedAsync(
+        int count, int? excludeArticleId = null, CancellationToken cancellationToken = default)
+    {
+        var query = PublishedArticles();
+        if (excludeArticleId is int excluded)
+        {
+            query = query.Where(a => a.Id != excluded);
+        }
+
+        return await query
+            .OrderByDescending(a => a.ViewCount)
+            .ThenByDescending(a => a.PublishedAt)
+            .Take(count)
+            .Select(ToSummary)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<PagedResult<ArticleSummaryDto>> GetLatestAsync(

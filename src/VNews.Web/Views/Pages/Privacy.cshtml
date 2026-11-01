@@ -1,0 +1,36 @@
+@{
+    ViewData["Title"] = "Chính sách bảo mật";
+    ViewData["Description"] = "VNews thu thập và sử dụng dữ liệu của bạn như thế nào.";
+}
+<div class="container static-page">
+    <nav class="breadcrumb" aria-label="Đường dẫn">
+        <a asp-controller="Home" asp-action="Index">Trang chủ</a> <span aria-hidden="true">/</span> Chính sách bảo mật
+    </nav>
+    <h1 class="static-page__title">Chính sách bảo mật</h1>
+    <p class="static-page__lead">Trang này mô tả đúng những dữ liệu mà VNews đang xử lý. VNews không dùng cookie quảng cáo hay công cụ theo dõi hành vi.</p>
+
+    <h2>Dữ liệu khi bạn chỉ đọc tin</h2>
+    <ul>
+        <li><strong>Lưu trong trình duyệt của bạn (localStorage):</strong> danh sách bài đã lưu khi chưa đăng nhập và lịch sử "tin đã xem" gần đây. Dữ liệu này không gửi lên máy chủ; bạn có thể xoá bằng cách xoá dữ liệu trang trong trình duyệt.</li>
+        <li><strong>Cookie bảo mật:</strong> cookie chống giả mạo yêu cầu (antiforgery) được tạo khi bạn gửi biểu mẫu.</li>
+        <li><strong>Nhật ký máy chủ:</strong> khi có lỗi hoặc sự kiện bảo mật (đăng nhập thất bại, bị giới hạn tần suất), máy chủ ghi nhật ký kỹ thuật gồm đường dẫn yêu cầu, mã lỗi và địa chỉ IP. Mật khẩu không bao giờ được ghi vào nhật ký.</li>
+    </ul>
+
+    <h2>Khi bạn đăng ký tài khoản độc giả</h2>
+    <ul>
+        <li>VNews lưu email, tên hiển thị, mật khẩu đã được băm bằng ASP.NET Core Identity (không lưu mật khẩu gốc) và danh sách bài bạn đã lưu.</li>
+        <li>Cookie đăng nhập được đánh dấu HttpOnly và SameSite=Lax; trên môi trường chạy thật cookie chỉ gửi qua HTTPS.</li>
+        <li>VNews chưa hỗ trợ xác nhận email hay khôi phục mật khẩu trong phiên bản này.</li>
+    </ul>
+
+    <h2>Dịch vụ bên thứ ba</h2>
+    <ul>
+        <li><strong>Google Fonts:</strong> trình duyệt của bạn tải phông chữ Merriweather từ Google, nên Google nhận được địa chỉ IP và thông tin trình duyệt của bạn theo chính sách của họ.</li>
+        <li><strong>Open-Meteo:</strong> máy chủ VNews (không phải trình duyệt của bạn) gọi dịch vụ này để lấy nhiệt độ hiển thị ở đầu trang.</li>
+    </ul>
+
+    <h2>Chia sẻ dữ liệu</h2>
+    <p>VNews không bán hay chia sẻ dữ liệu cá nhân với bên thứ ba ngoài các dịch vụ kỹ thuật nêu trên.</p>
+
+    <p class="static-page__links">Xem thêm: <a asp-controller="Pages" asp-action="Terms">Điều khoản sử dụng</a> · <a asp-controller="Pages" asp-action="About">Giới thiệu</a></p>
+</div>

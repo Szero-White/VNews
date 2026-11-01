@@ -63,7 +63,9 @@ public class HttpSecurityIntegrationTests : IClassFixture<IsolatedDbWebApplicati
         Assert.False(string.IsNullOrEmpty(nonce1));
         Assert.NotEqual(nonce1, Nonce(second));
 
-        var html = await first.Content.ReadAsStringAsync();
+        // Razor HTML-encodes attribute values (a base64 nonce may contain '+' => "&#x2B;"); browsers decode it back,
+        // so compare the decoded markup.
+        var html = System.Net.WebUtility.HtmlDecode(await first.Content.ReadAsStringAsync());
         Assert.Contains($"<script nonce=\"{nonce1}\">", html);
         // No inline event handlers remain that the policy would block.
         Assert.DoesNotMatch(@"\son[a-z]+\s*=\s*""", html);
@@ -359,6 +361,7 @@ public class ApiExceptionHandlingIntegrationTests : IClassFixture<IsolatedDbWebA
         public Task<PagedResult<ArticleSummaryDto>> SearchAsync(string query, int page, int pageSize, CancellationToken cancellationToken = default) => _inner.SearchAsync(query, page, pageSize, cancellationToken);
         public Task<PagedResult<ArticleSummaryDto>> GetByTagAsync(string tagSlug, int page, int pageSize, CancellationToken cancellationToken = default) => _inner.GetByTagAsync(tagSlug, page, pageSize, cancellationToken);
         public Task<PagedResult<ArticleSummaryDto>> GetLatestAsync(int page, int pageSize, CancellationToken cancellationToken = default) => _inner.GetLatestAsync(page, pageSize, cancellationToken);
+        public Task<IReadOnlyList<ArticleSummaryDto>> GetMostViewedAsync(int count, int? excludeArticleId = null, CancellationToken cancellationToken = default) => _inner.GetMostViewedAsync(count, excludeArticleId, cancellationToken);
     }
 }
 

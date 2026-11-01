@@ -16,7 +16,7 @@ button,input { font:inherit; }
 .reader-auth__form-wrap { width:100%; max-width:462px; }
 .reader-auth__card { border:1px solid var(--auth-line); border-radius:8px; background:#fff; box-shadow:0 10px 40px #2323230d; padding:39px 40px 30px; }
 .reader-auth__kicker { margin:0 0 10px; font-size:11px; letter-spacing:.12em; font-weight:800; color:var(--auth-red); }
-.reader-auth__card h1 { margin:0; font:700 29px/1.25 Georgia,serif; letter-spacing:-.03em; }
+.reader-auth__card h1 { margin:0; font:700 29px/1.25 Merriweather,"Times New Roman",Georgia,serif; letter-spacing:-.03em; }
 .reader-auth__lead { margin:12px 0 25px; font-size:14px; line-height:1.6; color:var(--auth-muted); }
 .reader-auth__form { display:grid; gap:15px; }
 .reader-auth__field { display:grid; gap:7px; }
