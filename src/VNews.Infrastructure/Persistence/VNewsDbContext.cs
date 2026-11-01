@@ -19,6 +19,7 @@ public class VNewsDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ArticleTag> ArticleTags => Set<ArticleTag>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<SavedArticle> SavedArticles => Set<SavedArticle>();
+    public DbSet<Comment> Comments => Set<Comment>();
 
     public DbSet<ArticleByCategoryResult> ArticleByCategoryResults => Set<ArticleByCategoryResult>();
     public DbSet<DailyPublishStatResult> DailyPublishStatResults => Set<DailyPublishStatResult>();
