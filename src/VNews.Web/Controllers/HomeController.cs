@@ -9,12 +9,14 @@ namespace VNews.Web.Controllers;
 public class HomeController : Controller
 {
     private readonly IArticleQueryService _articleQueryService;
+    private readonly IHomePageQueryService _homePage;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<HomeController> _logger;
 
-    public HomeController(IArticleQueryService articleQueryService, IWebHostEnvironment environment, ILogger<HomeController> logger)
+    public HomeController(IArticleQueryService articleQueryService, IHomePageQueryService homePage, IWebHostEnvironment environment, ILogger<HomeController> logger)
     {
         _articleQueryService = articleQueryService;
+        _homePage = homePage;
         _environment = environment;
         _logger = logger;
     }
@@ -29,7 +31,7 @@ public class HomeController : Controller
             return View(VisualFixtureHomePageData.Build());
         }
 
-        var data = await _articleQueryService.GetHomePageDataAsync(cancellationToken);
+        var data = await _homePage.GetHomePageDataAsync(cancellationToken);
         return View(data);
     }
 

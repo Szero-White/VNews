@@ -19,4 +19,7 @@ public class CategorySaveViewModel
     public string? Description { get; set; }
 
     public int DisplayOrder { get; set; }
+
+    /// <summary>Optional parent: makes this a sub-category (one level deep; validated by the service).</summary>
+    public int? ParentId { get; set; }
 }

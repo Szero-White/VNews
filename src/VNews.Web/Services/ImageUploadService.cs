@@ -11,7 +11,7 @@ namespace VNews.Web.Services;
 /// </summary>
 public class ImageUploadService : IImageUploadService
 {
-    private const long MaxBytes = 3 * 1024 * 1024;
+    private const long MaxBytes = ImageUploadLimits.MaxBytes;
 
     private enum ImageFormat { Jpeg, Png, WebP }
 
@@ -39,7 +39,7 @@ public class ImageUploadService : IImageUploadService
     {
         if (length <= 0 || length > MaxBytes)
         {
-            return Reject("size", "Ảnh phải nhỏ hơn 3MB.", length);
+            return Reject("size", "Ảnh phải nhỏ hơn " + ImageUploadLimits.Label + ".", length);
         }
 
         var extension = Path.GetExtension(originalFileName ?? string.Empty);
@@ -63,7 +63,7 @@ public class ImageUploadService : IImageUploadService
         {
             if (memoryStream.Length + read > MaxBytes)
             {
-                return Reject("size-actual", "Ảnh phải nhỏ hơn 3MB.", length);
+                return Reject("size-actual", "Ảnh phải nhỏ hơn " + ImageUploadLimits.Label + ".", length);
             }
 
             memoryStream.Write(buffer, 0, read);

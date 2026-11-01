@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VNews.Application.Common;
+using VNews.Application.DTOs;
 using VNews.Application.Interfaces;
 using VNews.Domain.Identity;
 using VNews.Web.Models.Cms;
@@ -19,68 +20,58 @@ public class CmsCategoriesController : Controller
         _categoryCommandService = categoryCommandService;
     }
 
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
-    {
-        var categories = await _categoryQueryService.GetAllAsync(cancellationToken);
-        return View(categories);
-    }
+    public async Task<IActionResult> Index(CancellationToken cancellationToken) =>
+        View(await _categoryQueryService.GetAllAsync(cancellationToken));
 
     [HttpGet]
-    public IActionResult Create() => View(new CategorySaveViewModel());
+    public Task<IActionResult> Create(CancellationToken cancellationToken) => FormViewAsync(new CategorySaveViewModel(), cancellationToken);
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CategorySaveViewModel model, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid)
-        {
-            return View(model);
-        }
+        if (!ModelState.IsValid) return await FormViewAsync(model, cancellationToken);
 
         try
         {
-            await _categoryCommandService.CreateAsync(model.Name, model.Slug, model.Description, model.DisplayOrder, cancellationToken);
+            await _categoryCommandService.CreateAsync(model.Name, model.Slug, model.Description, model.DisplayOrder, model.ParentId, cancellationToken);
             TempData["Message"] = "Đã tạo chuyên mục.";
             return RedirectToAction(nameof(Index));
         }
         catch (ArticleWorkflowException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            return View(model);
+            return await FormViewAsync(model, cancellationToken);
         }
     }
 
     [HttpGet]
     public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
     {
-        var categories = await _categoryQueryService.GetAllAsync(cancellationToken);
-        var category = categories.FirstOrDefault(c => c.Id == id);
-        if (category is null)
-        {
-            return NotFound();
-        }
+        var category = (await _categoryQueryService.GetAllAsync(cancellationToken)).FirstOrDefault(c => c.Id == id);
+        if (category is null) return NotFound();
 
-        return View(new CategorySaveViewModel
+        return await FormViewAsync(new CategorySaveViewModel
         {
             Id = category.Id,
             Name = category.Name,
             Slug = category.Slug,
-            Description = category.Description
-        });
+            Description = category.Description,
+            DisplayOrder = category.DisplayOrder,
+            ParentId = category.ParentId,
+        }, cancellationToken);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, CategorySaveViewModel model, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid)
-        {
-            return View(model);
-        }
+        model.Id = id;
+        if (!ModelState.IsValid) return await FormViewAsync(model, cancellationToken);
 
         try
         {
-            await _categoryCommandService.UpdateAsync(id, model.Name, model.Slug, model.Description, model.DisplayOrder, cancellationToken);
+            await _categoryCommandService.UpdateAsync(id, model.Name, model.Slug, model.Description, model.DisplayOrder, model.ParentId, cancellationToken);
             TempData["Message"] = "Đã cập nhật chuyên mục.";
             return RedirectToAction(nameof(Index));
         }
@@ -91,7 +82,16 @@ public class CmsCategoriesController : Controller
         catch (ArticleWorkflowException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            return View(model);
+            return await FormViewAsync(model, cancellationToken);
         }
+    }
+
+    /// <summary>The create/edit form. Parent choices are the top-level categories other than this one; a category that already has children cannot be given a parent.</summary>
+    private async Task<IActionResult> FormViewAsync(CategorySaveViewModel model, CancellationToken cancellationToken)
+    {
+        var tree = await _categoryQueryService.GetTreeAsync(cancellationToken);
+        ViewData["ParentOptions"] = tree.Where(c => c.Id != model.Id).ToList();
+        ViewData["HasChildren"] = tree.Any(c => c.Id == model.Id && c.Children.Count > 0);
+        return View(model);
     }
 }

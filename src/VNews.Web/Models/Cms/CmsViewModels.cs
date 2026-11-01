@@ -25,16 +25,6 @@ public sealed class CmsWorkspaceViewModel
     public bool IsDashboard => string.IsNullOrEmpty(Status) && string.IsNullOrEmpty(Query) && List.Page == 1;
 }
 
-public sealed class AuditRowViewModel
-{
-    public DateTime CreatedAt { get; init; }
-    public string UserDisplayName { get; init; } = string.Empty;
-    public string Action { get; init; } = string.Empty;
-    public string EntityType { get; init; } = string.Empty;
-    public string EntityId { get; init; } = string.Empty;
-    public string? Detail { get; init; }
-}
-
 public sealed class CmsOverviewViewModel
 {
     public required CmsStatsDto Stats { get; init; }
@@ -42,12 +32,12 @@ public sealed class CmsOverviewViewModel
     public int Users { get; init; }
     public IReadOnlyDictionary<string, int> UsersByRole { get; init; } = new Dictionary<string, int>();
     public IReadOnlyList<ArticleCmsListItemDto> PendingQueue { get; init; } = Array.Empty<ArticleCmsListItemDto>();
-    public IReadOnlyList<AuditRowViewModel> RecentAudit { get; init; } = Array.Empty<AuditRowViewModel>();
+    public IReadOnlyList<AuditEntryDto> RecentAudit { get; init; } = Array.Empty<AuditEntryDto>();
 }
 
 public sealed class UsersPageViewModel
 {
-    public required PagedResult<UserListItemViewModel> Users { get; init; }
+    public required PagedResult<UserListItemDto> Users { get; init; }
     public string? Query { get; init; }
     public string? Role { get; init; }
     public string CurrentUserId { get; init; } = string.Empty;
@@ -66,3 +56,6 @@ public sealed class AppPagerModel
     public string Noun { get; init; } = "mục";
     public int TotalPages => Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
 }
+
+/// <summary>Input of the shared Publish / Reject buttons (list row and edit page), so the confirmation texts exist in one place.</summary>
+public sealed record ReviewActionsModel(int Id, string Title, bool Small);

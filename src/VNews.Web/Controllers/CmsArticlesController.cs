@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using VNews.Application.Common;
 using VNews.Application.DTOs.Cms;
 using VNews.Application.Interfaces;
-using VNews.Web.Models.Cms;
+using VNews.Web.Helpers;
+using VNews.Web.Services;
 using VNews.Domain.Identity;
 
 namespace VNews.Web.Controllers;
@@ -14,80 +15,47 @@ namespace VNews.Web.Controllers;
 public class CmsArticlesController : Controller
 {
     private readonly IArticleCommandService _articleCommandService;
+    private readonly IArticleCmsQueryService _cmsQuery;
+    private readonly CmsWorkspaceBuilder _workspace;
     private readonly ICategoryQueryService _categoryQueryService;
     private readonly IImageUploadService _imageUploadService;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public CmsArticlesController(
         IArticleCommandService articleCommandService,
+        IArticleCmsQueryService cmsQuery,
+        CmsWorkspaceBuilder workspace,
         ICategoryQueryService categoryQueryService,
         IImageUploadService imageUploadService,
         UserManager<ApplicationUser> userManager)
     {
         _articleCommandService = articleCommandService;
+        _cmsQuery = cmsQuery;
+        _workspace = workspace;
         _categoryQueryService = categoryQueryService;
         _imageUploadService = imageUploadService;
         _userManager = userManager;
     }
+
+    private async Task<string> CurrentDisplayNameAsync() => (await _userManager.GetUserAsync(User))?.DisplayName ?? User.Identity?.Name ?? "Unknown";
 
     private string CurrentUserId => _userManager.GetUserId(User)!;
     private bool IsPrivileged => User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Editor);
 
     public async Task<IActionResult> Index(string? status, string? q, int page = 1, CancellationToken cancellationToken = default)
     {
-        // Authors only ever see their own articles; editors and admins see everything.
-        var authorFilter = IsPrivileged ? null : CurrentUserId;
-        status = VNews.Web.Helpers.CmsStatus.All.Contains(status ?? string.Empty) ? status : null;
-        q = string.IsNullOrWhiteSpace(q) ? null : q.Trim()[..Math.Min(q.Trim().Length, 100)];
-
-        var stats = await _articleCommandService.GetCmsStatsAsync(authorFilter, cancellationToken);
-        var list = await _articleCommandService.ListForCmsAsync(status, authorFilter, page, 15, cancellationToken, q,
-            oldestFirst: status == "PendingReview");
-
-        // What needs attention: editors/admins the review queue (oldest first); authors the articles sent back, else drafts.
-        IReadOnlyList<ArticleCmsListItemDto> attention;
-        string attentionTitle, attentionHint;
-        if (IsPrivileged)
-        {
-            attention = (await _articleCommandService.ListForCmsAsync("PendingReview", null, 1, 5, cancellationToken, oldestFirst: true)).Items;
-            attentionTitle = "Bài cần xử lý";
-            attentionHint = "Bài đang chờ duyệt, cũ nhất ở trên cùng.";
-        }
-        else
-        {
-            attention = (await _articleCommandService.ListForCmsAsync("Rejected", authorFilter, 1, 5, cancellationToken)).Items;
-            attentionTitle = "Cần chỉnh sửa";
-            attentionHint = "Bài được biên tập viên trả lại kèm lý do.";
-            if (attention.Count == 0)
-            {
-                attention = (await _articleCommandService.ListForCmsAsync("Draft", authorFilter, 1, 5, cancellationToken)).Items;
-                attentionTitle = "Bản nháp đang viết";
-                attentionHint = "Hoàn thiện rồi gửi duyệt khi sẵn sàng.";
-            }
-        }
-
-        var user = await _userManager.GetUserAsync(User);
-        return View(new CmsWorkspaceViewModel
-        {
-            Stats = stats,
-            List = list,
-            Attention = attention,
-            AttentionTitle = attentionTitle,
-            AttentionHint = attentionHint,
-            Status = status,
-            Query = q,
-            IsPrivileged = IsPrivileged,
-            CurrentUserId = CurrentUserId,
-            DisplayName = user?.DisplayName ?? User.Identity?.Name ?? string.Empty,
-            RoleLabel = VNews.Web.Helpers.AppFormat.RoleLabel(VNews.Web.Helpers.AppFormat.PrimaryRole(User.FindAll(ClaimTypes.Role).Select(c => c.Value))),
-        });
+        var viewer = new CmsWorkspaceBuilder.Viewer(
+            CurrentUserId,
+            await CurrentDisplayNameAsync(),
+            IsPrivileged,
+            AppFormat.PrimaryRole(User.FindAll(ClaimTypes.Role).Select(c => c.Value)));
+        return View(await _workspace.BuildAsync(viewer, status, q, page, cancellationToken));
     }
 
     [HttpGet]
     public async Task<IActionResult> Create(CancellationToken cancellationToken)
     {
-        ViewBag.Categories = await _categoryQueryService.GetAllAsync(cancellationToken);
-        return View(new ArticleSaveRequest());
+        return await FormViewAsync(new ArticleSaveRequest(), null, cancellationToken);
     }
 
     [HttpPost]
@@ -96,8 +64,7 @@ public class CmsArticlesController : Controller
     {
         if (!ModelState.IsValid)
         {
-            ViewBag.Categories = await _categoryQueryService.GetAllAsync(cancellationToken);
-            return View(request);
+            return await FormViewAsync(request, null, cancellationToken);
         }
 
         var displayName = User.FindFirstValue(ClaimTypes.Name) ?? User.Identity?.Name ?? "Unknown";
@@ -113,15 +80,14 @@ public class CmsArticlesController : Controller
         catch (ArticleWorkflowException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            ViewBag.Categories = await _categoryQueryService.GetAllAsync(cancellationToken);
-            return View(request);
+            return await FormViewAsync(request, null, cancellationToken);
         }
     }
 
     [HttpGet]
     public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
     {
-        var article = await _articleCommandService.GetForEditAsync(id, cancellationToken);
+        var article = await _cmsQuery.GetForEditAsync(id, cancellationToken);
         if (article is null)
         {
             return NotFound();
@@ -132,16 +98,14 @@ public class CmsArticlesController : Controller
             return Forbid();
         }
 
-        ViewBag.Categories = await _categoryQueryService.GetAllAsync(cancellationToken);
-        ViewBag.Article = article;
-        return View(ToSaveRequest(article));
+        return await FormViewAsync(ToSaveRequest(article), article, cancellationToken);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, ArticleSaveRequest request, string rowVersionBase64, CancellationToken cancellationToken)
     {
-        var existing = await _articleCommandService.GetForEditAsync(id, cancellationToken);
+        var existing = await _cmsQuery.GetForEditAsync(id, cancellationToken);
         if (existing is null)
         {
             return NotFound();
@@ -154,22 +118,18 @@ public class CmsArticlesController : Controller
 
         if (!ModelState.IsValid)
         {
-            ViewBag.Categories = await _categoryQueryService.GetAllAsync(cancellationToken);
-            ViewBag.Article = existing;
-            return View(request);
+            return await FormViewAsync(request, existing, cancellationToken);
         }
 
         if (!TryReadRowVersion(rowVersionBase64, out var rowVersion))
         {
             ModelState.AddModelError(string.Empty, "Phiên bản bài viết không hợp lệ. Vui lòng tải lại trang và thử lại.");
-            ViewBag.Categories = await _categoryQueryService.GetAllAsync(cancellationToken);
-            ViewBag.Article = existing;
-            return View(request);
+            return await FormViewAsync(request, existing, cancellationToken);
         }
 
         try
         {
-            await _articleCommandService.UpdateDraftAsync(id, request, rowVersion, CurrentUserId, IsPrivileged, cancellationToken);
+            await _articleCommandService.UpdateAsync(id, request, rowVersion, CurrentUserId, IsPrivileged, cancellationToken, await CurrentDisplayNameAsync());
             TempData["Message"] = "Đã lưu thay đổi.";
         }
         catch (EntityNotFoundException)
@@ -183,16 +143,12 @@ public class CmsArticlesController : Controller
         catch (ArticleWorkflowException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            ViewBag.Categories = await _categoryQueryService.GetAllAsync(cancellationToken);
-            ViewBag.Article = existing;
-            return View(request);
+            return await FormViewAsync(request, existing, cancellationToken);
         }
         catch (ArticleConcurrencyException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            ViewBag.Categories = await _categoryQueryService.GetAllAsync(cancellationToken);
-            ViewBag.Article = await _articleCommandService.GetForEditAsync(id, cancellationToken);
-            return View(request);
+            return await FormViewAsync(request, await _cmsQuery.GetForEditAsync(id, cancellationToken), cancellationToken);
         }
 
         return RedirectToAction(nameof(Edit), new { id });
@@ -202,7 +158,7 @@ public class CmsArticlesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SubmitForReview(int id, CancellationToken cancellationToken)
     {
-        var existing = await _articleCommandService.GetForEditAsync(id, cancellationToken);
+        var existing = await _cmsQuery.GetForEditAsync(id, cancellationToken);
         if (existing is null)
         {
             return NotFound();
@@ -282,7 +238,7 @@ public class CmsArticlesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequestSizeLimit(5 * 1024 * 1024)]
+    [RequestSizeLimit(ImageUploadLimits.RequestBytes)]
     public async Task<IActionResult> UploadCoverImage(IFormFile file, CancellationToken cancellationToken)
     {
         if (file is null || file.Length == 0)
@@ -299,6 +255,14 @@ public class CmsArticlesController : Controller
         }
 
         return Ok(new { url = result.Url });
+    }
+
+    /// <summary>The create/edit form: categories for the select, and (when editing) the stored article for the status and review note.</summary>
+    private async Task<IActionResult> FormViewAsync(ArticleSaveRequest model, ArticleEditDto? article, CancellationToken cancellationToken)
+    {
+        ViewBag.Categories = await _categoryQueryService.GetAllAsync(cancellationToken);
+        if (article is not null) ViewBag.Article = article;
+        return View(model);
     }
 
     private static bool TryReadRowVersion(string? base64, out byte[] rowVersion)

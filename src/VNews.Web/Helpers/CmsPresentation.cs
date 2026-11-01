@@ -49,9 +49,11 @@ public sealed record CmsRowActions(bool CanViewPublic, bool CanEdit, bool CanSub
     {
         var mayChange = isOwner || isPrivileged;
         var editable = status is "Draft" or "Rejected";
+        // A published article may be edited by editors and admins only (the service enforces the same rule).
+        var canEditPublished = status == "Published" && isPrivileged;
         return new CmsRowActions(
             CanViewPublic: status == "Published",
-            CanEdit: editable && mayChange,
+            CanEdit: (editable && mayChange) || canEditPublished,
             CanSubmit: editable && mayChange,
             CanPublish: status == "PendingReview" && isPrivileged,
             CanReject: status == "PendingReview" && isPrivileged);
@@ -101,12 +103,17 @@ public static class AuditLabels
         "SubmitForReview" => "Gửi duyệt",
         "Publish" => "Xuất bản",
         "Reject" => "Từ chối",
+        "UpdatePublished" => "Sửa bài đã xuất bản",
+        "HideComment" => "Gỡ bình luận",
+        "QuarantineUploads" => "Dọn ảnh không dùng",
         _ => action,
     };
 
     public static string Entity(string entity) => entity switch
     {
         "Article" => "Bài viết",
+        "Comment" => "Bình luận",
+        "Upload" => "Ảnh tải lên",
         _ => entity,
     };
 }
