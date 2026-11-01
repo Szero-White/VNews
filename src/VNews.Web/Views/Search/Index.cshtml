@@ -5,11 +5,11 @@
     ViewData["PaginationAction"] = "Search";
     ViewData["PaginationQuery"] = Model.Query;
 }
-<div class="container listing-page editorial-listing">
+<div class="container listing-page editorial-listing search-page">
     <nav class="breadcrumb"><a asp-controller="Home" asp-action="Index">Trang chủ</a> &rsaquo; Tìm kiếm</nav>
-    <h1 class="listing-page__title">Tìm kiếm</h1>
+    <h1 class="listing-page__title search-page__title">Tìm kiếm</h1>
     <form class="search-page-form" asp-controller="Search" asp-action="Index" method="get" role="search">
-        <label for="page-search">Từ khóa</label>
+        <label for="page-search" class="search-page-form__label">Từ khóa</label>
         <div><input id="page-search" name="q" value="@Model.Query" type="search" maxlength="120" placeholder="Tên bài viết, chủ đề..." required /><button type="submit">Tìm kiếm</button></div>
     </form>
     @if (string.IsNullOrWhiteSpace(Model.Query))

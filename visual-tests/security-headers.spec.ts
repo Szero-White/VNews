@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page, Browser } from '@playwright/test';
 
 // Proves the Content-Security-Policy added in Backend Reliability & Security Phase 1 does not
 // break the real UI: no CSP violation is reported and page scripts still run.
@@ -62,12 +62,33 @@ test('CMS: nonce-protected inline upload script runs and the server refuses SVG'
   expect(problems).toEqual([]);
 });
 
-test('CMS: reject button works without an inline handler (cancel keeps the form unsent)', async ({ page }) => {
+// The suite runs against its own isolated database (see playwright.config.ts), which starts without any
+// article awaiting review, so the test creates one through the real CMS UI as the demo author.
+async function ensurePendingArticle(browser: Browser, baseURL: string) {
+  const context = await browser.newContext({ baseURL });
+  const author = await context.newPage();
+  await loginCms(author, 'author@vnews.local');
+  await author.goto('/cms/CmsArticles/Create');
+  await author.locator('#Title').fill(`Bai cho duyet e2e ${Date.now()}`);
+  await author.locator('#CategoryId').selectOption({ index: 1 });
+  await author.locator('#Summary').fill('Tom tat bai cho duyet dung de kiem thu giao dien.');
+  await author.locator('#Body').fill('<p>Noi dung kiem thu.</p>');
+  await author.getByRole('button', { name: 'Tạo bản nháp' }).click();
+  await author.waitForURL(/\/CmsArticles\/Edit\/\d+/i);
+  await author.getByRole('button', { name: /Gửi duyệt/ }).click();
+  await context.close();
+}
+
+test('CMS: reject button works without an inline handler (cancel keeps the form unsent)', async ({ page, browser, baseURL }) => {
   const problems = watchViolations(page);
   await loginCms(page, 'editor@vnews.local');
   await page.goto('/cms/CmsArticles?status=PendingReview');
+  if (await page.locator('form.js-reject-form').count() === 0) {
+    await ensurePendingArticle(browser, baseURL!);
+    await page.goto('/cms/CmsArticles?status=PendingReview');
+  }
   const rejectForm = page.locator('form.js-reject-form').first();
-  if (await rejectForm.count() === 0) test.skip(true, 'no pending article available to exercise the reject button');
+  await expect(rejectForm).toHaveCount(1);
 
   let prompted = false;
   page.on('dialog', async dialog => { prompted = true; await dialog.dismiss(); });

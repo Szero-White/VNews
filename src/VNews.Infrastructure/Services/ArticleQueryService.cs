@@ -207,10 +207,15 @@ public class ArticleQueryService : IArticleQueryService
         return await ToPagedResultAsync(query, page, pageSize, cancellationToken);
     }
 
+    // Accent- and case-insensitive collation: "vang" matches "vàng". It does not fold đ/Đ, so those are replaced
+    // by d on the column side, as SearchText does on the keyword side.
+    private const string SearchCollation = "Latin1_General_100_CI_AI";
+
     public async Task<PagedResult<ArticleSummaryDto>> SearchAsync(
         string query, int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(query))
+        var tokens = SearchText.Tokenize(query);
+        if (tokens.Count == 0)
         {
             return new PagedResult<ArticleSummaryDto>
             {
@@ -221,13 +226,26 @@ public class ArticleQueryService : IArticleQueryService
             };
         }
 
-        var pattern = $"%{query.Trim()}%";
+        // Every keyword must appear in the title or the summary. Keywords are letters/digits only and are sent as
+        // parameters (never concatenated into SQL). The body is not searched: it is stored HTML (tag and attribute
+        // noise) and scanning nvarchar(max) needs a full-text index, which would need a migration.
+        var filtered = PublishedArticles();
+        foreach (var token in tokens)
+        {
+            var pattern = $"%{token}%";
+            filtered = filtered.Where(a =>
+                EF.Functions.Like(EF.Functions.Collate(a.Title, SearchCollation).Replace("đ", "d"), pattern)
+                || EF.Functions.Like(EF.Functions.Collate(a.Summary, SearchCollation).Replace("đ", "d"), pattern));
+        }
 
-        var filtered = PublishedArticles()
-            .Where(a => EF.Functions.Like(a.Title, pattern) || EF.Functions.Like(a.Summary, pattern))
-            .OrderByDescending(a => a.PublishedAt);
+        // Title hits on the whole phrase first, then newest; Id makes the order total so pages never repeat an article.
+        var phrase = $"%{string.Join(' ', tokens)}%";
+        var ordered = filtered
+            .OrderByDescending(a => EF.Functions.Like(EF.Functions.Collate(a.Title, SearchCollation).Replace("đ", "d"), phrase))
+            .ThenByDescending(a => a.PublishedAt)
+            .ThenByDescending(a => a.Id);
 
-        return await ToPagedResultAsync(filtered, page, pageSize, cancellationToken);
+        return await ToPagedResultAsync(ordered, page, pageSize, cancellationToken);
     }
 
     public async Task<PagedResult<ArticleSummaryDto>> GetByTagAsync(

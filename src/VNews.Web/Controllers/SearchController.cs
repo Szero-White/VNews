@@ -23,6 +23,12 @@ public class SearchController : Controller
             ? new PagedResult<ArticleSummaryDto> { Items = Array.Empty<ArticleSummaryDto>(), Page = page, PageSize = 12, TotalCount = 0 }
             : await _articleQueryService.SearchAsync(query, page, 12, cancellationToken);
 
+        // A page number past the end (stale link, hand-edited URL) shows the last real page, not "no results".
+        if (articles.Items.Count == 0 && articles.TotalCount > 0 && articles.TotalPages > 0 && page > articles.TotalPages)
+        {
+            articles = await _articleQueryService.SearchAsync(query, articles.TotalPages, 12, cancellationToken);
+        }
+
         return View(new SearchPageViewModel
         {
             Query = query,

@@ -183,3 +183,23 @@ html { scroll-behavior: smooth; }
   .article-related__card { font-size: 14px; }
   .article-topbar { flex-direction: column; gap: 2px; }
 }
+
+/* Search results: single 760px column, joined input + button, headline-first rows with the thumbnail on the right
+   (layout reference: timkiem.vnexpress.net, captured 2026-11-01); VNews colours and type. */
+.search-page { max-width: 760px; margin-left: auto; margin-right: auto; }
+.search-page__title { font-family: Merriweather,"Times New Roman",Georgia,serif; }
+.search-page .search-page-form { max-width: none; margin: 18px 0 22px; }
+.search-page-form__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.search-page .search-page-form input { padding: 13px 14px; background: #f7f7f7; }
+.search-page .search-count { font-size: 14px; padding-bottom: 12px; }
+.search-page .editorial-listing__articles .story-row { flex-direction: row-reverse; align-items: flex-start; justify-content: space-between; gap: 22px; }
+.search-page .editorial-listing__articles .story-row__body { flex: 1 1 auto; min-width: 0; }
+.search-page .editorial-listing__articles .story-row__title { font: 700 19px/1.4 Merriweather,"Times New Roman",Georgia,serif; margin: 0 0 8px; }
+.search-page .editorial-listing__articles .story-row__image-link { flex: 0 0 220px; }
+@media (max-width: 600px) {
+  .search-page .editorial-listing__articles .story-row { flex-direction: row; gap: 12px; padding: 16px 0; }
+  .search-page .editorial-listing__articles .story-row__body { order: 1; }
+  .search-page .editorial-listing__articles .story-row__image-link { order: 2; flex: 0 0 120px; }
+  .search-page .editorial-listing__articles .story-row__title { font-size: 16px; margin-bottom: 4px; }
+  .search-page .editorial-listing__articles .story-row__summary { display: none; }
+}
