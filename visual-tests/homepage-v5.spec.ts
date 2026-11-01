@@ -8,7 +8,7 @@ test('desktop masthead, editorial cover and lead story keep the reference geomet
   await expect(page.locator('.masthead__brand')).toBeVisible();
   const hero = page.locator('.news-home--v5 .hero-lead__image-link img');
   await expect(hero).toBeVisible();
-  const cover = page.locator('.house-promo');
+  const cover = page.locator('.top-ad-space');
   await expect(cover).toBeVisible();
   const hb = await hero.boundingBox();
   const brand = await page.locator('.masthead__brand').boundingBox();

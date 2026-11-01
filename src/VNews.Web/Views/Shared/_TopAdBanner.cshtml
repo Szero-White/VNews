@@ -1,0 +1,24 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    // An owned "house ad", not a third-party paid impression. No scripts,
+    // tracking pixels or external dependencies. Disable the creative to model
+    // an unfilled ad slot without collapsing the editorial layout.
+    var showCreative = Configuration.GetValue("Ads:TopBanner:ShowCreative", true);
+}
+@if (showCreative)
+{
+    <aside class="top-ad-space" aria-label="Quảng cáo minh họa của VNews" data-ad-slot="top" data-ad-state="house">
+        <a class="top-ad-space__creative" asp-controller="Home" asp-action="Latest"
+           aria-label="VNews: Khám phá tin tức mới nhất">
+            <span class="top-ad-space__brand">VNEWS <span aria-hidden="true">•</span> NHỊP SỐNG HÔM NAY</span>
+            <span class="top-ad-space__message">Mỗi ngày, một góc nhìn mới</span>
+            <span class="top-ad-space__description">Tin tức và câu chuyện đáng chú ý, cập nhật mỗi ngày.</span>
+            <span class="top-ad-space__button">Khám phá ngay <span aria-hidden="true">→</span></span>
+            <span class="top-ad-space__disclosure">QUẢNG CÁO MINH HỌA</span>
+        </a>
+    </aside>
+}
+else
+{
+    <div class="top-ad-space top-ad-space--vacant" aria-hidden="true" data-ad-slot="top" data-ad-state="empty"></div>
+}

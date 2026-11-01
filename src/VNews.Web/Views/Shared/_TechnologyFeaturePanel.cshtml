@@ -1,0 +1,89 @@
+@using VNews.Application.Common
+@using VNews.Application.DTOs
+@using System.Linq
+@model CategoryPanel
+@{
+    // One editorial module, one source of truth: the published articles already
+    // supplied by the home page query. No extra SQL reads or hard-coded stories.
+    var stories = Model.Articles
+        .Where(a => !string.IsNullOrWhiteSpace(a.Slug))
+        .GroupBy(a => a.Slug, StringComparer.OrdinalIgnoreCase)
+        .Select(group => group.First())
+        .Take(9)
+        .ToList();
+    var lead = stories.FirstOrDefault();
+    var middle = stories.Skip(1).Take(2).ToList();
+    var brief = stories.Skip(3).Take(4).ToList();
+    var extra = stories.Skip(7).ToList();
+    var topics = new[]
+    {
+        new { Label = "AI", Query = "AI" },
+        new { Label = "Chuyển đổi số", Query = "chuyển đổi số" },
+        new { Label = "Thiết bị", Query = "thiết bị" },
+        new { Label = "An ninh mạng", Query = "an ninh mạng" }
+    };
+}
+@if (lead is not null)
+{
+    <section class="technology-feature" aria-label="Khoa học công nghệ" data-home-technology>
+        <header class="technology-feature__header">
+            <h2><a asp-controller="Category" asp-action="Index" asp-route-slug="@Model.Category.Slug">Khoa học công nghệ</a></h2>
+            <nav aria-label="Chủ đề công nghệ" class="technology-feature__topics">
+                @foreach (var topic in topics)
+                {
+                    <a asp-controller="Search" asp-action="Index" asp-route-q="@topic.Query">@topic.Label</a>
+                }
+            </nav>
+        </header>
+
+        <div class="technology-feature__grid">
+            <article class="technology-feature__lead">
+                <a class="technology-feature__image" asp-controller="Article" asp-action="Detail" asp-route-slug="@lead.Slug">
+                    <img src="@(string.IsNullOrWhiteSpace(lead.CoverImageUrl) ? Url.Content("~/images/demo/fallback.svg") : lead.CoverImageUrl)"
+                         alt="@lead.Title" loading="lazy" decoding="async" />
+                </a>
+                <h3><a asp-controller="Article" asp-action="Detail" asp-route-slug="@lead.Slug">@lead.Title</a></h3>
+                <p>@lead.Summary</p>
+            </article>
+
+            <div class="technology-feature__middle" aria-label="Bài nổi bật khác">
+                @foreach (var article in middle)
+                {
+                    <article>
+                        <a class="technology-feature__image" asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug">
+                            <img src="@(string.IsNullOrWhiteSpace(article.CoverImageUrl) ? Url.Content("~/images/demo/fallback.svg") : article.CoverImageUrl)"
+                                 alt="@article.Title" loading="lazy" decoding="async" />
+                        </a>
+                        <h3><a asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug">@article.Title</a></h3>
+                    </article>
+                }
+            </div>
+
+            <div class="technology-feature__brief" aria-label="Tin công nghệ mới">
+                @foreach (var article in brief)
+                {
+                    <article>
+                        <a asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug" class="technology-feature__thumb">
+                            <img src="@(string.IsNullOrWhiteSpace(article.CoverImageUrl) ? Url.Content("~/images/demo/fallback.svg") : article.CoverImageUrl)"
+                                 alt="@article.Title" loading="lazy" decoding="async" />
+                        </a>
+                        <h3><a asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug">@article.Title</a></h3>
+                    </article>
+                }
+            </div>
+        </div>
+
+        <footer class="technology-feature__footer">
+            @if (extra.Count > 0)
+            {
+                <ul>
+                    @foreach (var article in extra)
+                    {
+                        <li><a asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug">@article.Title</a></li>
+                    }
+                </ul>
+            }
+            <a class="technology-feature__all" asp-controller="Category" asp-action="Index" asp-route-slug="@Model.Category.Slug">Xem tất cả tin công nghệ →</a>
+        </footer>
+    </section>
+}

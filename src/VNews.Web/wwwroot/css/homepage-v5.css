@@ -146,8 +146,7 @@
   .news-home--v5 .home-parallel { width:100%; display:flex; flex-direction:column; gap:30px; margin:20px 0 40px; padding:0 16px; }
   .news-home--v5 .home-parallel__stream, .news-home--v5 .home-parallel__content { width:100%; padding-left:0; padding-right:0; }
   .news-home--v5 .stream-list { display:block; }
-  /* Four headlines before categories; the full feed remains one tap away. */
-  .news-home--v5 .stream-list > .stream-compact:nth-child(n+5) { display:none; }
+  /* The published stream is part of the page, not hidden after 4 cards. */
   .news-home--v5 .home-topics-directory__links { grid-template-columns:1fr; gap:0; }
   .news-home--v5 .spotlight-section { padding:20px 16px; }
   .news-home--v5 .stream-compact { gap:11px; }
@@ -185,4 +184,33 @@
  .news-home--v5 .hero-side__title { font-size:17px; line-height:1.45; }
  .news-home--v5 .hero-side__image-link img { aspect-ratio:5/3; }
  .news-home--v5 .home-parallel__content > .topic-spotlight { margin-bottom:4px; }
+}
+
+/* Full-page editorial structure: numbered popular articles follow the media
+   blocks, matching their position in the current desktop/mobile reference. */
+.news-home--v5 .home-popular { padding-top:24px; border-top:1px solid #ddd; }
+.news-home--v5 .home-popular .most-viewed { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:30px; }
+.news-home--v5 .home-popular .most-viewed li { min-width:0; }
+@media(max-width:600px) {
+  .news-home--v5 .home-popular { padding:20px 16px 0; }
+  .news-home--v5 .home-popular .most-viewed { grid-template-columns:minmax(0,1fr); }
+}
+
+/* Reference-aligned top fold. Visual layout and content are separate concerns:
+   no third-party logo, campaign image, or article is copied into the project. */
+@media (min-width:1221px) {
+  .page-home .site-main { padding-top:23px; }
+  .news-home--v5 .front-page { margin-bottom:26px; }
+}
+.news-home--v5 .hero-side__item,
+.news-home--v5 .hero-side__opinion { min-width:0; }
+.news-home--v5 .hero-side__item .hero-side__title a:focus-visible,
+.news-home--v5 .hero-side__opinion .hero-side__title a:focus-visible,
+.news-home--v5 .hero-lead__title a:focus-visible { outline:2px solid var(--vn-accent); outline-offset:3px; }
+/* The ranked list should not compete with the continuous stream. */
+.news-home--v5 .home-popular { clear:both; }
+@media (max-width:600px) {
+  .news-home--v5 .hero-side { border-top:1px solid #e5e5e5; }
+  .news-home--v5 .home-parallel { margin-top:24px; }
+  .news-home--v5 .stream-list { grid-template-columns:1fr; }
 }

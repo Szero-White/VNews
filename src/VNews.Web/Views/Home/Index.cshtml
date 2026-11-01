@@ -14,8 +14,22 @@
         .ToList();
     // The complete live stream remains accessible through the Latest route.
     // Home features a curated, finite set rather than endlessly repeated cards.
-    var featuredPanels = Model.CategoryPanels.Take(6).ToList();
-    var additionalPanels = Model.CategoryPanels.Skip(6).ToList();
+    // Render every populated category as a real editorial block, instead of
+    // silently reducing the last categories to a compact link directory.
+    // Keep a continuous conventional news stream, but give technology its own
+    // full-width magazine feature instead of repeating the generic category tile.
+    var technologySource = Model.CategoryPanels.FirstOrDefault(
+        panel => string.Equals(panel.Category.Slug, "cong-nghe", StringComparison.OrdinalIgnoreCase));
+    var technologyPanel = technologySource is null ? null : new CategoryPanel
+    {
+        Category = technologySource.Category,
+        Articles = technologySource.Articles
+            .Where(article => !featuredSlugs.Contains(article.Slug))
+            .ToList()
+    };
+    var featuredPanels = Model.CategoryPanels
+        .Where(panel => !string.Equals(panel.Category.Slug, "cong-nghe", StringComparison.OrdinalIgnoreCase))
+        .ToList();
 }
 <div class="container news-home news-home--v5">
     @if (Model.Hero is null)
@@ -57,15 +71,6 @@
                         }
                     </ul>
                     <a class="view-more-link" asp-controller="Home" asp-action="Latest">Xem thêm tin <span aria-hidden="true">→</span></a>
-                    <section class="today-digest" aria-label="Tin đọc nhiều">
-                        <h2 class="section-title">Đọc nhiều</h2>
-                        <ol class="most-viewed">
-                            @foreach (var article in Model.MostViewed.Take(5))
-                            {
-                                <li><a asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug">@article.Title</a></li>
-                            }
-                        </ol>
-                    </section>
                 </aside>
 
                 <div class="home-parallel__content">
@@ -73,22 +78,13 @@
                     {
                         @await Html.PartialAsync("_CategoryPanelBox", panel)
                     }
-                    @if (additionalPanels.Any())
-                    {
-                        <section class="home-topics-directory" aria-label="Khám phá thêm chuyên mục">
-                            <div class="editorial-heading">
-                                <h2 class="section-title">Khám phá thêm</h2>
-                            </div>
-                            <ul class="home-topics-directory__links">
-                                @foreach (var panel in additionalPanels)
-                                {
-                                    <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@panel.Category.Slug">@panel.Category.Name <span aria-hidden="true">→</span></a></li>
-                                }
-                            </ul>
-                        </section>
-                    }
                 </div>
             </div>
+        }
+
+        @if (technologyPanel is not null && technologyPanel.Articles.Any())
+        {
+            @await Html.PartialAsync("_TechnologyFeaturePanel", technologyPanel)
         }
 
         @* Order below the stream+category zone follows the reference's real DOM order
@@ -136,6 +132,21 @@
                         @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.PhotoGrid })
                     }
                 </div>
+            </section>
+        }
+
+        @* The ranked-news index belongs near the end of the editorial homepage,
+           after the gallery, as in the 31/10/2026 full-page reference. *@
+        @if (Model.MostViewed.Any())
+        {
+            <section class="home-popular today-digest media-zone" aria-label="Bài đọc nhiều">
+                <div class="editorial-heading"><h2 class="section-title">Xem nhiều</h2></div>
+                <ol class="most-viewed">
+                    @foreach (var article in Model.MostViewed.Take(5))
+                    {
+                        <li><a asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug">@article.Title</a></li>
+                    }
+                </ol>
             </section>
         }
     }

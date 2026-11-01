@@ -76,11 +76,14 @@ test.describe('mobile masthead 390px', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    const loginLink = page.locator('.masthead__right a', { hasText: 'Đăng nhập' });
+    const loginLink = page.locator('.masthead__right [data-reader-login-open]');
     await expect(loginLink).toBeVisible();
+    // The href remains a usable fallback without JavaScript, while the
+    // normal interaction opens the Identity-backed dialog on this page.
+    await expect(loginLink).toHaveAttribute('href', /\/(tai-khoan\/dang-nhap|Account\/Login)/i);
     await loginLink.click();
-    await page.waitForLoadState('networkidle');
-    expect(page.url()).toContain('/tai-khoan/dang-nhap');
+    await expect(page.getByRole('dialog', { name: 'Đăng nhập tài khoản' })).toBeVisible();
+    await expect(page).toHaveURL(/\/$/);
   });
 
   test('no horizontal overflow with the reordered masthead', async ({ page }) => {

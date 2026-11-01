@@ -3,12 +3,12 @@ import { test, expect } from '@playwright/test';
 test('reader sign-in opens in a keyboard-accessible dialog without accessing CMS', async ({ page }) => {
   await page.goto('/');
   const login = page.locator('.masthead__right [data-reader-login-open]');
-  await expect(login).toHaveAttribute('href', /Account\/Login/i);
+  await expect(login).toHaveAttribute('href', /(?:Account\/Login|tai-khoan\/dang-nhap)/i);
   await login.click();
   const dialog = page.getByRole('dialog', { name: 'Đăng nhập tài khoản' });
   await expect(dialog).toBeVisible();
   await expect(dialog.locator('form')).toHaveAttribute('method', 'post');
-  await expect(dialog.locator('form')).toHaveAttribute('action', /Account\/Login/i);
+  await expect(dialog.locator('form')).toHaveAttribute('action', /(?:Account\/Login|tai-khoan\/dang-nhap)/i);
   await expect(dialog.locator('input[name="__RequestVerificationToken"]')).toHaveCount(1);
   await expect(dialog.locator('input[name="Email"]')).toBeFocused();
   await page.keyboard.press('Escape');
@@ -26,5 +26,5 @@ test('mobile login link closes utility menu and opens reader sign-in', async ({ 
   const dialog = page.getByRole('dialog', { name: 'Đăng nhập tài khoản' });
   await expect(dialog).toBeVisible();
   await dialog.getByRole('link', { name: /Đăng ký miễn phí/ }).click();
-  await expect(page).toHaveURL(/\/Account\/Register/i);
+  await expect(page).toHaveURL(/\/(?:Account\/Register|tai-khoan\/dang-ky)/i);
 });

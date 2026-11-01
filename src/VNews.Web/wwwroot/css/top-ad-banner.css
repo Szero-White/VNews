@@ -1,0 +1,83 @@
+/* First-party top ad slot. Reusable layout contract: the creative can be
+   switched off without moving the masthead, just as real ad inventory varies.
+   This is VNews-owned artwork, never a live third-party ad impression. */
+.page-home .top-ad-space {
+  height: 294px;
+  padding: 0 0 26px;
+  background: #fff;
+  overflow: hidden;
+}
+.page-home .top-ad-space__creative {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 268px;
+  padding: 20px 24px;
+  text-align: center;
+  color: #fff;
+  background: #d96f1b url('../images/banners/vnews-house-campaign.svg') center center / cover no-repeat;
+}
+.page-home .top-ad-space__creative::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(104,39,19,.54) 0%, rgba(120,38,21,.36) 46%, rgba(117,42,16,.24) 100%);
+}
+.page-home .top-ad-space__creative:hover,
+.page-home .top-ad-space__creative:focus-visible { color: #fff; }
+.page-home .top-ad-space__brand {
+  color: #fff3cf;
+  font: 700 12px/1.3 Arial, Helvetica, sans-serif;
+  letter-spacing: .2em;
+}
+.page-home .top-ad-space__message {
+  margin-top: 7px;
+  font: 700 clamp(24px, 3vw, 38px)/1.2 Georgia, 'Times New Roman', serif;
+  text-shadow: 0 2px 12px rgba(65, 27, 15, .22);
+}
+.page-home .top-ad-space__description {
+  margin-top: 7px;
+  font: 14px/1.5 Arial, Helvetica, sans-serif;
+  color: #fff6e8;
+}
+.page-home .top-ad-space__button {
+  margin-top: 13px;
+  padding: 7px 20px;
+  border: 1px solid rgba(255,255,255,.95);
+  border-radius: 30px;
+  background: #fff;
+  color: #8f3f17;
+  font: 700 13px/1.3 Arial, Helvetica, sans-serif;
+  transition: background-color .15s ease;
+}
+.page-home .top-ad-space__creative:hover .top-ad-space__button,
+.page-home .top-ad-space__creative:focus-visible .top-ad-space__button { background: #fff0cf; }
+.page-home .top-ad-space__disclosure {
+  position: absolute;
+  bottom: 9px;
+  right: 15px;
+  color: #ffead1;
+  background: rgba(0,0,0,.2);
+  border-radius: 3px;
+  padding: 3px 6px;
+  font: 10px/1.1 Arial, sans-serif;
+  letter-spacing: .06em;
+}
+.page-home .top-ad-space--vacant { background: #fff; }
+@media (max-width: 600px) {
+  .page-home .top-ad-space { height: 184px; padding-bottom: 16px; }
+  .page-home .top-ad-space__creative { height: 168px; padding: 12px 12px 19px; }
+  .page-home .top-ad-space__brand { font-size: 9px; letter-spacing: .13em; }
+  .page-home .top-ad-space__message { margin-top: 4px; font-size: 21px; line-height: 1.15; }
+  .page-home .top-ad-space__description { margin-top: 5px; font-size: 11px; line-height: 1.35; }
+  .page-home .top-ad-space__button { margin-top: 8px; padding: 5px 12px; font-size: 11px; }
+  .page-home .top-ad-space__disclosure { font-size: 8px; bottom: 4px; right: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-home .top-ad-space__button { transition: none; }
+}

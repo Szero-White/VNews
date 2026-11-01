@@ -77,6 +77,76 @@
     });
   }
 
+  // An actual, on-device read history. No invented notifications or comments.
+  var recentKey = 'vnews_recently_read_v1';
+  function getRecent() {
+    try {
+      var rows = JSON.parse(localStorage.getItem(recentKey) || '[]');
+      return Array.isArray(rows) ? rows.filter(function (x) {
+        return x && typeof x.slug === 'string' && /^[a-z0-9-]{1,180}$/.test(x.slug)
+          && typeof x.title === 'string';
+      }).slice(0, 12) : [];
+    } catch (_) { return []; }
+  }
+  var currentArticle = document.querySelector('article[data-news-article]');
+  if (currentArticle) {
+    var currentSlug = currentArticle.dataset.newsSlug;
+    var currentTitle = currentArticle.dataset.newsTitle;
+    if (currentSlug && /^[a-z0-9-]{1,180}$/.test(currentSlug) && currentTitle) {
+      try {
+        var history = getRecent().filter(function (x) { return x.slug !== currentSlug; });
+        history.unshift({ slug: currentSlug, title: currentTitle.slice(0, 220) });
+        localStorage.setItem(recentKey, JSON.stringify(history.slice(0, 12)));
+      } catch (_) { /* Optional local history may be blocked. */ }
+    }
+  }
+  var newsPanel = document.getElementById('reader-news-panel');
+  if (newsPanel) {
+    var newsTabs = Array.from(newsPanel.querySelectorAll('[data-reader-news-tab]'));
+    function renderRecentlyRead() {
+      var list = newsPanel.querySelector('#reader-news-recent-list');
+      var empty = newsPanel.querySelector('#reader-news-recent-empty');
+      if (!list || !empty) return;
+      list.replaceChildren();
+      var rows = getRecent();
+      empty.hidden = rows.length !== 0;
+      rows.forEach(function (item) {
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.href = '/tin/' + encodeURIComponent(item.slug);
+        a.textContent = item.title;
+        li.appendChild(a);
+        list.appendChild(li);
+      });
+    }
+    function changeNewsTab(which) {
+      newsTabs.forEach(function (tab) {
+        var selected = tab.dataset.readerNewsTab === which;
+        tab.setAttribute('aria-selected', String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+      });
+      newsPanel.querySelector('#reader-news-content-latest').hidden = which !== 'latest';
+      newsPanel.querySelector('#reader-news-content-seen').hidden = which !== 'seen';
+      if (which === 'seen') renderRecentlyRead();
+    }
+    newsTabs.forEach(function (tab) {
+      tab.addEventListener('click', function () { changeNewsTab(tab.dataset.readerNewsTab); });
+      tab.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        e.preventDefault();
+        var index = newsTabs.indexOf(tab);
+        var next = newsTabs[(index + (e.key === 'ArrowRight' ? 1 : newsTabs.length - 1)) % newsTabs.length];
+        changeNewsTab(next.dataset.readerNewsTab); next.focus();
+      });
+    });
+    document.addEventListener('click', function (event) {
+      if (newsPanel.open && !newsPanel.contains(event.target)) newsPanel.open = false;
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && newsPanel.open) { newsPanel.open = false; newsPanel.querySelector('summary').focus(); }
+    });
+  }
+
   var backTop = document.getElementById('back-to-top');
   var progress = document.getElementById('reading-progress');
   var article = document.querySelector('[data-news-article]');

@@ -9,9 +9,10 @@ test('homepage has multiple editorial layouts and linked sections', async ({ pag
   await expect(page.locator('.home-parallel__content > .topic-spotlight').first()).toBeVisible();
   await expect(page.locator('.photo-gallery-v2')).toBeVisible();
   await expect(page.locator('.podcast-grid')).toBeVisible();
-  // All 10 seeded categories now stack as .topic-spotlight boxes in the home-parallel
-  // right column (see commit on content-architecture restructuring), not just the first.
-  await expect(page.locator('.home-parallel__content > .topic-spotlight')).toHaveCount(10);
+  // Technology is rendered separately as a full-width magazine module;
+  // the other nine seeded categories remain in the parallel column.
+  await expect(page.locator('.home-parallel__content > .topic-spotlight')).toHaveCount(9);
+  await expect(page.locator('[data-home-technology]')).toHaveCount(1);
 });
 
 test('latest page is real and article links open', async ({ page }) => {
@@ -40,7 +41,9 @@ test('search form and results work against published DB content', async ({ page 
   await page.goto('/tim-kiem');
   await expect(page.locator('#page-search')).toBeVisible();
   await page.locator('#page-search').fill('giáo dục');
-  await page.getByRole('button', { name: 'Tìm kiếm' }).click();
+  await page.locator('.search-page-form button[type="submit"]').click();
+  await expect(page).toHaveURL(/\/tim-kiem\?/);
+  expect(new URL(page.url()).searchParams.get('q')).toBe('giáo dục');
   await expect(page.locator('.listing-page__title')).toContainText('Tìm kiếm');
 });
 

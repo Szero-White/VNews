@@ -83,6 +83,8 @@ img {
 .house-promo__edition span { font:700 93px/.85 Georgia,serif; letter-spacing:-.07em; }
 .house-promo__edition small { font:700 11px/1.45 Arial,sans-serif; letter-spacing:.16em; }
 
+/* The homepage banner is isolated in top-ad-banner.css. */
+
 /* Main layout */
 .site-main {
   padding: 24px 0 48px;
@@ -360,7 +362,7 @@ img {
 
 /* Responsive: tablet */
 @media (max-width: 1024px) {
-  
+
 }
 
 /* Responsive: mobile */
@@ -400,7 +402,7 @@ img {
     flex: 0 0 110px;
   }
 
-  
+
 }
 
 @media (max-width: 480px) {
@@ -414,7 +416,7 @@ img {
     flex: none;
   }
 
-  
+
 }
 
 /* ==============================================================
@@ -509,6 +511,8 @@ body {
 .masthead__account-link { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; }
 .masthead__account-icon, .masthead__saved-mobile { display: none; }
 .masthead__saved-mobile { align-items: center; justify-content: center; color: #777; }
+.masthead__saved-shortcut { display:inline-flex; width:28px; height:32px; justify-content:center; align-items:center; color:#777; }
+.masthead__saved-shortcut:hover { color:var(--vn-accent); }
 .masthead__saved-mobile:hover { color: var(--vn-accent); }
 
 .masthead__date {
@@ -620,7 +624,7 @@ body {
   color: #777;
 }
 .primary-nav__home:hover { background: #e8e8e8; color: var(--vn-accent); }
-.primary-nav__latest { flex: 0 0 auto; white-space: nowrap; font-size: 14px; color: var(--vn-accent); font-weight: 600; }
+.primary-nav__latest { display:none; flex:0 0 auto; white-space:nowrap; font-size:14px; color:var(--vn-accent); font-weight:600; }
 .primary-nav__latest:hover { text-decoration: underline; }
 
 .category-nav__list {
@@ -708,7 +712,8 @@ body {
   /* Reference mobile has an unfilled ad area; reserve space without a false advert. */
   .house-promo { height:184px; background:#fff; }
   .house-promo__inner { display:none; }
-  .primary-nav__latest { font-size: 13px; }
+
+  .primary-nav__latest { display:inline-flex; font-size:13px; }
   .site-main { padding-top: 0; }
   .site-main { padding-top: 15px; }
   .site-footer__grid { grid-template-columns: 1fr; gap: 20px; padding: 24px 0 16px; }
