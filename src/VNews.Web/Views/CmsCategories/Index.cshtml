@@ -38,7 +38,14 @@
                             <td data-label="Chuyên mục cha">@(c.ParentName ?? "—")</td>
                             <td data-label="Đường dẫn"><span class="table__sub">/chuyen-muc/@c.Slug</span></td>
                             <td data-label="Mô tả">@c.Description</td>
-                            <td><div class="table__actions"><a asp-action="Edit" asp-route-id="@c.Id" class="btn btn--secondary btn--sm">Sửa</a></div></td>
+                            <td>
+                                <div class="table__actions">
+                                    <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn--secondary btn--sm">Sửa</a>
+                                    <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="inline-form" data-confirm="Xóa chuyên mục “@c.Name”? Chỉ xóa được khi chuyên mục không còn bài viết và không có chuyên mục con." data-confirm-title="Xóa chuyên mục" data-confirm-label="Xóa" data-confirm-danger>
+                                        <button type="submit" class="btn btn--danger btn--sm">Xóa</button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                     }
                 </tbody>

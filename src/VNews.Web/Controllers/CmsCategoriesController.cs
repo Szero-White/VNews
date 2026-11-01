@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using VNews.Application.Common;
 using VNews.Application.DTOs;
@@ -13,11 +14,13 @@ public class CmsCategoriesController : Controller
 {
     private readonly ICategoryQueryService _categoryQueryService;
     private readonly ICategoryCommandService _categoryCommandService;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public CmsCategoriesController(ICategoryQueryService categoryQueryService, ICategoryCommandService categoryCommandService)
+    public CmsCategoriesController(ICategoryQueryService categoryQueryService, ICategoryCommandService categoryCommandService, UserManager<ApplicationUser> userManager)
     {
         _categoryQueryService = categoryQueryService;
         _categoryCommandService = categoryCommandService;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken) =>
@@ -84,6 +87,29 @@ public class CmsCategoriesController : Controller
             ModelState.AddModelError(string.Empty, ex.Message);
             return await FormViewAsync(model, cancellationToken);
         }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null) return Forbid();
+        try
+        {
+            await _categoryCommandService.DeleteAsync(id, user.Id, user.DisplayName, cancellationToken);
+            TempData["Message"] = "Đã xóa chuyên mục.";
+        }
+        catch (EntityNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ArticleWorkflowException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     /// <summary>The create/edit form. Parent choices are the top-level categories other than this one; a category that already has children cannot be given a parent.</summary>

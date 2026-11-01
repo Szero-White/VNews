@@ -11,11 +11,35 @@ public class CategoryCommandService : ICategoryCommandService
 {
     private readonly VNewsDbContext _context;
     private readonly ILogger<CategoryCommandService> _logger;
+    private readonly IAuditLogService _auditLog;
 
-    public CategoryCommandService(VNewsDbContext context, ILogger<CategoryCommandService> logger)
+    public CategoryCommandService(VNewsDbContext context, ILogger<CategoryCommandService> logger, IAuditLogService auditLog)
     {
         _context = context;
         _logger = logger;
+        _auditLog = auditLog;
+    }
+
+    public async Task DeleteAsync(int id, string actingUserId, string actingUserName, CancellationToken cancellationToken = default)
+    {
+        var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id, cancellationToken)
+            ?? throw new EntityNotFoundException($"Không tìm thấy chuyên mục {id}.");
+
+        var articles = await _context.Articles.CountAsync(a => a.CategoryId == id, cancellationToken);
+        if (articles > 0)
+        {
+            throw new ArticleWorkflowException($"Chuyên mục còn {articles} bài viết (kể cả bài trong thùng rác). Hãy chuyển các bài sang chuyên mục khác trước khi xóa.");
+        }
+
+        if (await _context.Categories.AnyAsync(c => c.ParentId == id, cancellationToken))
+        {
+            throw new ArticleWorkflowException("Chuyên mục còn chuyên mục con. Hãy chuyển hoặc xóa các chuyên mục con trước.");
+        }
+
+        _context.Categories.Remove(category);
+        await _context.SaveChangesAsync(cancellationToken);
+        await _auditLog.LogAsync(actingUserId, actingUserName, "DeleteCategory", "Category", id.ToString(), category.Name, cancellationToken);
+        _logger.LogInformation("Category {CategoryId} deleted by user {UserId}.", id, actingUserId);
     }
 
     public async Task<int> CreateAsync(string name, string slug, string? description, int displayOrder, int? parentId = null, CancellationToken cancellationToken = default)
