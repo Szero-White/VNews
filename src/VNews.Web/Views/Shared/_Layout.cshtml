@@ -24,7 +24,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Merriweather (SIL Open Font License, free for any use): headline typeface, matched to the
          editorial reference's measured computed style (font-family: Merriweather, serif; 700). -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap" media="print" data-font-swap />
     <link rel="stylesheet" href="~/css/brand-logo.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/editorial.css" asp-append-version="true" />
@@ -34,6 +34,7 @@
         <link rel="stylesheet" href="~/css/home-technology-feature.css" asp-append-version="true" />
         <link rel="stylesheet" href="~/css/home-business-feature.css" asp-append-version="true" />
     }
+    <link rel="stylesheet" href="~/css/auth-tokens.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/reader-login-dialog.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/reader-news-panel.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/top-ad-banner.css" asp-append-version="true" />
@@ -56,6 +57,7 @@
     {
         <link rel="stylesheet" href="~/css/static-pages.css" asp-append-version="true" />
     }
+    <script src="~/js/font-swap.js" asp-append-version="true" defer></script>
 </head>
 <body class="@(isHomepage ? "page-home" : isArticle ? "page-article" : isCategory ? "page-category" : "")">
     <a class="skip-link" href="#main-content">Bỏ qua điều hướng, đến nội dung</a>
@@ -162,7 +164,7 @@
             @* Mobile has no utility rail; expose Latest in its horizontal category strip. *@
             <a class="primary-nav__latest" asp-controller="Home" asp-action="Latest">Mới nhất</a>
             @await Component.InvokeAsync("CategoryNav")
-            <button type="button" id="mega-menu-toggle" class="primary-nav__all" aria-haspopup="dialog" aria-expanded="false" aria-controls="mega-menu">
+            <button type="button" id="mega-menu-toggle" class="primary-nav__all" aria-haspopup="dialog" aria-expanded="false" aria-controls="mega-menu" title="Tất cả chuyên mục">
                 <span class="primary-nav__all-icon" aria-hidden="true"><span></span><span></span><span></span></span>
                 <span class="primary-nav__all-label">Tất cả chuyên mục</span>
             </button>

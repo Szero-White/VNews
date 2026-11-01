@@ -4,7 +4,6 @@
     Layout = "_ReaderAuthLayout";
 }
 <section class="reader-auth__card" aria-labelledby="login-title">
-    <p class="reader-auth__kicker">TÀI KHOẢN ĐỘC GIẢ</p>
     <h1 id="login-title">Chào mừng trở lại</h1>
     <p class="reader-auth__lead">Đăng nhập để quản lý tài khoản và các bài báo bạn yêu thích.</p>
     <form asp-controller="Account" asp-action="Login" method="post" class="reader-auth__form">
@@ -24,7 +23,6 @@
         <button class="reader-auth__submit" type="submit">Đăng nhập</button>
     </form>
     <p class="reader-auth__switch">Chưa có tài khoản? <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Đăng ký miễn phí</a></p>
-    <p class="reader-auth__staff-link">Nhân viên tòa soạn? Dùng cùng tài khoản này để <a asp-controller="CmsArticles" asp-action="Index">vào CMS</a>.</p>
 </section>
 <partial name="_DemoLogin" model='"page"' />
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

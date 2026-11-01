@@ -77,7 +77,10 @@
       }
       readerDialog.showModal();
       var emailField = readerDialog.querySelector('input[name="Email"]');
-      if (emailField) emailField.focus();
+      if (emailField) emailField.focus({ preventScroll: true });
+      // A new opening always starts at the top (logo, title and the close button in view), never mid-scroll.
+      var dialogScroll = readerDialog.querySelector('[data-reader-login-scroll]');
+      if (dialogScroll) dialogScroll.scrollTop = 0;
     });
     var closeReaderDialog = readerDialog.querySelector('[data-reader-login-close]');
     if (closeReaderDialog) closeReaderDialog.addEventListener('click', function () { readerDialog.close(); });
@@ -87,6 +90,18 @@
     readerDialog.addEventListener('close', function () {
       if (loginOpener && loginOpener.isConnected) loginOpener.focus();
       loginOpener = null;
+    });
+
+    // Focus trap: Tab / Shift+Tab wrap around inside the dialog instead of leaving it for the browser UI.
+    readerDialog.addEventListener('keydown', function (event) {
+      if (event.key !== 'Tab') return;
+      var focusables = Array.prototype.slice.call(readerDialog.querySelectorAll('a[href], button:not([disabled]), input:not([type="hidden"]):not([disabled])'))
+        .filter(function (el) { return el.offsetParent !== null; });
+      if (!focusables.length) return;
+      var first = focusables[0];
+      var last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     });
 
     // Sign in from the dialog without leaving the page: wrong credentials show their message right here.

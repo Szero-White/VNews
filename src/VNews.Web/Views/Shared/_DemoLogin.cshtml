@@ -17,7 +17,7 @@
                     <input type="hidden" name="role" value="@persona.Key" />
                     <h3 class="demo-card__title">@persona.Title</h3>
                     <p class="demo-card__desc">@persona.Description</p>
-                    <button type="submit" class="demo-card__button" data-demo-role="@persona.Key">@persona.ButtonLabel</button>
+                    <button type="submit" class="demo-card__button" data-demo-role="@persona.Key" aria-label="@persona.AriaLabel">@persona.ButtonLabel</button>
                 </form>
             }
         </div>

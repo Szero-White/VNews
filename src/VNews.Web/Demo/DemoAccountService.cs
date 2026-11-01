@@ -5,10 +5,12 @@ using VNews.Domain.Identity;
 namespace VNews.Web.Demo;
 
 /// <summary>One demo persona: the public key used in the form, the real role it maps to, and its dedicated account.</summary>
-public sealed record DemoPersona(string Key, string Role, string Email, string DisplayName, string Description, string ButtonLabel)
+public sealed record DemoPersona(string Key, string Role, string Email, string DisplayName, string Description, string Title)
 {
-    /// <summary>Card heading, e.g. "Demo Tác giả".</summary>
-    public string Title => ButtonLabel.StartsWith("Vào ", StringComparison.Ordinal) ? ButtonLabel[4..] : ButtonLabel;
+    /// <summary>Same short text on all four buttons (so none wraps); the aria-label tells them apart.</summary>
+    public string ButtonLabel => "Vào demo";
+
+    public string AriaLabel => $"Vào demo {Title}";
 }
 
 /// <summary>
@@ -22,10 +24,10 @@ public static class DemoPersonas
 
     public static readonly IReadOnlyList<DemoPersona> All = new[]
     {
-        new DemoPersona("reader", Roles.Reader, "demo.reader" + EmailDomain, "Độc giả demo", "Đọc tin, lưu bài viết, quản lý tài khoản.", "Vào Demo Độc giả"),
-        new DemoPersona("author", Roles.Author, "demo.author" + EmailDomain, "Tác giả demo", "Viết bài, lưu bản nháp, gửi duyệt.", "Vào Demo Tác giả"),
-        new DemoPersona("editor", Roles.Editor, "demo.editor" + EmailDomain, "Biên tập viên demo", "Xem, duyệt hoặc từ chối bài viết theo quyền.", "Vào Demo Biên tập viên"),
-        new DemoPersona("admin", Roles.Admin, "demo.admin" + EmailDomain, "Quản trị viên demo", "Quản lý chuyên mục và người dùng trong phạm vi được phép.", "Vào Demo Quản trị viên"),
+        new DemoPersona("reader", Roles.Reader, "demo.reader" + EmailDomain, "Độc giả demo", "Đọc tin, lưu bài viết, quản lý tài khoản.", "Độc giả"),
+        new DemoPersona("author", Roles.Author, "demo.author" + EmailDomain, "Tác giả demo", "Viết bài, lưu bản nháp, gửi duyệt.", "Tác giả"),
+        new DemoPersona("editor", Roles.Editor, "demo.editor" + EmailDomain, "Biên tập viên demo", "Xem, duyệt hoặc từ chối bài viết theo quyền.", "Biên tập viên"),
+        new DemoPersona("admin", Roles.Admin, "demo.admin" + EmailDomain, "Quản trị viên demo", "Quản lý chuyên mục và người dùng trong phạm vi được phép.", "Quản trị viên"),
     };
 
     public static DemoPersona? Find(string? key) =>

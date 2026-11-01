@@ -9,10 +9,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     @* Same headline face as the main layout. Georgia lacks the precomposed glyphs for
        ấ ầ ắ ằ ế ề ố ồ, so a user-supplied display name in the h1 would render detached accents. *@
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap" media="print" data-font-swap />
     <link rel="stylesheet" href="~/css/brand-logo.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/auth-tokens.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/demo-login.css" asp-append-version="true" />
+    <script src="~/js/font-swap.js" asp-append-version="true" defer></script>
 </head>
 <body class="reader-auth">
     <a class="reader-auth__skip" href="#auth-content">Bỏ qua điều hướng</a>

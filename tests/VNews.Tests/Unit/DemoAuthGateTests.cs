@@ -140,8 +140,10 @@ public class DemoAuthGateTests
         Assert.All(DemoPersonas.All, p =>
         {
             Assert.EndsWith(DemoPersonas.EmailDomain, p.Email);
-            Assert.StartsWith("Demo ", p.Title);
-            Assert.StartsWith("Vào Demo ", p.ButtonLabel);
+            Assert.False(string.IsNullOrWhiteSpace(p.Title));
+            Assert.DoesNotContain("Demo", p.Title); // the card shows the role name
+            Assert.Equal("Vào demo", p.ButtonLabel);
+            Assert.Equal($"Vào demo {p.Title}", p.AriaLabel);
         });
         Assert.NotNull(DemoPersonas.Find("ADMIN"));
         Assert.Null(DemoPersonas.Find("root"));

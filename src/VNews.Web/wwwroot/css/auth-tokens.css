@@ -1,0 +1,47 @@
+/* Design tokens for every authentication surface: the sign-in dialog, the sign-in / registration / profile pages and the
+   one-click demo cards. Component CSS reads these variables; nothing else sets radii, UI font or spacing for them. */
+:root {
+  /* One UI font for forms, headings and cards in authentication (article typography is untouched). */
+  --auth-font: Arial, Helvetica, sans-serif;
+
+  /* Colours */
+  --auth-ink: #272727;
+  --auth-muted: #5f5f5f;
+  --auth-red: #a61b46;
+  --auth-red-dark: #85122f;
+  --auth-line: #e7e4e4;
+  --auth-field-line: #c9c9c9;
+  --auth-error: #a0002d;
+  --auth-error-bg: #fdf1f4;
+  --auth-surface: #fff;
+  --auth-surface-alt: #fcfbfb;
+
+  /* Spacing scale: 4 / 8 / 12 / 16 / 24 / 32 */
+  --auth-space-1: 4px;
+  --auth-space-2: 8px;
+  --auth-space-3: 12px;
+  --auth-space-4: 16px;
+  --auth-space-6: 24px;
+  --auth-space-8: 32px;
+
+  /* Radii: modal 12, every control and card 8 */
+  --auth-radius-modal: 12px;
+  --auth-radius-control: 8px;
+
+  /* Controls */
+  --auth-control-height: 44px;
+  --auth-button-height-sm: 40px;
+  --auth-focus-outline: 2px solid var(--auth-red);
+  --auth-focus-offset: 2px;
+
+  /* Type scale (size / line-height) */
+  --auth-fs-title: 22px;
+  --auth-lh-title: 28px;
+  --auth-fs-page-title: 28px;
+  --auth-lh-page-title: 36px;
+  --auth-fs-body: 14px;
+  --auth-lh-body: 20px;
+  --auth-fs-button: 15px;
+  --auth-fs-small: 12px;
+  --auth-lh-small: 16px;
+}

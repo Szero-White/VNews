@@ -566,9 +566,10 @@ body {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center; /* home + categories + menu button form one cluster, centred on the page */
+  gap: 15px;
   min-height: 49px;
-  padding: 0 44px 0 20px;
+  padding: 0 20px;
 }
 .primary-nav__arrow {
   display: flex;
@@ -589,11 +590,11 @@ body {
 }
 .primary-nav__arrow:hover { color: var(--vn-accent); border-color: var(--vn-accent); }
 .primary-nav__arrow[hidden] { display: none; }
-.primary-nav__inner .category-nav { flex: 1; min-width: 0; }
+.primary-nav__inner .category-nav { flex: 0 1 auto; min-width: 0; }
 .primary-nav__home {
-  width: 25px; height: 25px;
+  width: 24px; height: 24px;
   display: flex;
-  flex: 0 0 25px;
+  flex: 0 0 24px;
   align-items: center; justify-content: center;
   border-radius: 50%;
   background: #f0f0f0;
@@ -604,14 +605,14 @@ body {
 .primary-nav__latest:hover { text-decoration: underline; }
 
 .category-nav__list {
-  width: 100%;
-  max-width: none;
+  width: max-content;
+  max-width: 100%;
   margin: 0;
   padding: 0;
   display: flex;
   align-items: center;
   list-style: none;
-  gap: 22px;
+  gap: 15px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -701,7 +702,7 @@ body {
 /* Header geometry shared by every page except the homepage (which has its own banner above the masthead):
    the reference header is 62px including its rule, and content starts 20px under the navigation. */
 @media (min-width: 769px) {
-  body:not(.page-home) .masthead__inner { min-height: 61px; }
+  .masthead__inner { min-height: 61px; }
 }
 body:not(.page-home) .site-main { padding-top: 20px; }
 /* Weather is page chrome; only the homepage keeps its strip on small screens. */

@@ -188,7 +188,7 @@ test('the page behind does not scroll while the menu is open, and scrolling work
 });
 
 test('the scroll arrow never sits on top of the menu button', async ({ page }) => {
-  await page.setViewportSize({ width: 900, height: 800 }); // narrow enough for the strip to overflow
+  await page.setViewportSize({ width: 780, height: 800 }); // narrow enough for the strip to overflow (still desktop layout)
   await page.goto('/');
   const arrow = page.locator('#primary-nav-next');
   await expect(arrow).toBeVisible();

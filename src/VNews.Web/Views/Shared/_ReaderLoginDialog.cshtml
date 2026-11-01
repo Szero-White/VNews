@@ -1,21 +1,26 @@
 @* Public-site sign-in uses the same Identity POST action as /Account/Login.
    Keep the full-page route as a progressive-enhancement fallback and for validation errors.
-   Staff sign in here too: one Identity account, one form. *@
+   Staff sign in here too: one Identity account, one form.
+   Structure: fixed header (logo + close) and a single scrolling content area (see reader-login-dialog.css). *@
 <dialog id="reader-login-dialog" class="reader-login-dialog" aria-labelledby="reader-login-dialog-title" aria-describedby="reader-login-dialog-description">
     <div class="reader-login-dialog__header">
         <span class="vn-logo reader-login-dialog__brand" aria-hidden="true"><partial name="_BrandMark" /></span>
         <button class="reader-login-dialog__close" type="button" data-reader-login-close aria-label="Đóng đăng nhập">×</button>
     </div>
-    <div class="reader-login-dialog__content">
+    <div class="reader-login-dialog__content" data-reader-login-scroll>
         <h2 id="reader-login-dialog-title">Đăng nhập tài khoản</h2>
         <p id="reader-login-dialog-description">Đăng nhập để lưu bài báo và đọc tiếp trên tài khoản của bạn.</p>
         <form asp-controller="Account" asp-action="Login" method="post" asp-antiforgery="true" class="reader-login-dialog__form">
             <div class="reader-login-dialog__error" data-reader-login-error role="alert" hidden></div>
             <input type="hidden" name="ReturnUrl" value="@(Context.Request.Path.Value + Context.Request.QueryString.Value)" />
-            <label for="reader-login-email">Email</label>
-            <input id="reader-login-email" name="Email" type="email" autocomplete="username" required maxlength="254" placeholder="Email của bạn" />
-            <label for="reader-login-password">Mật khẩu</label>
-            <input id="reader-login-password" name="Password" type="password" autocomplete="current-password" required placeholder="Nhập mật khẩu" />
+            <div class="reader-login-dialog__field">
+                <label for="reader-login-email">Email</label>
+                <input id="reader-login-email" name="Email" type="email" autocomplete="username" required maxlength="254" placeholder="Email của bạn" />
+            </div>
+            <div class="reader-login-dialog__field">
+                <label for="reader-login-password">Mật khẩu</label>
+                <input id="reader-login-password" name="Password" type="password" autocomplete="current-password" required placeholder="Nhập mật khẩu" />
+            </div>
             <label class="reader-login-dialog__remember"><input type="checkbox" name="RememberMe" value="true" /> Ghi nhớ đăng nhập</label>
             <button class="reader-login-dialog__submit" type="submit">Đăng nhập</button>
         </form>
