@@ -16,6 +16,19 @@
     <span asp-validation-for="Description" class="app-field-error"></span>
 </div>
 <div class="app-field">
+    <label asp-for="ParentId" class="app-label">Chuyên mục cha</label>
+    <select asp-for="ParentId" class="app-select" disabled="@(ViewData["HasChildren"] is true)">
+        <option value="">Không có (chuyên mục cấp cao nhất)</option>
+        @foreach (var p in (IEnumerable<CategoryDto>)ViewData["ParentOptions"]!)
+        {
+            <option value="@p.Id" selected="@(p.Id == Model.ParentId)">@p.Name</option>
+        }
+    </select>
+    @if (ViewData["HasChildren"] is true) { <p class="app-hint">Chuyên mục này đang có chuyên mục con nên không thể trở thành chuyên mục con.</p> }
+    else { <p class="app-hint">Chọn để hiển thị chuyên mục này trong menu xổ xuống của chuyên mục cha. Chỉ hỗ trợ một cấp con.</p> }
+    <span asp-validation-for="ParentId" class="app-field-error"></span>
+</div>
+<div class="app-field">
     <label asp-for="DisplayOrder" class="app-label">Thứ tự hiển thị</label>
     <input asp-for="DisplayOrder" type="number" class="app-input" />
     <span asp-validation-for="DisplayOrder" class="app-field-error"></span>

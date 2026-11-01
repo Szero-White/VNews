@@ -33,12 +33,13 @@
         <ul class="app-nav__list">
             @Item("users", "users", "Người dùng", Url.Action("Index", "CmsUsers")!)
             @Item("categories", "folder", "Chuyên mục", Url.Action("Index", "CmsCategories")!)
+            @Item("media", "image", "Ảnh tải lên", Url.Action("Index", "CmsMedia")!)
             @Item("audit", "log", "Nhật ký hoạt động", Url.Action("Index", "CmsAudit")!)
         </ul>
     }
     <p class="app-nav__heading">Tài khoản</p>
     <ul class="app-nav__list">
-        @Item("profile", "user", "Hồ sơ của tôi", Url.Action("Profile", "Account")!)
-        @Item("saved", "bookmark", "Bài đã lưu", Url.Action("SavedArticles", "Account")!)
+        @Item("profile", "user", "Hồ sơ của tôi", Url.Action("Profile", "ReaderAccount")!)
+        @Item("saved", "bookmark", "Bài đã lưu", Url.Action("SavedArticles", "ReaderAccount")!)
     </ul>
 </nav>

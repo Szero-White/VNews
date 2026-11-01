@@ -1,0 +1,21 @@
+@* Mobile utility drawer: categories (drawer variant), latest, saved, account. Toggled by js/site/chrome.js. *@
+    <div id="utility-drawer" class="utility-drawer">
+        <div class="utility-drawer__inner">
+            @await Component.InvokeAsync("CategoryNav", new { variant = "drawer" })
+            <a asp-controller="Home" asp-action="Latest">Tin mới nhất</a>
+            <a asp-controller="Home" asp-action="Saved">Đã lưu</a>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="ReaderAccount" asp-action="Profile">Tài khoản của tôi</a>
+                @if (User.IsNewsroomStaff())
+                {
+                    <a asp-controller="CmsArticles" asp-action="Index">Tòa soạn</a>
+                }
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" data-reader-login-open>Đăng nhập</a>
+                <a asp-controller="Account" asp-action="Register">Đăng ký</a>
+            }
+        </div>
+    </div>

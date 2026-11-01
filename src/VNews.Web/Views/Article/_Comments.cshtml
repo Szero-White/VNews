@@ -1,0 +1,134 @@
+@using VNews.Application.Interfaces
+@model ArticleDetailPageViewModel
+@* Reader comments. Server-rendered plain forms (no script needed): posting needs a signed-in user, text is shown encoded and never as
+   HTML, replies are one level deep, editors/admins can take a comment down, authors can withdraw their own. The server re-checks all of it. *@
+@{
+    var article = Model.Article;
+    var thread = Model.Comments;
+    var returnUrl = Context.Request.Path.Value + Context.Request.QueryString.Value;
+    var nowUtc = DateTime.UtcNow;
+    string PageUrl(int p) => Url.Action("Detail", "Article", new { slug = article.Slug, cpage = p > 1 ? p : (int?)null }) + "#binh-luan";
+}
+<section class="comments" id="binh-luan" aria-labelledby="comments-title">
+    <h2 class="comments__title" id="comments-title">Bình luận <span class="comments__count">@thread.TotalVisible</span></h2>
+
+    @if (Model.CommentMessage is not null)
+    {
+        <p class="comments__notice" role="status">@Model.CommentMessage</p>
+    }
+    @if (Model.CommentError is not null && Model.CommentDraftParent is null)
+    {
+        <p class="comments__error" role="alert">@Model.CommentError</p>
+    }
+
+    @if (Model.IsSignedIn)
+    {
+        <form class="comment-form" id="comment-form" asp-controller="Comments" asp-action="Add" asp-route-slug="@article.Slug" method="post">
+            <label class="comment-form__label" for="comment-body">Ý kiến của bạn</label>
+            <textarea id="comment-body" name="body" class="comment-form__input" rows="3" maxlength="@ICommentService.MaxLength" required minlength="@ICommentService.MinLength"
+                      placeholder="Chia sẻ ý kiến của bạn về bài viết...">@(Model.CommentDraftParent is null ? Model.CommentDraft : null)</textarea>
+            <div class="comment-form__row">
+                <span class="comment-form__hint">Tối đa @ICommentService.MaxLength ký tự. Vui lòng bình luận lịch sự.</span>
+                <button type="submit" class="comment-form__submit">Gửi bình luận</button>
+            </div>
+        </form>
+    }
+    else
+    {
+        <div class="comment-login">
+            <p>Đăng nhập để tham gia bình luận.</p>
+            <a class="comment-login__button" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl" data-reader-login-open>Đăng nhập</a>
+        </div>
+    }
+
+    @if (thread.Threads.Count == 0)
+    {
+        <p class="comments__empty">Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ ý kiến.</p>
+    }
+    else
+    {
+        <ol class="comment-list">
+            @foreach (var c in thread.Threads)
+            {
+                <li class="comment" id="comment-@c.Id">
+                    @if (c.IsVisible)
+                    {
+                        <div class="comment__head">
+                            <span class="comment__avatar" aria-hidden="true">@AppFormat.Initials(c.AuthorName)</span>
+                            <strong class="comment__author">@c.AuthorName</strong>
+                            <time class="comment__time" datetime="@VietnamTime.ToIso(c.CreatedAtUtc)" title="@VietnamTime.FormatLong(c.CreatedAtUtc)">@VietnamTime.Ago(c.CreatedAtUtc, nowUtc)</time>
+                        </div>
+                        <p class="comment__body">@c.Body</p>
+                        <div class="comment__actions">
+                            @if (Model.IsSignedIn)
+                            {
+                                <details class="comment__reply" @(Model.CommentDraftParent == c.Id ? "open" : null)>
+                                    <summary>Trả lời</summary>
+                                    @if (Model.CommentError is not null && Model.CommentDraftParent == c.Id)
+                                    {
+                                        <p class="comments__error" role="alert">@Model.CommentError</p>
+                                    }
+                                    <form class="comment-form comment-form--reply" asp-controller="Comments" asp-action="Add" asp-route-slug="@article.Slug" method="post">
+                                        <input type="hidden" name="parentId" value="@c.Id" />
+                                        <label class="sr-only" for="reply-@c.Id">Trả lời @c.AuthorName</label>
+                                        <textarea id="reply-@c.Id" name="body" class="comment-form__input" rows="2" maxlength="@ICommentService.MaxLength" required minlength="@ICommentService.MinLength"
+                                                  placeholder="Trả lời @c.AuthorName...">@(Model.CommentDraftParent == c.Id ? Model.CommentDraft : null)</textarea>
+                                        <div class="comment-form__row"><span></span><button type="submit" class="comment-form__submit">Gửi trả lời</button></div>
+                                    </form>
+                                </details>
+                            }
+                            @if (Model.IsSignedIn && c.UserId == Model.CurrentUserId)
+                            {
+                                <form asp-controller="Comments" asp-action="DeleteOwn" asp-route-id="@c.Id" method="post" class="comment__inline"><button type="submit" class="comment__link">Xóa</button></form>
+                            }
+                            @if (Model.CanModerate)
+                            {
+                                <form asp-controller="Comments" asp-action="Hide" asp-route-id="@c.Id" method="post" class="comment__inline"><button type="submit" class="comment__link comment__link--danger">Gỡ bình luận</button></form>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="comment__removed">@c.RemovedReason</p>
+                    }
+
+                    @if (c.Replies.Count > 0)
+                    {
+                        <ol class="comment-list comment-list--replies">
+                            @foreach (var r in c.Replies)
+                            {
+                                <li class="comment comment--reply" id="comment-@r.Id">
+                                    <div class="comment__head">
+                                        <span class="comment__avatar" aria-hidden="true">@AppFormat.Initials(r.AuthorName)</span>
+                                        <strong class="comment__author">@r.AuthorName</strong>
+                                        <time class="comment__time" datetime="@VietnamTime.ToIso(r.CreatedAtUtc)" title="@VietnamTime.FormatLong(r.CreatedAtUtc)">@VietnamTime.Ago(r.CreatedAtUtc, nowUtc)</time>
+                                    </div>
+                                    <p class="comment__body">@r.Body</p>
+                                    <div class="comment__actions">
+                                        @if (Model.IsSignedIn && r.UserId == Model.CurrentUserId)
+                                        {
+                                            <form asp-controller="Comments" asp-action="DeleteOwn" asp-route-id="@r.Id" method="post" class="comment__inline"><button type="submit" class="comment__link">Xóa</button></form>
+                                        }
+                                        @if (Model.CanModerate)
+                                        {
+                                            <form asp-controller="Comments" asp-action="Hide" asp-route-id="@r.Id" method="post" class="comment__inline"><button type="submit" class="comment__link comment__link--danger">Gỡ bình luận</button></form>
+                                        }
+                                    </div>
+                                </li>
+                            }
+                        </ol>
+                    }
+                </li>
+            }
+        </ol>
+
+        @if (thread.TotalPages > 1)
+        {
+            <nav class="comments__pager" aria-label="Phân trang bình luận">
+                @if (thread.Page > 1) { <a href="@PageUrl(thread.Page - 1)" rel="prev">‹ Bình luận mới hơn</a> }
+                <span>Trang @thread.Page / @thread.TotalPages</span>
+                @if (thread.Page < thread.TotalPages) { <a href="@PageUrl(thread.Page + 1)" rel="next">Bình luận cũ hơn ›</a> }
+            </nav>
+        }
+    }
+</section>

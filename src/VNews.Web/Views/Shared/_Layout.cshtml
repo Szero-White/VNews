@@ -4,6 +4,8 @@
     // Keep public editorial routes explicit; CMS and account layouts are unaffected.
     var isHomepage = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Home", StringComparison.OrdinalIgnoreCase)
         && string.Equals(ViewContext.RouteData.Values["action"]?.ToString(), "Index", StringComparison.OrdinalIgnoreCase);
+    var isSavedPage = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Home", StringComparison.OrdinalIgnoreCase)
+        && string.Equals(ViewContext.RouteData.Values["action"]?.ToString(), "Saved", StringComparison.OrdinalIgnoreCase);
     var isArticle = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Article", StringComparison.OrdinalIgnoreCase);
     var isCategory = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Category", StringComparison.OrdinalIgnoreCase);
 }
@@ -26,7 +28,12 @@
          editorial reference's measured computed style (font-family: Merriweather, serif; 700). -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap" media="print" data-font-swap />
     <link rel="stylesheet" href="~/css/brand-logo.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/base/base.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/home-sections.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/listing-article.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/layout/header.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/layout/navigation.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/layout/page-chrome.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/editorial.css" asp-append-version="true" />
     @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index")
     {
@@ -40,6 +47,7 @@
     <link rel="stylesheet" href="~/css/top-ad-banner.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site-footer.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/mega-menu.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/category-submenu.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/demo-login.css" asp-append-version="true" />
     @if (isArticle || isCategory)
     {
@@ -57,6 +65,7 @@
     {
         <link rel="stylesheet" href="~/css/static-pages.css" asp-append-version="true" />
     }
+    @await RenderSectionAsync("Head", required: false)
     <script src="~/js/font-swap.js" asp-append-version="true" defer></script>
 </head>
 <body class="@(isHomepage ? "page-home" : isArticle ? "page-article" : isCategory ? "page-category" : "")">
@@ -70,107 +79,11 @@
         <partial name="_TopAdBanner" />
     }
 
-    <header class="masthead">
-        <div class="masthead__inner">
-            <button class="masthead__menu-toggle" type="button" aria-label="Mở menu tiện ích" aria-controls="utility-drawer" aria-expanded="false">
-                <span></span><span></span><span></span>
-            </button>
+    <partial name="_SiteHeader" />
 
-            <details class="masthead__search masthead__search--mobile-left">
-                <summary aria-label="Mở tìm kiếm" title="Tìm kiếm">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
-                        <circle cx="10.8" cy="10.8" r="6.7"></circle>
-                        <path d="m16 16 4.5 4.5"></path>
-                    </svg>
-                </summary>
-                <form class="masthead__search-form" asp-controller="Search" asp-action="Index" method="get" role="search">
-                    <input type="search" name="q" placeholder="Tìm kiếm bài viết..." value="@Context.Request.Query["q"]" aria-label="Tìm kiếm bài viết" required />
-                    <button type="submit">Tìm</button>
-                </form>
-            </details>
+    <partial name="_UtilityDrawer" />
 
-            <div class="masthead__identity">
-                <a class="vn-logo masthead__brand" asp-controller="Home" asp-action="Index" aria-label="VNews - Trang chủ"><partial name="_BrandMark" /></a>
-                <span class="masthead__motto">Bản tin dành cho người thích khám phá</span>
-            </div>
-
-            <div class="masthead__right">
-                <span class="masthead__hide-mobile">@await Component.InvokeAsync("WeatherWidget")</span>
-                <span id="today-date" class="masthead__date masthead__hide-mobile"></span>
-                <span class="masthead__separator masthead__hide-mobile" aria-hidden="true"></span>
-                <a class="masthead__utility-link masthead__hide-mobile" asp-controller="Home" asp-action="Latest">Mới nhất</a>
-                <span class="masthead__separator masthead__hide-mobile" aria-hidden="true"></span>
-                @* Visible desktop search: GET /Search/Index, backed by SQL Server. *@
-                <form class="masthead__desktop-search" asp-controller="Search" asp-action="Index" method="get" role="search">
-                    <input name="q" type="search" value="@Context.Request.Query["q"]" placeholder="Tìm kiếm" aria-label="Tìm kiếm bài viết" required />
-                    <button type="submit" aria-label="Tìm kiếm">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.7"/><path d="m16 16 4.5 4.5"/></svg>
-                    </button>
-                </form>
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    @if (User.IsInRole("Admin") || User.IsInRole("Editor") || User.IsInRole("Author"))
-                    {
-                        <a class="masthead__utility-link masthead__hide-mobile" asp-controller="CmsArticles" asp-action="Index">Tòa soạn</a>
-                    }
-                    <a class="masthead__utility-link masthead__account-link" asp-controller="Account" asp-action="Profile" aria-label="Tài khoản của tôi">
-                        <span class="masthead__account-label">Tài khoản</span>
-                        <svg class="masthead__account-icon" viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20v-2.2a7.5 7.5 0 0 1 15 0V20z"/></svg>
-                    </a>
-                }
-                else
-                {
-                    <a class="masthead__utility-link masthead__account-link" asp-controller="Account" asp-action="Login" aria-label="Đăng nhập" data-reader-login-open>
-                        <span class="masthead__account-label">Đăng nhập</span>
-                        <svg class="masthead__account-icon" viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20v-2.2a7.5 7.5 0 0 1 15 0V20z"/></svg>
-                    </a>
-                }
-                @* Actual latest published stories and local recently-read history; not push notifications. *@
-                @await Component.InvokeAsync("ReaderNewsPanel")
-                <a class="masthead__saved-mobile" asp-controller="Home" asp-action="Saved" aria-label="Bài đã lưu" title="Bài đã lưu">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg>
-                </a>
-            </div>
-        </div>
-    </header>
-
-    <div id="utility-drawer" class="utility-drawer">
-        <div class="utility-drawer__inner">
-            @await Component.InvokeAsync("CategoryNav", new { variant = "drawer" })
-            <a asp-controller="Home" asp-action="Latest">Tin mới nhất</a>
-            <a asp-controller="Home" asp-action="Saved">Đã lưu</a>
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <a asp-controller="Account" asp-action="Profile">Tài khoản của tôi</a>
-                @if (User.IsInRole("Admin") || User.IsInRole("Editor") || User.IsInRole("Author"))
-                {
-                    <a asp-controller="CmsArticles" asp-action="Index">Tòa soạn</a>
-                }
-            }
-            else
-            {
-                <a asp-controller="Account" asp-action="Login" data-reader-login-open>Đăng nhập</a>
-                <a asp-controller="Account" asp-action="Register">Đăng ký</a>
-            }
-        </div>
-    </div>
-
-    <div id="mega-menu-overlay" class="mega-overlay" hidden></div>
-    <nav id="primary-nav" class="primary-nav" aria-label="Chuyên mục tin tức">
-        <div class="primary-nav__inner">
-            <a class="primary-nav__home" asp-controller="Home" asp-action="Index" aria-label="Trang chủ" title="Trang chủ">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3 2 11h2v10h6v-7h4v7h6V11h2L12 3z" /></svg>
-            </a>
-            @* Mobile has no utility rail; expose Latest in its horizontal category strip. *@
-            <a class="primary-nav__latest" asp-controller="Home" asp-action="Latest">Mới nhất</a>
-            @await Component.InvokeAsync("CategoryNav")
-            <button type="button" id="mega-menu-toggle" class="primary-nav__all" aria-haspopup="dialog" aria-expanded="false" aria-controls="mega-menu" title="Tất cả chuyên mục">
-                <span class="primary-nav__all-icon" aria-hidden="true"><span></span><span></span><span></span></span>
-                <span class="primary-nav__all-label">Tất cả chuyên mục</span>
-            </button>
-        </div>
-        @await Component.InvokeAsync("CategoryNav", new { variant = "mega" })
-    </nav>
+    <partial name="_PrimaryNav" />
 
     <div class="mobile-weather-row">
         @await Component.InvokeAsync("WeatherWidget")
@@ -189,8 +102,22 @@
     <button id="back-to-top" class="back-to-top" type="button" aria-label="Lên đầu trang" hidden>↑</button>
     <div id="site-toast" class="site-toast" role="status" aria-live="polite" hidden></div>
 
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/site/core.js" asp-append-version="true"></script>
+    <script src="~/js/site/chrome.js" asp-append-version="true"></script>
+    @* The sign-in dialog only exists for visitors who are not signed in. *@
+    <script src="~/js/site/login-dialog.js" asp-append-version="true"></script>
+    <script src="~/js/site/reading-history.js" asp-append-version="true"></script>
+    @* Saving and the reading tools belong to the article page (and the saved-articles list) only. *@
+    @if (isArticle || isSavedPage)
+    {
+        <script src="~/js/site/bookmarks.js" asp-append-version="true"></script>
+    }
+    @if (isArticle)
+    {
+        <script src="~/js/site/article-tools.js" asp-append-version="true"></script>
+    }
     <script src="~/js/mega-menu.js" asp-append-version="true"></script>
+    <script src="~/js/category-submenu.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>

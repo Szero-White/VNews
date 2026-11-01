@@ -1,11 +1,26 @@
 @model CategoryNavViewModel
-
+@* The strip. A category with sub-categories gets a small disclosure button next to its link: hovering the item (mouse), focusing the
+   button (keyboard) or tapping it (touch) opens the real list of its sub-categories. Opening/closing and placement: category-submenu.js. *@
 <nav class="category-nav">
     <ul class="category-nav__list">
         @foreach (var category in Model.Categories)
         {
-            var isActive = string.Equals(category.Slug, Model.ActiveSlug, StringComparison.OrdinalIgnoreCase);
-            <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@category.Slug" aria-current="@(isActive ? "page" : null)">@category.Name</a></li>
+            var hasSub = category.Children.Count > 0;
+            <li class="category-nav__item@(hasSub ? " has-sub" : "")">
+                <a asp-controller="Category" asp-action="Index" asp-route-slug="@category.Slug" aria-current="@(Model.IsActive(category) ? "page" : null)" class="@(Model.IsActiveSection(category) ? "is-section" : null)">@category.Name</a>
+                @if (hasSub)
+                {
+                    <button type="button" class="category-nav__toggle" data-subnav-toggle aria-expanded="false" aria-controls="subnav-@category.Slug" aria-label="Chuyên mục con của @category.Name">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                    </button>
+                    <ul id="subnav-@category.Slug" class="category-subnav" hidden>
+                        @foreach (var child in category.Children)
+                        {
+                            <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@child.Slug" aria-current="@(Model.IsActive(child) ? "page" : null)">@child.Name</a></li>
+                        }
+                    </ul>
+                }
+            </li>
         }
     </ul>
     @* Sits on the strip's own right edge, so it can never overlap neighbouring controls. *@

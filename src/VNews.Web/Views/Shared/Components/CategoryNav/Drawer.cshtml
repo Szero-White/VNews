@@ -5,8 +5,23 @@
     <ul class="utility-drawer__cat-list">
         @foreach (var category in Model.Categories)
         {
-            var isActive = string.Equals(category.Slug, Model.ActiveSlug, StringComparison.OrdinalIgnoreCase);
-            <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@category.Slug" aria-current="@(isActive ? "page" : null)">@category.Name</a></li>
+            var hasSub = category.Children.Count > 0;
+            <li class="drawer-cat@(hasSub ? " has-sub" : "")">
+                <a asp-controller="Category" asp-action="Index" asp-route-slug="@category.Slug" aria-current="@(Model.IsActive(category) ? "page" : null)">@category.Name</a>
+                @if (hasSub)
+                {
+                    @* Tapping the arrow opens the sub-categories; tapping the name still goes to the parent category. *@
+                    <button type="button" class="drawer-cat__toggle" data-subnav-toggle aria-expanded="@(Model.IsActiveSection(category) ? "true" : "false")" aria-controls="drawer-sub-@category.Slug" aria-label="Chuyên mục con của @category.Name">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                    </button>
+                    <ul id="drawer-sub-@category.Slug" class="drawer-cat__sub" hidden="@(!Model.IsActiveSection(category))">
+                        @foreach (var child in category.Children)
+                        {
+                            <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@child.Slug" aria-current="@(Model.IsActive(child) ? "page" : null)">@child.Name</a></li>
+                        }
+                    </ul>
+                }
+            </li>
         }
     </ul>
 </nav>

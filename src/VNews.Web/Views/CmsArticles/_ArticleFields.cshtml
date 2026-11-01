@@ -1,3 +1,4 @@
+@using VNews.Application.Interfaces
 @model ArticleSaveRequest
 @* Fields shared by the create and edit pages. ViewData["Categories"], ViewData["ReadOnly"] (bool). *@
 @{
@@ -32,7 +33,7 @@
                 <option value="">Chọn chuyên mục</option>
                 @foreach (var c in categories)
                 {
-                    <option value="@c.Id" selected="@(c.Id == Model.CategoryId)">@c.Name</option>
+                    <option value="@c.Id" selected="@(c.Id == Model.CategoryId)">@c.FullName</option>
                 }
             </select>
             <span asp-validation-for="CategoryId" class="app-field-error"></span>
@@ -40,7 +41,7 @@
 
         @* Cover image: preview of what is stored now, a native file input wrapped in a button-like label, the file name, and
            "remove" (which empties CoverImageUrl: the save already accepts an empty value). cover-field.js drives the states. *@
-        <div class="app-field cover" data-cover data-upload-url="@Url.Action("UploadCoverImage", "CmsArticles")" data-readonly="@readOnly.ToString().ToLowerInvariant()">
+        <div class="app-field cover" data-cover data-upload-url="@Url.Action("UploadCoverImage", "CmsArticles")" data-max-bytes="@ImageUploadLimits.MaxBytes" data-max-label="@ImageUploadLimits.Label" data-readonly="@readOnly.ToString().ToLowerInvariant()">
             <span class="app-label" id="cover-label">Ảnh bìa</span>
             <div class="cover__stage" role="group" aria-labelledby="cover-label">
                 <img class="cover__img" data-cover-img src="@(hasCover ? Model.CoverImageUrl : "")" alt="Xem trước ảnh bìa" hidden="@(!hasCover)" />
@@ -61,7 +62,7 @@
                     <button type="button" class="btn btn--ghost btn--sm" data-cover-remove hidden="@(!hasCover)">Bỏ ảnh</button>
                     <button type="button" class="btn btn--ghost btn--sm" data-cover-undo hidden>Hoàn tác</button>
                 </div>
-                <p class="app-hint" data-cover-file-name>JPG, PNG hoặc WebP, tối đa 5 MB.</p>
+                <p class="app-hint" data-cover-file-name>JPG, PNG hoặc WebP, tối đa @ImageUploadLimits.Label.</p>
             }
             <div id="uploadStatus" class="app-hint cover__status" role="status"></div>
             <input asp-for="CoverImageUrl" type="hidden" />

@@ -38,6 +38,6 @@
                 </li>
             }
         </ul>
-        <partial name="_AppPager" model="@(new AppPagerModel { Page = Model.Items.Page, PageSize = Model.Items.PageSize, TotalCount = Model.Items.TotalCount, Controller = "Account", Action = "SavedArticles", Noun = "bài" })" />
+        <partial name="_AppPager" model="@(new AppPagerModel { Page = Model.Items.Page, PageSize = Model.Items.PageSize, TotalCount = Model.Items.TotalCount, Controller = "ReaderAccount", Action = "SavedArticles", Noun = "bài" })" />
     }
 </section>

@@ -1,7 +1,7 @@
 @model CategoryNavViewModel
 @* Desktop "Tất cả chuyên mục" menu. Categories come from the database (the same model as the strip and the
-   mobile drawer); the utility column only lists pages that exist. No sub-menus are invented: the data has no
-   parent categories yet. Opened and closed by mega-menu.js; it is hidden (and inert) when closed. *@
+   mobile drawer); the utility column only lists pages that exist. Sub-categories are the real children of each
+   parent (none are invented; a parent without children is a plain link). Opened and closed by mega-menu.js; it is hidden (and inert) when closed. *@
 <div id="mega-menu" class="mega-menu" role="dialog" aria-modal="true" aria-labelledby="mega-menu-title" hidden>
     <div class="mega-menu__inner">
         <div class="mega-menu__head">
@@ -13,8 +13,18 @@
                 <ul class="mega-menu__list">
                     @foreach (var category in Model.Categories)
                     {
-                        var isActive = string.Equals(category.Slug, Model.ActiveSlug, StringComparison.OrdinalIgnoreCase);
-                        <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@category.Slug" aria-current="@(isActive ? "page" : null)">@category.Name</a></li>
+                        <li>
+                            <a asp-controller="Category" asp-action="Index" asp-route-slug="@category.Slug" aria-current="@(Model.IsActive(category) ? "page" : null)">@category.Name</a>
+                            @if (category.Children.Count > 0)
+                            {
+                                <ul class="mega-menu__sub">
+                                    @foreach (var child in category.Children)
+                                    {
+                                        <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@child.Slug" aria-current="@(Model.IsActive(child) ? "page" : null)">@child.Name</a></li>
+                                    }
+                                </ul>
+                            }
+                        </li>
                     }
                 </ul>
             </nav>
@@ -26,7 +36,7 @@
                     <li><a asp-controller="Search" asp-action="Index">Tìm kiếm</a></li>
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        <li><a asp-controller="Account" asp-action="Profile">Tài khoản của tôi</a></li>
+                        <li><a asp-controller="ReaderAccount" asp-action="Profile">Tài khoản của tôi</a></li>
                     }
                     else
                     {

@@ -1,7 +1,7 @@
 @model ArticleCardViewModel
 @{
     var a = Model.Article;
-    var imageUrl = string.IsNullOrWhiteSpace(a.CoverImageUrl) ? Url.Content("~/images/demo/fallback.svg") : a.CoverImageUrl;
+    var imageUrl = Url.CoverOrFallback(a.CoverImageUrl);
 }
 
 @switch (Model.Layout)

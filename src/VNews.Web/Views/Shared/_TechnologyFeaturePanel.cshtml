@@ -39,7 +39,7 @@
         <div class="technology-feature__grid">
             <article class="technology-feature__lead">
                 <a class="technology-feature__image" asp-controller="Article" asp-action="Detail" asp-route-slug="@lead.Slug">
-                    <img src="@(string.IsNullOrWhiteSpace(lead.CoverImageUrl) ? Url.Content("~/images/demo/fallback.svg") : lead.CoverImageUrl)"
+                    <img src="@(Url.CoverOrFallback(lead.CoverImageUrl))"
                          alt="@lead.Title" loading="lazy" decoding="async" />
                 </a>
                 <h3><a asp-controller="Article" asp-action="Detail" asp-route-slug="@lead.Slug">@lead.Title</a></h3>
@@ -51,7 +51,7 @@
                 {
                     <article>
                         <a class="technology-feature__image" asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug">
-                            <img src="@(string.IsNullOrWhiteSpace(article.CoverImageUrl) ? Url.Content("~/images/demo/fallback.svg") : article.CoverImageUrl)"
+                            <img src="@(Url.CoverOrFallback(article.CoverImageUrl))"
                                  alt="@article.Title" loading="lazy" decoding="async" />
                         </a>
                         <h3><a asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug">@article.Title</a></h3>
@@ -64,7 +64,7 @@
                 {
                     <article>
                         <a asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug" class="technology-feature__thumb">
-                            <img src="@(string.IsNullOrWhiteSpace(article.CoverImageUrl) ? Url.Content("~/images/demo/fallback.svg") : article.CoverImageUrl)"
+                            <img src="@(Url.CoverOrFallback(article.CoverImageUrl))"
                                  alt="@article.Title" loading="lazy" decoding="async" />
                         </a>
                         <h3><a asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug">@article.Title</a></h3>

@@ -1,0 +1,17 @@
+@* Primary navigation: home link, the category strip with sub-category lists, the full-menu button, and the full menu (mega variant). *@
+    <div id="mega-menu-overlay" class="mega-overlay" hidden></div>
+    <nav id="primary-nav" class="primary-nav" aria-label="Chuyên mục tin tức">
+        <div class="primary-nav__inner">
+            <a class="primary-nav__home" asp-controller="Home" asp-action="Index" aria-label="Trang chủ" title="Trang chủ">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3 2 11h2v10h6v-7h4v7h6V11h2L12 3z" /></svg>
+            </a>
+            @* Mobile has no utility rail; expose Latest in its horizontal category strip. *@
+            <a class="primary-nav__latest" asp-controller="Home" asp-action="Latest">Mới nhất</a>
+            @await Component.InvokeAsync("CategoryNav")
+            <button type="button" id="mega-menu-toggle" class="primary-nav__all" aria-haspopup="dialog" aria-expanded="false" aria-controls="mega-menu" title="Tất cả chuyên mục">
+                <span class="primary-nav__all-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span class="primary-nav__all-label">Tất cả chuyên mục</span>
+            </button>
+        </div>
+        @await Component.InvokeAsync("CategoryNav", new { variant = "mega" })
+    </nav>

@@ -1,4 +1,3 @@
-@using VNews.Web.Helpers
 @model CmsWorkspaceViewModel
 @{
     Layout = "_AppLayout";
@@ -164,18 +163,9 @@
                                             <button type="submit" class="btn btn--primary btn--sm">Gửi duyệt</button>
                                         </form>
                                     }
-                                    @if (act.CanPublish)
+                                    @if (act.CanPublish && act.CanReject)
                                     {
-                                        <form asp-action="Publish" asp-route-id="@a.Id" method="post" class="inline-form" data-confirm="Xuất bản bài “@a.Title”? Bài sẽ hiển thị công khai ngay." data-confirm-title="Duyệt và xuất bản" data-confirm-label="Duyệt">
-                                            <button type="submit" class="btn btn--primary btn--sm">Duyệt</button>
-                                        </form>
-                                    }
-                                    @if (act.CanReject)
-                                    {
-                                        <form asp-action="Reject" asp-route-id="@a.Id" method="post" class="inline-form js-reject-form" data-confirm="Từ chối bài “@a.Title”. Tác giả sẽ thấy lý do này để chỉnh sửa." data-confirm-title="Từ chối bài viết" data-confirm-label="Từ chối" data-confirm-danger data-reason>
-                                            <input type="hidden" name="reason" value="" />
-                                            <button type="submit" class="btn btn--danger btn--sm">Từ chối</button>
-                                        </form>
+                                        <partial name="_ReviewActions" model="new ReviewActionsModel(a.Id, a.Title, Small: true)" />
                                     }
                                 </div>
                             </td>

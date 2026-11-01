@@ -1,0 +1,64 @@
+@* Masthead: brand, search, date, weather, account actions and the reader news panel. *@
+    <header class="masthead">
+        <div class="masthead__inner">
+            <button class="masthead__menu-toggle" type="button" aria-label="Mở menu tiện ích" aria-controls="utility-drawer" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+
+            <details class="masthead__search masthead__search--mobile-left">
+                <summary aria-label="Mở tìm kiếm" title="Tìm kiếm">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+                        <circle cx="10.8" cy="10.8" r="6.7"></circle>
+                        <path d="m16 16 4.5 4.5"></path>
+                    </svg>
+                </summary>
+                <form class="masthead__search-form" asp-controller="Search" asp-action="Index" method="get" role="search">
+                    <input type="search" name="q" placeholder="Tìm kiếm bài viết..." value="@Context.Request.Query["q"]" aria-label="Tìm kiếm bài viết" required />
+                    <button type="submit">Tìm</button>
+                </form>
+            </details>
+
+            <div class="masthead__identity">
+                <a class="vn-logo masthead__brand" asp-controller="Home" asp-action="Index" aria-label="VNews - Trang chủ"><partial name="_BrandMark" /></a>
+                <span class="masthead__motto">Bản tin dành cho người thích khám phá</span>
+            </div>
+
+            <div class="masthead__right">
+                <span class="masthead__hide-mobile">@await Component.InvokeAsync("WeatherWidget")</span>
+                <span id="today-date" class="masthead__date masthead__hide-mobile"></span>
+                <span class="masthead__separator masthead__hide-mobile" aria-hidden="true"></span>
+                <a class="masthead__utility-link masthead__hide-mobile" asp-controller="Home" asp-action="Latest">Mới nhất</a>
+                <span class="masthead__separator masthead__hide-mobile" aria-hidden="true"></span>
+                @* Visible desktop search: GET /Search/Index, backed by SQL Server. *@
+                <form class="masthead__desktop-search" asp-controller="Search" asp-action="Index" method="get" role="search">
+                    <input name="q" type="search" value="@Context.Request.Query["q"]" placeholder="Tìm kiếm" aria-label="Tìm kiếm bài viết" required />
+                    <button type="submit" aria-label="Tìm kiếm">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.7"/><path d="m16 16 4.5 4.5"/></svg>
+                    </button>
+                </form>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    @if (User.IsNewsroomStaff())
+                    {
+                        <a class="masthead__utility-link masthead__hide-mobile" asp-controller="CmsArticles" asp-action="Index">Tòa soạn</a>
+                    }
+                    <a class="masthead__utility-link masthead__account-link" asp-controller="ReaderAccount" asp-action="Profile" aria-label="Tài khoản của tôi">
+                        <span class="masthead__account-label">Tài khoản</span>
+                        <svg class="masthead__account-icon" viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20v-2.2a7.5 7.5 0 0 1 15 0V20z"/></svg>
+                    </a>
+                }
+                else
+                {
+                    <a class="masthead__utility-link masthead__account-link" asp-controller="Account" asp-action="Login" aria-label="Đăng nhập" data-reader-login-open>
+                        <span class="masthead__account-label">Đăng nhập</span>
+                        <svg class="masthead__account-icon" viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20v-2.2a7.5 7.5 0 0 1 15 0V20z"/></svg>
+                    </a>
+                }
+                @* Actual latest published stories and local recently-read history; not push notifications. *@
+                @await Component.InvokeAsync("ReaderNewsPanel")
+                <a class="masthead__saved-mobile" asp-controller="Home" asp-action="Saved" aria-label="Bài đã lưu" title="Bài đã lưu">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg>
+                </a>
+            </div>
+        </div>
+    </header>

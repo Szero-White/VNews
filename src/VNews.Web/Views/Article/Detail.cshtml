@@ -1,10 +1,12 @@
-@using VNews.Web.Helpers
 @model ArticleDetailPageViewModel
 @{
     var article = Model.Article;
     var related = Model.RelatedArticles;
     ViewData["Title"] = article.Title;
     ViewData["Description"] = article.Summary;
+}
+@section Head {
+    <link rel="stylesheet" href="~/css/comments.css" asp-append-version="true" />
 }
 <div class="container article-layout">
     <div class="article-layout__main article-page">
@@ -20,6 +22,11 @@
         </div>
         <article class="article-detail" data-news-article data-news-id="@article.Id" data-news-slug="@article.Slug" data-news-title="@article.Title" data-news-image="@article.CoverImageUrl">
             <h1 class="article-detail__title">@article.Title</h1>
+            <p class="article-byline">
+                @if (!string.IsNullOrWhiteSpace(article.AuthorName)) { <span class="article-byline__item">Tác giả: <strong>@article.AuthorName</strong></span> }
+                <span class="article-byline__item">@Model.ReadMinutes phút đọc</span>
+                <a class="article-byline__item article-byline__link" href="#binh-luan">@Model.Comments.TotalVisible bình luận</a>
+            </p>
             <p class="article-detail__summary" id="article-summary">@article.Summary</p>
             <div class="article-tools" role="group" aria-label="Công cụ đọc bài">
                 <button type="button" class="article-tool" data-action="share" aria-label="Chia sẻ bài viết">Chia sẻ</button>
@@ -58,6 +65,22 @@
                 <button type="button" data-action="share">Chia sẻ bài viết</button>
             </div>
         </article>
+
+        @if (Model.Neighbors.Previous is not null || Model.Neighbors.Next is not null)
+        {
+            <nav class="article-neighbors" aria-label="Bài trước và bài sau trong chuyên mục">
+                @if (Model.Neighbors.Previous is { } prev)
+                {
+                    <a class="article-neighbors__link article-neighbors__link--prev" asp-controller="Article" asp-action="Detail" asp-route-slug="@prev.Slug" rel="prev"><span class="article-neighbors__label">‹ Bài trước</span><span class="article-neighbors__title">@prev.Title</span></a>
+                }
+                @if (Model.Neighbors.Next is { } next)
+                {
+                    <a class="article-neighbors__link article-neighbors__link--next" asp-controller="Article" asp-action="Detail" asp-route-slug="@next.Slug" rel="next"><span class="article-neighbors__label">Bài sau ›</span><span class="article-neighbors__title">@next.Title</span></a>
+                }
+            </nav>
+        }
+
+        <partial name="_Comments" model="Model" />
 
         @if (related.Count > 0)
         {

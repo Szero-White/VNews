@@ -9,7 +9,7 @@
 <div class="page-head">
     <div class="page-head__text">
         <h1 class="app-page-title">Chuyên mục</h1>
-        <p class="page-head__sub">@Model.Count chuyên mục hiển thị trên trang tin.</p>
+        <p class="page-head__sub">@Model.Count chuyên mục (@Model.Count(c => c.IsChild) chuyên mục con) hiển thị trên trang tin.</p>
     </div>
     <div class="page-head__actions">
         <a asp-action="Create" class="btn btn--primary"><svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>Tạo chuyên mục</a>
@@ -29,12 +29,13 @@
     {
         <div class="table-wrap">
             <table class="table table--cards">
-                <thead><tr><th scope="col">Tên</th><th scope="col">Đường dẫn</th><th scope="col">Mô tả</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+                <thead><tr><th scope="col">Tên</th><th scope="col">Chuyên mục cha</th><th scope="col">Đường dẫn</th><th scope="col">Mô tả</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
                 <tbody>
                     @foreach (var c in Model)
                     {
                         <tr>
-                            <td class="table__cell-title"><span class="table__title">@c.Name</span></td>
+                            <td class="table__cell-title"><span class="table__title" style="@(c.IsChild ? "padding-left:20px" : null)">@(c.IsChild ? "└ " : "")@c.Name</span></td>
+                            <td data-label="Chuyên mục cha">@(c.ParentName ?? "—")</td>
                             <td data-label="Đường dẫn"><span class="table__sub">/chuyen-muc/@c.Slug</span></td>
                             <td data-label="Mô tả">@c.Description</td>
                             <td><div class="table__actions"><a asp-action="Edit" asp-route-id="@c.Id" class="btn btn--secondary btn--sm">Sửa</a></div></td>

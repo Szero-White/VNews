@@ -2,7 +2,7 @@
 @inject ICategoryQueryService CategoryQueryService
 @{
     // Every category in the footer comes from the database; nothing here is hard-coded.
-    var footerCategories = await CategoryQueryService.GetAllAsync();
+    var footerCategories = await CategoryQueryService.GetTreeAsync();
     var isSignedIn = User.Identity?.IsAuthenticated == true;
 }
 
@@ -40,7 +40,7 @@
                 <ul>
                     @if (isSignedIn)
                     {
-                        <li><a asp-controller="Account" asp-action="Profile">Tài khoản của tôi</a></li>
+                        <li><a asp-controller="ReaderAccount" asp-action="Profile">Tài khoản của tôi</a></li>
                     }
                     else
                     {

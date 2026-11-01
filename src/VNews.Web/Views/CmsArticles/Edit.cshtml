@@ -5,7 +5,9 @@
     Layout = "_AppLayout";
     var article = (ArticleEditDto)ViewBag.Article;
     var privileged = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Editor);
-    var editable = article.Status is "Draft" or "Rejected";
+    var awaitingSubmit = article.Status is "Draft" or "Rejected";
+    var editingPublished = article.Status == "Published" && privileged; // editors and admins; authors never get this form unlocked
+    var editable = awaitingSubmit || editingPublished;
     ViewData["Title"] = editable ? "Sửa bài viết" : "Xem bài viết";
     ViewData["AppNav"] = "articles";
     ViewData["Crumbs"] = new (string, string?)[] { ("Tòa soạn", null), ("Bài viết", Url.Action("Index", "CmsArticles")), (editable ? "Sửa bài viết" : "Xem bài viết", null) };
@@ -25,17 +27,15 @@
         }
         @if (article.Status == "PendingReview" && privileged)
         {
-            <form asp-action="Publish" asp-route-id="@article.Id" method="post" class="inline-form" data-confirm="Xuất bản bài “@article.Title”? Bài sẽ hiển thị công khai ngay." data-confirm-title="Duyệt và xuất bản" data-confirm-label="Duyệt">
-                <button type="submit" class="btn btn--primary">Duyệt</button>
-            </form>
-            <form asp-action="Reject" asp-route-id="@article.Id" method="post" class="inline-form" data-confirm="Từ chối bài “@article.Title”. Tác giả sẽ thấy lý do này để chỉnh sửa." data-confirm-title="Từ chối bài viết" data-confirm-label="Từ chối" data-confirm-danger data-reason>
-                <input type="hidden" name="reason" value="" />
-                <button type="submit" class="btn btn--danger">Từ chối</button>
-            </form>
+            <partial name="_ReviewActions" model="new ReviewActionsModel(article.Id, article.Title, Small: false)" />
         }
     </div>
 </div>
 
+@if (editingPublished)
+{
+    <div class="app-alert app-alert--info" role="note"><svg class="icon" aria-hidden="true"><use href="#i-alert" /></svg><span>Bài đã xuất bản: thay đổi được áp dụng ngay trên trang công khai. Đường dẫn và ngày xuất bản được giữ nguyên.</span></div>
+}
 @if (!string.IsNullOrWhiteSpace(article.ReviewNote))
 {
     <div class="app-alert app-alert--error" role="alert"><svg class="icon" aria-hidden="true"><use href="#i-alert" /></svg><span>Lý do biên tập viên trả lại: @article.ReviewNote</span></div>
@@ -50,12 +50,12 @@
             {
                 <button type="submit" class="btn btn--primary">Lưu thay đổi</button>
             }
-            <a asp-action="Index" class="btn btn--secondary">Quay lại danh sách</a>
+            <a asp-action="Index" class="btn btn--secondary">@(editable ? "Hủy" : "Quay lại danh sách")</a>
         </div>
     </div>
 </form>
 
-@if (editable)
+@if (awaitingSubmit)
 {
     <form asp-action="SubmitForReview" asp-route-id="@article.Id" method="post" class="card" data-confirm="Gửi bài “@article.Title” cho biên tập viên duyệt? Bạn sẽ không sửa được bài trong lúc chờ duyệt." data-confirm-title="Gửi duyệt" data-confirm-label="Gửi duyệt">
         <div class="card__body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">

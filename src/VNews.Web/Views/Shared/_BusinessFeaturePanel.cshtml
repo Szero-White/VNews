@@ -44,7 +44,7 @@
         <div class="business-feature__top-stories" aria-label="Tin kinh doanh nổi bật">
             <article class="business-feature__lead">
                 <a class="business-feature__lead-image" asp-controller="Article" asp-action="Detail" asp-route-slug="@lead.Slug">
-                    <img src="@(string.IsNullOrWhiteSpace(lead.CoverImageUrl) ? Url.Content("~/images/demo/fallback.svg") : lead.CoverImageUrl)"
+                    <img src="@(Url.CoverOrFallback(lead.CoverImageUrl))"
                          alt="@lead.Title" loading="lazy" decoding="async" />
                 </a>
                 <div class="business-feature__lead-copy">

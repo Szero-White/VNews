@@ -1,0 +1,55 @@
+@using VNews.Web.Services
+@model UploadScan
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Ảnh tải lên";
+    ViewData["AppNav"] = "media";
+    ViewData["Crumbs"] = new (string, string?)[] { ("Quản trị", null), ("Ảnh tải lên", null) };
+}
+<div class="page-head">
+    <div class="page-head__text">
+        <h1 class="app-page-title">Ảnh tải lên</h1>
+        <p class="page-head__sub">Ảnh bìa đã tải lên nhưng không còn bài viết nào dùng. Ảnh được chuyển vào thư mục lưu tạm, không bị xóa.</p>
+    </div>
+    @if (Model.Unused.Count > 0)
+    {
+        <div class="page-head__actions">
+            <form asp-action="Quarantine" method="post" class="inline-form" data-confirm="Chuyển @Model.Unused.Count ảnh không còn được dùng vào thư mục lưu tạm? Ảnh đang được bài viết sử dụng và ảnh tải lên trong 24 giờ qua sẽ không bị động tới." data-confirm-title="Dọn ảnh không dùng" data-confirm-label="Chuyển vào lưu tạm">
+                <button type="submit" class="btn btn--primary">Dọn @Model.Unused.Count ảnh</button>
+            </form>
+        </div>
+    }
+</div>
+
+<section class="stats" aria-label="Thống kê ảnh tải lên">
+    <div class="stat stat--neutral"><span class="stat__label">Tổng số ảnh</span><span class="stat__value">@Model.TotalFiles</span><span class="stat__hint">trong uploads/articles</span></div>
+    <div class="stat stat--published"><span class="stat__label">Đang được dùng</span><span class="stat__value">@Model.ReferencedFiles</span><span class="stat__hint">bài viết đang tham chiếu</span></div>
+    <div class="stat stat--pending"><span class="stat__label">Mới tải lên</span><span class="stat__value">@Model.TooNewFiles</span><span class="stat__hint">dưới 24 giờ, được giữ lại</span></div>
+    <div class="stat stat--rejected"><span class="stat__label">Không còn dùng</span><span class="stat__value">@Model.Unused.Count</span><span class="stat__hint">@(Model.UnusedBytes / 1024) KB</span></div>
+</section>
+
+<section class="card">
+    @if (Model.Unused.Count == 0)
+    {
+        <div class="empty"><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg><p class="empty__title">Không có ảnh nào cần dọn</p><p class="empty__text">Mọi ảnh tải lên đều đang được bài viết sử dụng hoặc vừa mới tải lên.</p></div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table--cards">
+                <thead><tr><th scope="col">Ảnh</th><th scope="col">Tệp</th><th scope="col">Dung lượng</th><th scope="col">Tải lên lúc</th></tr></thead>
+                <tbody>
+                    @foreach (var u in Model.Unused)
+                    {
+                        <tr>
+                            <td class="table__cell-title"><img class="article-cell__thumb" src="@u.Url" alt="" loading="lazy" /></td>
+                            <td data-label="Tệp"><span class="table__sub">@u.FileName</span></td>
+                            <td data-label="Dung lượng">@(Math.Max(1, u.Bytes / 1024)) KB</td>
+                            <td data-label="Tải lên lúc">@u.LastWriteUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

@@ -7,7 +7,7 @@
     <ol class="popular-list">
         @foreach (var item in Model)
         {
-            var thumb = string.IsNullOrWhiteSpace(item.CoverImageUrl) ? Url.Content("~/images/demo/fallback.svg") : item.CoverImageUrl;
+            var thumb = Url.CoverOrFallback(item.CoverImageUrl);
             <li class="popular-list__row">
                 <a class="popular-list__thumb" asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug" tabindex="-1" aria-hidden="true">
                     <img src="@thumb" alt="" width="110" height="66" loading="lazy" decoding="async" />

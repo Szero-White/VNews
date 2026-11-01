@@ -1,0 +1,30 @@
+@model IReadOnlyList<CategoryGroupDto>
+@* One block per sub-category that has stories: heading with "view all", the newest story with its picture, and the next ones as headlines. The controller already removed stories shown elsewhere on the page. *@
+<div class="cat-groups">
+    @foreach (var group in Model)
+    {
+        var first = group.Articles[0];
+        <section class="cat-group" aria-labelledby="group-@group.Category.Slug">
+            <header class="cat-group__head">
+                <h2 id="group-@group.Category.Slug" class="cat-group__title"><a asp-controller="Category" asp-action="Index" asp-route-slug="@group.Category.Slug">@group.Category.Name</a></h2>
+                <a class="cat-group__all" asp-controller="Category" asp-action="Index" asp-route-slug="@group.Category.Slug">Xem tất cả ›</a>
+            </header>
+            <div class="cat-group__body">
+                <article class="cat-group__lead">
+                    <a class="cat-group__image" asp-controller="Article" asp-action="Detail" asp-route-slug="@first.Slug" tabindex="-1" aria-hidden="true"><img src="@Url.CoverOrFallback(first.CoverImageUrl)" alt="" width="240" height="144" loading="lazy" decoding="async" /></a>
+                    <h3 class="cat-group__lead-title"><a asp-controller="Article" asp-action="Detail" asp-route-slug="@first.Slug">@first.Title</a></h3>
+                    <p class="cat-group__summary">@first.Summary</p>
+                </article>
+                @if (group.Articles.Count > 1)
+                {
+                    <ul class="cat-group__list">
+                        @foreach (var other in group.Articles.Skip(1))
+                        {
+                            <li><a asp-controller="Article" asp-action="Detail" asp-route-slug="@other.Slug">@other.Title</a></li>
+                        }
+                    </ul>
+                }
+            </div>
+        </section>
+    }
+</div>
