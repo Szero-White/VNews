@@ -1,0 +1,68 @@
+/* CMS / account area, part 2 of 5: shell. Sidebar, top bar (breadcrumb, user, logout), page header, and the drawer that replaces the
+   sidebar on narrow screens. */
+.app-shell { display: grid; grid-template-columns: var(--app-sidebar) minmax(0, 1fr); min-height: 100vh; }
+
+/* ---------- sidebar ---------- */
+.app-sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; background: #fff; border-right: 1px solid #ececf0; overflow-y: auto; }
+.app-sidebar__brand { display: flex; align-items: center; justify-content: space-between; height: var(--app-topbar); padding: 0 var(--auth-space-4) 0 var(--auth-space-6); border-bottom: 1px solid var(--auth-line); }
+.app-sidebar__logo { --vn-logo-size: 24px; }
+.app-nav { padding: var(--auth-space-4) var(--auth-space-3); flex: 1 1 auto; }
+.app-nav__heading { margin: var(--auth-space-4) var(--auth-space-3) var(--auth-space-2); font: 600 11px/16px var(--auth-font); letter-spacing: .08em; text-transform: uppercase; color: #9097a3; }
+.app-nav__heading:first-child { margin-top: 0; }
+.app-nav__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.app-nav__link { display: flex; align-items: center; gap: var(--auth-space-3); min-height: 40px; padding: 0 var(--auth-space-3); border-radius: var(--auth-radius-control); color: #4b5563; font: 500 14px/20px var(--auth-font); }
+.app-nav__link:hover { background: #f6f6f8; color: var(--auth-ink); }
+.app-nav__link.is-active { background: #fdf3f6; color: var(--auth-red); font-weight: 600; box-shadow: inset 2px 0 0 var(--auth-red); }
+.app-nav__link:focus-visible, .btn:focus-visible, .app-icon-btn:focus-visible { outline: var(--auth-focus-outline); outline-offset: var(--auth-focus-offset); }
+.app-sidebar__foot { padding: var(--auth-space-3); border-top: 1px solid var(--auth-line); }
+/* The floating demo badge sits bottom-left: keep the last sidebar entry above it. */
+body:has(.demo-badge) .app-sidebar__foot { margin-bottom: 64px; }
+
+/* ---------- top bar ---------- */
+.app-body { min-width: 0; display: flex; flex-direction: column; }
+.app-topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: var(--auth-space-4); height: var(--app-topbar); padding: 0 var(--auth-space-6); background: #fff; border-bottom: 1px solid #ececf0; }
+.app-breadcrumb { min-width: 0; flex: 1 1 auto; }
+.app-breadcrumb ol { display: flex; align-items: center; gap: var(--auth-space-2); margin: 0; padding: 0; list-style: none; font: 13px/20px var(--auth-font); color: #6b6b6b; white-space: nowrap; overflow: hidden; }
+.app-breadcrumb li + li::before { content: "/"; margin-right: var(--auth-space-2); color: #bbb; }
+.app-breadcrumb a:hover { color: var(--auth-red); }
+.app-breadcrumb [aria-current] { color: var(--auth-ink); font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.app-user { display: flex; align-items: center; gap: var(--auth-space-3); }
+.app-user__text { order: 1; display: grid; text-align: right; min-width: 0; }
+.app-user__name { font: 600 13px/18px var(--auth-font); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-user__role { font: 12px/16px var(--auth-font); color: #757575; }
+.app-user__logout { order: 3; margin: 0; }
+.app-avatar { order: 2; display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: #fbeff3; color: var(--auth-red); font: 600 13px/1 var(--auth-font); }
+.app-icon-btn { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: var(--auth-radius-control); background: transparent; color: #5b6472; cursor: pointer; }
+.app-icon-btn:hover { background: #f1f1f3; color: var(--auth-ink); }
+/* Drawer buttons exist only on narrow screens. They come AFTER .app-icon-btn so its display value does not undo this. */
+.app-sidebar__close, .app-menu-btn { display: none; }
+
+/* ---------- content area ---------- */
+/* Bottom padding leaves room for the floating demo badge. */
+.app-main { padding: var(--auth-space-6) var(--auth-space-6) 88px; max-width: 1180px; width: 100%; margin: 0 auto; outline: none; }
+.app-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, .45); }
+.app-backdrop[hidden] { display: none; }
+
+/* ---------- page header ---------- */
+.page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--auth-space-4); margin: 0 0 var(--auth-space-6); }
+.page-head__text { min-width: 0; }
+.app-page-title { margin: 0; font: 600 24px/32px var(--auth-font); }
+.page-head__sub { margin: var(--auth-space-1) 0 0; color: var(--auth-muted); }
+.page-head__actions { display: flex; flex-wrap: wrap; gap: var(--auth-space-2); }
+
+/* ---------- narrow screens: the sidebar becomes a drawer ---------- */
+@media (max-width: 900px) {
+  .app-shell { grid-template-columns: minmax(0, 1fr); }
+  .app-sidebar { position: fixed; z-index: 50; left: 0; top: 0; bottom: 0; width: min(300px, 86vw); display: none; box-shadow: 0 0 40px rgba(0, 0, 0, .25); }
+  .app-sidebar.is-open { display: flex; }
+  .app-sidebar__close, .app-menu-btn { display: inline-grid; }
+  .app-topbar { padding: 0 var(--auth-space-4); }
+  .app-main { padding: var(--auth-space-4) var(--auth-space-4) 88px; }
+  .app-user__text { display: none; }
+}
+@media (max-width: 520px) {
+  .page-head__actions { width: 100%; }
+  /* only the current page in the breadcrumb: the parents do not fit */
+  .app-breadcrumb li:not(:last-child) { display: none; }
+  .app-breadcrumb li + li::before { content: none; }
+}

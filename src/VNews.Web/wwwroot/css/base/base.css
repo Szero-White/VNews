@@ -1,0 +1,85 @@
+/* Base: design tokens (--vn-*), reset, typography, page container, main layout shell. Loaded first on every page. */
+/* VNews — editorial layout, original styling (not copied from any portal) */
+
+:root {
+  --vn-text: #222;
+  --vn-muted: #6b6b6b;
+  --vn-border: #e7e7e7;
+  --vn-accent: #a61b46;
+  --vn-bg: #ffffff;
+  --vn-surface: #f7f7f7;
+  --vn-max-width: 1200px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--vn-text);
+  background: var(--vn-bg);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--vn-accent);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  height: auto;
+}
+
+.container {
+  max-width: var(--vn-max-width);
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.masthead__menu-toggle {
+  display: none;
+  margin-left: auto;
+  background: none;
+  border: none;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.masthead__menu-toggle span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--vn-text);
+}
+
+
+/* The homepage banner is isolated in top-ad-banner.css. */
+
+/* Main layout */
+.site-main {
+  padding: 24px 0 48px;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  border-left: 4px solid var(--vn-accent);
+  padding-left: 10px;
+  margin: 0 0 16px;
+}
+

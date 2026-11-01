@@ -1,0 +1,39 @@
+/* CMS / account area, part 4 of 5: the reader's account pages (profile hero, key/value list, saved articles) and the two-column page
+   layout also used by the admin overview. */
+.profile-hero { display: flex; align-items: center; gap: var(--auth-space-6); padding: var(--auth-space-6); }
+.profile-hero__avatar { display: inline-grid; place-items: center; flex: 0 0 auto; width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #a61b46, #d9577b); color: #fff; font: 600 26px/1 var(--auth-font); }
+.profile-hero__name { margin: 0; font: 600 22px/28px var(--auth-font); }
+.profile-hero__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--auth-space-2) var(--auth-space-3); margin-top: var(--auth-space-2); color: var(--auth-muted); }
+
+.two-col { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--auth-space-6); align-items: start; }
+/* cards that are grid items sit at the top of their cell: the stacking margin of ".card + .card" is for plain flow */
+.two-col > .card, .two-col > div > .card:first-child { margin-top: 0; }
+
+.kv { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: var(--auth-space-3) var(--auth-space-4); margin: 0; }
+.kv dt { color: var(--auth-muted); }
+.kv dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+
+.saved-list { list-style: none; margin: 0; padding: 0; }
+.saved-item { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: var(--auth-space-4); align-items: center; padding: var(--auth-space-4) var(--auth-space-6); border-bottom: 1px solid #efeff2; }
+.saved-item:last-child { border-bottom: 0; }
+.saved-item__img { width: 96px; height: 58px; object-fit: cover; border-radius: 6px; background: #e6e6e6; }
+.saved-item__title { display: block; font-weight: 600; color: var(--auth-ink); }
+.saved-item__title:hover { color: var(--auth-red); }
+.saved-item__meta { display: block; font-size: 12px; line-height: 16px; color: var(--auth-muted); }
+
+.list-plain { list-style: none; margin: 0; padding: 0; }
+.list-plain li { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--auth-space-4); padding: var(--auth-space-3) var(--auth-space-6); border-bottom: 1px solid #efeff2; }
+.list-plain li:last-child { border-bottom: 0; }
+
+@media (max-width: 1100px) {
+  .two-col { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 520px) {
+  .profile-hero { flex-direction: column; align-items: flex-start; padding: var(--auth-space-4); }
+  .kv { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .kv dt { margin-top: var(--auth-space-3); }
+  .saved-item { grid-template-columns: 72px minmax(0, 1fr); }
+  .saved-item > form { grid-column: 2; }
+  .saved-item__img { width: 72px; height: 48px; }
+  .saved-item, .list-plain li { padding-left: var(--auth-space-4); padding-right: var(--auth-space-4); }
+}

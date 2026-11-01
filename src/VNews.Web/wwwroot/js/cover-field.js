@@ -1,38 +1,64 @@
-/* Cover image field of the article form. Keeps three clear states: the image stored now ("Ảnh hiện tại"), a newly chosen
-   image ("Ảnh mới", previewed at once from the local file, then uploaded), and "Sẽ bỏ ảnh bìa khi lưu". The server value
-   lives in the hidden CoverImageUrl input, so the normal form post saves exactly what the preview shows. */
+/* Cover image field of the article form. Three clear states: the image stored now ("Ảnh hiện tại"), a newly chosen image ("Ảnh mới",
+   previewed at once from the local file, then uploaded), and "Sẽ bỏ ảnh bìa khi lưu". The server value lives in the hidden CoverImageUrl
+   input, so the normal form post saves exactly what the preview shows.
+
+   Concurrency rule: every user action (choose, remove, undo) starts a new "generation". Work that belongs to an older generation (a slow
+   preview, an upload that finishes late) is dropped, and its request is aborted, so a late response can never overwrite what the user
+   chose afterwards. The Save buttons stay locked while an upload of the CURRENT generation is running. */
 (function () {
   'use strict';
+
   var root = document.querySelector('[data-cover]');
   if (!root) return;
 
-  var img = root.querySelector('[data-cover-img]');
-  var placeholder = root.querySelector('[data-cover-placeholder]');
-  var placeholderText = root.querySelector('[data-cover-placeholder-text]');
-  var state = root.querySelector('[data-cover-state]');
-  var pickLabel = root.querySelector('[data-cover-pick-label]');
-  var fileInput = document.getElementById('coverFile');
-  var removeBtn = root.querySelector('[data-cover-remove]');
-  var undoBtn = root.querySelector('[data-cover-undo]');
-  var fileName = root.querySelector('[data-cover-file-name]');
-  var status = document.getElementById('uploadStatus');
-  var value = root.querySelector('input[name="CoverImageUrl"]');
-  var form = root.closest('form');
-  var HINT = 'JPG, PNG hoặc WebP, tối đa 5 MB.';
-  var MAX = 5 * 1024 * 1024;
+  var els = {
+    img: root.querySelector('[data-cover-img]'),
+    placeholder: root.querySelector('[data-cover-placeholder]'),
+    placeholderText: root.querySelector('[data-cover-placeholder-text]'),
+    state: root.querySelector('[data-cover-state]'),
+    pickLabel: root.querySelector('[data-cover-pick-label]'),
+    fileInput: document.getElementById('coverFile'),
+    remove: root.querySelector('[data-cover-remove]'),
+    undo: root.querySelector('[data-cover-undo]'),
+    fileName: root.querySelector('[data-cover-file-name]'),
+    status: document.getElementById('uploadStatus'),
+    value: root.querySelector('input[name="CoverImageUrl"]'),
+    form: root.closest('form')
+  };
 
-  var saved = value.value;      // what the server stores now (or the last successful upload)
-  var token = 0;                // guards against a slow preview of an older choice overwriting a newer one
+  // The limit comes from the server (ImageUploadLimits) through data attributes, so the form and the check can never disagree.
+  var MAX_BYTES = parseInt(root.getAttribute('data-max-bytes'), 10) || 3 * 1024 * 1024;
+  var LIMIT_LABEL = root.getAttribute('data-max-label') || '3 MB';
+  var HINT = 'JPG, PNG hoặc WebP, tối đa ' + LIMIT_LABEL + '.';
 
-  function render(current, label, text) {
-    if (current) { img.src = current; img.hidden = false; placeholder.hidden = true; }
-    else { img.removeAttribute('src'); img.hidden = true; placeholder.hidden = false; placeholderText.textContent = text || 'Chưa có ảnh bìa'; }
-    state.textContent = label || '';
-    state.hidden = !label;
-    if (pickLabel) pickLabel.textContent = current ? 'Thay ảnh' : 'Chọn ảnh';
-    if (removeBtn) removeBtn.hidden = !current;
+  var storedUrl = els.value.value; // what the server stores now
+  var generation = 0;
+  var uploadController = null;
+
+  // ---- display ----
+  function render(imageUrl, label, placeholderText) {
+    if (imageUrl) {
+      els.img.src = imageUrl;
+      els.img.hidden = false;
+      els.placeholder.hidden = true;
+    } else {
+      els.img.removeAttribute('src');
+      els.img.hidden = true;
+      els.placeholder.hidden = false;
+      els.placeholderText.textContent = placeholderText || 'Chưa có ảnh bìa';
+    }
+    els.state.textContent = label || '';
+    els.state.hidden = !label;
+    if (els.pickLabel) els.pickLabel.textContent = imageUrl ? 'Thay ảnh' : 'Chọn ảnh';
+    if (els.remove) els.remove.hidden = !imageUrl;
   }
-  // A data: URL (not blob:) keeps the page's Content-Security-Policy (img-src 'self' data: https:) untouched.
+
+  function setSaveLocked(locked) {
+    if (!els.form) return;
+    els.form.querySelectorAll('button[type="submit"]').forEach(function (button) { button.disabled = locked; });
+  }
+
+  /** A data: URL (not blob:) keeps the page's Content-Security-Policy (img-src 'self' data: https:) untouched. */
   function readPreview(file) {
     return new Promise(function (resolve) {
       var reader = new FileReader();
@@ -41,72 +67,97 @@
       reader.readAsDataURL(file);
     });
   }
-  function setBusy(busy) {
-    if (!form) return;
-    form.querySelectorAll('button[type="submit"]').forEach(function (b) { b.disabled = busy; });
+
+  // ---- generations ----
+  /** Invalidates everything in flight (preview or upload) and releases the Save buttons. Returns the new generation id. */
+  function beginGeneration() {
+    generation++;
+    if (uploadController) { uploadController.abort(); uploadController = null; }
+    setSaveLocked(false);
+    return generation;
+  }
+  function isCurrent(id) { return id === generation; }
+
+  function showStored() {
+    els.fileInput.value = '';
+    els.value.value = storedUrl;
+    els.fileName.textContent = HINT;
+    els.undo.hidden = true;
+    render(storedUrl, storedUrl ? 'Ảnh hiện tại' : '');
   }
 
-  if (!fileInput) return; // read-only view: the preview is all there is
-
-  fileInput.addEventListener('change', async function (e) {
-    var file = e.target.files[0];
-    if (!file) return;
-    status.textContent = '';
-    if (file.size > MAX) {
-      status.textContent = 'Lỗi: ảnh lớn hơn 5 MB.';
-      fileInput.value = '';
-      return;
-    }
-    var mine = ++token;
-    var preview = await readPreview(file);
-    if (mine !== token) return;
-    render(preview, 'Ảnh mới · đang tải lên…');
-    fileName.textContent = file.name;
-    undoBtn.hidden = false;
-    setBusy(true);
-
+  // ---- upload ----
+  async function upload(file) {
+    var csrf = els.form.querySelector('input[name="__RequestVerificationToken"]').value;
     var data = new FormData();
     data.append('file', file);
-    var csrf = form.querySelector('input[name="__RequestVerificationToken"]').value;
-    try {
-      var res = await fetch(root.getAttribute('data-upload-url'), { method: 'POST', headers: { 'RequestVerificationToken': csrf }, body: data });
-      var body = await res.json();
-      if (res.ok) {
-        value.value = body.url;
-        if (mine !== token) return;
-        render(preview, 'Ảnh mới · lưu bài để áp dụng');
-        status.textContent = 'Đã tải lên: ' + body.url;
-      } else {
-        status.textContent = 'Lỗi: ' + body.error;
-        revert();
-      }
-    } catch (err) {
-      status.textContent = 'Lỗi tải lên.';
-      revert();
-    } finally {
-      setBusy(false);
-    }
-  });
-
-  // Back to the stored image: drops a failed or unwanted new choice.
-  function revert() {
-    token++;
-    fileInput.value = '';
-    value.value = saved;
-    fileName.textContent = HINT;
-    undoBtn.hidden = true;
-    render(saved, saved ? 'Ảnh hiện tại' : '');
+    uploadController = new AbortController();
+    var response = await fetch(root.getAttribute('data-upload-url'), {
+      method: 'POST',
+      headers: { 'RequestVerificationToken': csrf },
+      body: data,
+      signal: uploadController.signal
+    });
+    return { ok: response.ok, body: await response.json() };
   }
 
-  removeBtn.addEventListener('click', function () {
-    token++;
-    fileInput.value = '';
-    value.value = '';
-    fileName.textContent = HINT;
-    status.textContent = '';
-    undoBtn.hidden = false;
+  async function onFileChosen(file) {
+    els.status.textContent = '';
+    if (file.size > MAX_BYTES) {
+      els.status.textContent = 'Lỗi: ảnh lớn hơn ' + LIMIT_LABEL + '.';
+      els.fileInput.value = '';
+      return;
+    }
+
+    var id = beginGeneration();
+    var preview = await readPreview(file);
+    if (!isCurrent(id)) return;
+
+    render(preview, 'Ảnh mới · đang tải lên…');
+    els.fileName.textContent = file.name;
+    els.undo.hidden = false;
+    setSaveLocked(true);
+
+    try {
+      var result = await upload(file);
+      if (!isCurrent(id)) return; // the user chose something else meanwhile: this answer is stale
+      if (result.ok) {
+        els.value.value = result.body.url;
+        render(preview, 'Ảnh mới · lưu bài để áp dụng');
+        els.status.textContent = 'Đã tải lên: ' + result.body.url;
+      } else {
+        els.status.textContent = 'Lỗi: ' + result.body.error;
+        showStored();
+      }
+    } catch (err) {
+      if (!isCurrent(id)) return; // aborted by a newer action, not a failure
+      els.status.textContent = 'Lỗi tải lên.';
+      showStored();
+    } finally {
+      if (isCurrent(id)) { uploadController = null; setSaveLocked(false); }
+    }
+  }
+
+  if (!els.fileInput) return; // read-only view: the preview is all there is
+
+  els.fileInput.addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    if (file) onFileChosen(file);
+  });
+
+  els.remove.addEventListener('click', function () {
+    beginGeneration();
+    els.fileInput.value = '';
+    els.value.value = '';
+    els.fileName.textContent = HINT;
+    els.status.textContent = '';
+    els.undo.hidden = false;
     render('', 'Sẽ bỏ ảnh bìa khi lưu', 'Ảnh bìa sẽ bị bỏ khi bạn lưu bài');
   });
 
-  undoBtn.addEventListener('click', function () { status.textContent = ''; revert(); });
+  els.undo.addEventListener('click', function () {
+    beginGeneration();
+    els.status.textContent = '';
+    showStored();
+  });
 })();

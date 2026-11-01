@@ -1,0 +1,15 @@
+/* CMS / account area, part 1 of 5: base. Everything under the CMS is scoped by the .vn-app class on <body>, so none of it can reach the
+   public news pages. Colour, spacing, radius and focus tokens come from auth-tokens.css; this file adds the area's own variables. */
+.vn-app { --app-bg: #f5f6f8; --app-sidebar: 248px; --app-topbar: 60px; margin: 0; background: var(--app-bg); --auth-ink: #353b45; --auth-muted: #6b7280; --auth-line: #ebebef; color: var(--auth-ink); font: 14px/20px var(--auth-font); }
+.vn-app *, .vn-app *::before, .vn-app *::after { box-sizing: border-box; }
+/* :where() keeps this at zero specificity, so a component colour (e.g. .btn--primary) always wins over "links inherit". */
+:where(.vn-app a) { color: inherit; text-decoration: none; }
+.vn-app h1, .vn-app h2, .vn-app h3 { font-family: var(--auth-font); letter-spacing: 0; }
+.vn-app strong { font-weight: 600; }
+.vn-app .icon { width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.app-skip { position: absolute; left: 8px; top: -60px; z-index: 100; padding: var(--auth-space-2) var(--auth-space-3); background: #fff; border-radius: var(--auth-radius-control); }
+.app-skip:focus { top: 8px; }
+.vn-app .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* Two !important in the area, on purpose (this and reduced-motion): components set their own display values (inline-grid, flex...), and the [hidden] attribute set by scripts must still hide them. */
+.vn-app [hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .vn-app * { scroll-behavior: auto !important; } }

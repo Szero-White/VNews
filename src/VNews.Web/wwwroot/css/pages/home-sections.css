@@ -1,0 +1,159 @@
+/* Shared editorial sections used by the home page: hero grid, content split, category panels. (Home-only composition lives in homepage-v5.css.) */
+/* Hero grid */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  align-items: start;
+  gap: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--vn-border);
+  margin-bottom: 24px;
+}
+
+.hero-lead {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.hero-lead__image-link {
+  flex: 0 0 52%;
+}
+
+.hero-lead__image-link img {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--vn-surface);
+}
+
+.hero-lead__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 4px;
+}
+
+.hero-lead__category {
+  display: inline-block;
+  color: var(--vn-accent);
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.hero-lead__title {
+  font-size: 1.6rem;
+  line-height: 1.28;
+  margin: 0 0 10px;
+}
+
+.hero-lead__summary {
+  color: var(--vn-muted);
+  margin: 0 0 12px;
+}
+
+.hero-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hero-side__item img {
+  aspect-ratio: 21 / 9;
+  object-fit: cover;
+  background: var(--vn-surface);
+}
+
+.hero-side__title {
+  font-size: 1.05rem;
+  margin: 8px 0 0;
+}
+
+.article-meta {
+  display: flex;
+  gap: 12px;
+  color: var(--vn-muted);
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+}
+
+/* Content split */
+.content-split {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 32px;
+  margin-bottom: 32px;
+}
+
+.story-row {
+  display: flex;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--vn-border);
+}
+
+.story-row__image-link {
+  flex: 0 0 160px;
+}
+
+.story-row__image-link img {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--vn-surface);
+}
+
+.story-row__title {
+  font-size: 1.05rem;
+  margin: 0 0 6px;
+}
+
+.story-row__summary {
+  color: var(--vn-muted);
+  font-size: 0.9rem;
+  margin: 0 0 8px;
+}
+
+.sidebar {
+  border-left: 1px solid var(--vn-border);
+  padding-left: 24px;
+}
+
+.most-viewed {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.most-viewed li {
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+/* Category panel */
+
+
+
+
+
+
+.see-more {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--vn-accent);
+}
+
+
+
+.card img {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--vn-surface);
+}
+
+.card__title {
+  font-size: 0.95rem;
+  margin: 8px 0 0;
+}
+

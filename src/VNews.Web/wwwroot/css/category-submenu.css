@@ -1,0 +1,36 @@
+/* Sub-category lists: the strip's hover/tap list, the mobile drawer's expandable list, the full menu's nested links.
+   The strip list is position:fixed (placed by category-submenu.js) so the scrolling strip cannot clip it. */
+.category-nav__item { display: flex; align-items: center; gap: 2px; position: relative; }
+.category-nav__toggle { display: inline-grid; place-items: center; width: 18px; height: 22px; padding: 0; border: 0; border-radius: 4px; background: none; color: #7a7a7a; cursor: pointer; }
+.category-nav__toggle svg { transition: transform .15s ease; }
+.category-nav__item.is-open .category-nav__toggle svg { transform: rotate(180deg); }
+.category-nav__toggle:hover, .category-nav__item.is-open .category-nav__toggle { color: var(--vn-accent, #a61b46); }
+.category-nav__toggle:focus-visible, .category-subnav a:focus-visible, .drawer-cat__toggle:focus-visible { outline: 2px solid var(--vn-accent, #a61b46); outline-offset: 1px; }
+.category-nav__item.is-open > a { color: var(--vn-accent, #a61b46); }
+.category-nav__list li a.is-section { color: var(--vn-accent, #a61b46); }
+
+.category-subnav { position: fixed; z-index: 70; min-width: 220px; max-width: 320px; max-height: calc(100vh - 120px); overflow-y: auto; margin: 0; padding: 6px 0; list-style: none; background: #fff; border: 1px solid #e5e5e5; border-top: 2px solid var(--vn-accent, #a61b46); border-radius: 0 0 8px 8px; box-shadow: 0 10px 24px rgba(0, 0, 0, .14); }
+.category-subnav[hidden] { display: none; }
+.category-subnav li { display: block; }
+.category-nav__list .category-subnav li a { display: block; padding: 9px 18px; font: 400 14px/20px Arial, Helvetica, sans-serif; color: #333; white-space: normal; box-shadow: none; }
+.category-nav__list .category-subnav li a:hover, .category-nav__list .category-subnav li a:focus-visible { background: #f6f6f7; color: var(--vn-accent, #a61b46); }
+.category-nav__list .category-subnav li a[aria-current="page"] { color: var(--vn-accent, #a61b46); font-weight: 600; box-shadow: none; }
+
+/* mobile drawer */
+.drawer-cat { display: flex; flex-wrap: wrap; align-items: center; }
+.drawer-cat > a { flex: 1 1 auto; }
+.drawer-cat__toggle { display: inline-grid; place-items: center; flex: 0 0 44px; height: 44px; padding: 0; border: 0; background: none; color: #666; cursor: pointer; }
+.drawer-cat__toggle svg { transition: transform .15s ease; }
+.drawer-cat__toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.drawer-cat__sub { flex: 1 1 100%; margin: 0 0 6px; padding: 0 0 0 14px; list-style: none; border-left: 2px solid #eee; }
+.drawer-cat__sub[hidden] { display: none; }
+.drawer-cat__sub a { display: block; padding: 10px 6px; font-size: 14px; }
+
+/* full menu */
+.mega-menu__sub { margin: 2px 0 6px; padding: 0 0 0 14px; list-style: none; }
+.mega-menu__sub a { font-size: 13px; color: #666; }
+
+/* touch screens have no hover: only the button opens the strip list */
+@media (hover: none) { .category-nav__toggle { width: 28px; height: 32px; } }
+/* In the two-column drawer list, an expanded parent takes the full row so its children do not stretch the neighbouring cell. */
+.drawer-cat.has-sub:has(> .drawer-cat__toggle[aria-expanded="true"]) { grid-column: 1 / -1; }
