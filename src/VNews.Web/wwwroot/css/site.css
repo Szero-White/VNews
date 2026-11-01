@@ -574,7 +574,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 50px;
+  min-height: 49px;
   padding: 0 44px 0 20px;
 }
 .primary-nav__arrow {

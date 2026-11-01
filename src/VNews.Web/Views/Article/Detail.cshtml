@@ -81,12 +81,16 @@
     @if (Model.MostViewed.Count > 0)
     {
         <aside class="article-layout__aside" aria-label="Xem nhiều">
-            <h2>Xem nhiều</h2>
-            <ol class="most-viewed">
+            <h2 class="aside-title"><span class="aside-title__text">Xem nhiều</span></h2>
+            <ol class="article-popular">
                 @foreach (var item in Model.MostViewed)
                 {
-                    <li>
-                        <a class="most-viewed__item" asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug">@item.Title</a>
+                    var thumb = string.IsNullOrWhiteSpace(item.CoverImageUrl) ? Url.Content("~/images/demo/fallback.svg") : item.CoverImageUrl;
+                    <li class="article-popular__row">
+                        <a class="article-popular__thumb" asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug" tabindex="-1" aria-hidden="true">
+                            <img src="@thumb" alt="" width="110" height="66" loading="lazy" decoding="async" />
+                        </a>
+                        <a class="article-popular__item" asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug">@item.Title</a>
                     </li>
                 }
             </ol>

@@ -35,7 +35,7 @@ test('desktop article: dateline row, serif title, sign-off, back link, side colu
   expect(aside.x).toBeGreaterThan(main.x + main.width);
 
   // "Xem nhiều": real articles, current one excluded, every link works.
-  const hrefs = await page.locator('.most-viewed__item').evaluateAll(els => els.map(e => e.getAttribute('href')!));
+  const hrefs = await page.locator('.article-popular__item').evaluateAll(els => els.map(e => e.getAttribute('href')!));
   expect(hrefs.length).toBe(5);
   expect(hrefs).not.toContain(`/tin/${slug}`);
   for (const href of hrefs) expect((await page.request.get(href)).status(), href).toBe(200);

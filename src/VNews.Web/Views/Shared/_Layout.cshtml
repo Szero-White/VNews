@@ -4,6 +4,7 @@
     // Keep public editorial routes explicit; CMS and account layouts are unaffected.
     var isHomepage = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Home", StringComparison.OrdinalIgnoreCase)
         && string.Equals(ViewContext.RouteData.Values["action"]?.ToString(), "Index", StringComparison.OrdinalIgnoreCase);
+    var isArticle = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Article", StringComparison.OrdinalIgnoreCase);
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -35,22 +36,26 @@
     <link rel="stylesheet" href="~/css/reader-news-panel.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/top-ad-banner.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site-footer.css" asp-append-version="true" />
+    @if (isArticle)
+    {
+        <link rel="stylesheet" href="~/css/article-page.css" asp-append-version="true" />
+    }
     @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Pages")
     {
         <link rel="stylesheet" href="~/css/static-pages.css" asp-append-version="true" />
     }
 </head>
-<body class="@(isHomepage ? "page-home" : "")">
+<body class="@(isHomepage ? "page-home" : isArticle ? "page-article" : "")">
     <a class="skip-link" href="#main-content">Bỏ qua điều hướng, đến nội dung</a>
     <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 
-    @* A first-party demo ad occupies the homepage campaign area.
-       Category/article pages retain their existing cover until redesigned. *@
+    @* A first-party demo ad occupies the homepage campaign area. Category pages retain the house promo
+       until redesigned; article pages start straight under the navigation (like the reference). *@
     @if (isHomepage && Configuration.GetValue("Features:ShowDemoAdSlot", true))
     {
         <partial name="_TopAdBanner" />
     }
-    else if (!isHomepage)
+    else if (!isHomepage && !isArticle)
     {
         @if (Configuration.GetValue("Features:ShowDemoAdSlot", true))
         {

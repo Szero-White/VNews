@@ -1,0 +1,102 @@
+/* Article detail page (loaded only by the Article controller).
+   Layout reference: a standard article on https://vnexpress.net/ measured 2026-11-01 at 1440px:
+   content box 1100px wide, article text column 680px, 80px gap, 300px side column; breadcrumb 20px below the
+   navigation; 32px/48px serif headline; 18px/28.8px body; side column with 110x66 thumbnails.
+   Colours, logo and copy stay VNews's own. */
+
+.page-article .site-main { padding-top: 20px; }
+/* Header is 62px tall on the reference including its rule; here the inner row's min-height plus the 1px border made 63. */
+.page-article .masthead__inner { min-height: 61px; }
+/* The weather strip is page chrome on small screens; article pages start straight at the breadcrumb. */
+.page-article .mobile-weather-row { display: none; }
+
+.container.article-layout {
+  display: grid;
+  grid-template-columns: 680px 300px;
+  column-gap: 80px;
+  align-items: start;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 0 0 40px;
+}
+.article-layout__main.article-page { min-width: 0; max-width: none; padding-top: 0; }
+
+/* Breadcrumb + dateline row. */
+.article-topbar { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin: 0 0 30px; }
+.article-topbar .breadcrumb { margin: 0; font-size: 14px; line-height: 17px; }
+.article-topbar__date { font: 14px/17px Arial,Helvetica,sans-serif; color: #757575; white-space: nowrap; }
+
+.article-detail__title { font: 700 32px/48px Merriweather,"Times New Roman",Georgia,serif; letter-spacing: 0; margin: 0 0 16px; }
+.article-detail__summary { font: 400 18px/28.8px Arial,Helvetica,sans-serif; color: #222; margin: 0 0 16px; }
+
+/* Reading tools: one quiet text row (no boxed buttons, no rules) so it does not interrupt the headline-to-body flow. */
+.article-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0 18px; margin: 0 0 20px; padding: 0; border: 0; }
+.article-tool { border: 0; border-radius: 0; background: none; padding: 6px 0; font: 600 13px/20px Arial,Helvetica,sans-serif; color: #757575; cursor: pointer; }
+.article-tool:hover { background: none; color: var(--vn-accent); }
+.article-tool[aria-pressed="true"] { color: var(--vn-accent); background: none; border: 0; }
+.article-tool[data-action="font-down"] { margin-left: auto; }
+.article-tool[data-action="font-down"], .article-tool[data-action="font-up"] { padding-left: 6px; padding-right: 6px; }
+.article-tools .article-tool:focus-visible { outline: 2px solid var(--vn-accent); outline-offset: 2px; }
+
+.article-cover-wrap { margin: 0 0 24px; }
+.article-cover-wrap .article-detail__cover { display: block; width: 100%; height: auto; margin: 0; }
+.article-cover-wrap figcaption { margin-top: 7px; font-size: 12px; color: #888; text-align: center; }
+
+.article-detail__body { font: 400 18px/28.8px Arial,Helvetica,sans-serif; color: #222; overflow-wrap: break-word; }
+.article-detail__body p { margin: 0 0 16px; }
+.article-detail__body h2 { font-size: 24px; line-height: 1.3; margin: 24px 0 12px; }
+.article-detail__body img { display: block; height: auto; max-width: 100%; margin: 18px auto; }
+.article-detail__body figure { margin: 24px 0; }
+.article-detail__body blockquote { margin: 24px 0; padding: 8px 0 8px 18px; border-left: 3px solid var(--vn-accent); color: #555; }
+.article-detail__body a { color: #1c64aa; text-decoration: underline; }
+
+.article-signoff { margin: 26px 0 0; text-align: right; }
+.article-signoff__name { font: 700 16px/1.4 Arial,Helvetica,sans-serif; color: #222; }
+.article-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee; }
+.article-tags__label { font: 700 13px Arial,Helvetica,sans-serif; color: #222; margin-right: 4px; }
+.article-tags__item { display: inline-block; padding: 5px 12px; border: 1px solid #ddd; border-radius: 16px; background: #fff; color: #444; font: 600 13px/1.3 Arial,Helvetica,sans-serif; }
+.article-tags__item:hover { color: var(--vn-accent); border-color: var(--vn-accent); }
+.article-bottom-actions { display: flex; justify-content: space-between; align-items: center; gap: 15px; border-top: 1px solid #eee; padding-top: 16px; margin-top: 24px; font-size: 14px; font-weight: 700; }
+.article-bottom-actions a { color: var(--vn-accent); }
+.article-bottom-actions button { border: 1px solid #ddd; border-radius: 4px; padding: 8px 12px; background: #fff; color: #444; font: 600 13px Arial,sans-serif; cursor: pointer; }
+.article-bottom-actions button:hover { background: #f8f8f8; color: var(--vn-accent); border-color: #c9c9c9; }
+.article-back-link { display: inline-block; padding: 6px 0; }
+
+/* Same-category stories under the article. */
+.article-related { margin-top: 34px; padding-top: 14px; border-top: 1px solid #e5e5e5; }
+.article-related h2 { font: 700 18px/28.8px Merriweather,"Times New Roman",Georgia,serif; margin: 0 0 14px; }
+.article-related__grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 20px 22px; }
+.article-related__card { display: block; font: 700 15px/1.45 Merriweather,"Times New Roman",Georgia,serif; color: #222; }
+.article-related__card img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; margin-bottom: 8px; background: #eee; }
+.article-related__card:hover { color: var(--vn-accent); }
+
+/* Side column: stays in view while reading, just below the sticky navigation (50px + 20px). */
+.article-layout__aside { position: sticky; top: 70px; padding: 0; border: 0; }
+.aside-title { margin: 0 0 12px; font: 700 18px/28.8px Merriweather,"Times New Roman",Georgia,serif; color: #222; }
+.aside-title__text { position: relative; display: inline-block; }
+.aside-title__text::after { content: ""; position: absolute; left: 0; bottom: 0; width: 100%; height: 1px; background: var(--vn-accent); }
+.article-popular { list-style: none; margin: 0; padding: 0; }
+.article-popular__row { display: grid; grid-template-columns: 110px minmax(0,1fr); column-gap: 10px; align-items: start; box-sizing: content-box; min-height: 67px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid #ececec; }
+.article-popular__row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
+.article-popular__thumb { display: block; width: 110px; height: 66px; overflow: hidden; background: #eee; }
+.article-popular__thumb img { display: block; width: 110px; height: 66px; object-fit: cover; }
+.article-popular__item { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font: 400 14px/22.4px Merriweather,"Times New Roman",Georgia,serif; color: #222; }
+.article-popular__item:hover { color: var(--vn-accent); }
+
+@media (max-width: 1140px) {
+  .container.article-layout { grid-template-columns: minmax(0,1fr) 300px; column-gap: 32px; padding: 0 20px; }
+}
+@media (max-width: 900px) {
+  .container.article-layout { display: block; padding: 0 18px; }
+  .article-layout__aside { position: static; margin-top: 36px; }
+  .article-popular { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); column-gap: 24px; }
+}
+@media (max-width: 600px) {
+  .article-topbar { flex-direction: column; gap: 2px; margin-bottom: 20px; }
+  .article-detail__title { font-size: 22px; line-height: 35.75px; }
+  .article-tool { padding: 10px 0; }
+  .article-related__grid { gap: 16px 12px; }
+  .article-related__card { font-size: 14px; }
+  .article-popular { display: block; }
+}
