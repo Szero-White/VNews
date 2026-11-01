@@ -76,7 +76,14 @@
                 <div class="home-parallel__content">
                     @foreach (var panel in featuredPanels)
                     {
-                        @await Html.PartialAsync("_CategoryPanelBox", panel)
+                        @if (string.Equals(panel.Category.Slug, "kinh-doanh", StringComparison.OrdinalIgnoreCase))
+                        {
+                            @await Html.PartialAsync("_BusinessFeaturePanel", panel)
+                        }
+                        else
+                        {
+                            @await Html.PartialAsync("_CategoryPanelBox", panel)
+                        }
                     }
                 </div>
             </div>

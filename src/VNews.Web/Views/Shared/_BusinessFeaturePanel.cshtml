@@ -1,0 +1,104 @@
+@using System.Linq
+@using VNews.Application.Common
+@model CategoryPanel
+@{
+    // Editorial content is from the same published-article query as other panels.
+    // Avoid synthetic prices and separate network/API calls during home rendering.
+    var stories = Model.Articles
+        .Where(a => !string.IsNullOrWhiteSpace(a.Slug))
+        .GroupBy(a => a.Slug, StringComparer.OrdinalIgnoreCase)
+        .Select(group => group.First())
+        .Take(8)
+        .ToList();
+    var lead = stories.FirstOrDefault();
+    var side = stories.Skip(1).FirstOrDefault();
+    var headlines = stories.Skip(2).Take(3).ToList();
+    var extra = stories.Skip(5).ToList();
+    var topics = new[]
+    {
+        new { Label = "Doanh nghiệp", Query = "doanh nghiệp" },
+        new { Label = "Thị trường", Query = "thị trường" },
+        new { Label = "Ngân hàng", Query = "ngân hàng" },
+        new { Label = "Chứng khoán", Query = "chứng khoán" },
+        new { Label = "Giá vàng", Query = "giá vàng" }
+    };
+}
+@if (lead is not null)
+{
+    @* Preserve the existing category-panel contract for full-page/home parity tests,
+       but use a dedicated composition, as with the financial section in the reference. *@
+    <section class="home-parallel__category topic-spotlight topic-spotlight--kinh-doanh business-feature"
+             data-home-business aria-label="Kinh doanh">
+        <header class="business-feature__header">
+            <h2 class="section-title">
+                <a asp-controller="Category" asp-action="Index" asp-route-slug="@Model.Category.Slug">@Model.Category.Name</a>
+            </h2>
+            <nav class="business-feature__topics" aria-label="Chủ đề Kinh doanh">
+                @foreach (var topic in topics)
+                {
+                    <a asp-controller="Search" asp-action="Index" asp-route-q="@topic.Query">@topic.Label</a>
+                }
+            </nav>
+        </header>
+
+        <div class="business-feature__top-stories" aria-label="Tin kinh doanh nổi bật">
+            <article class="business-feature__lead">
+                <a class="business-feature__lead-image" asp-controller="Article" asp-action="Detail" asp-route-slug="@lead.Slug">
+                    <img src="@(string.IsNullOrWhiteSpace(lead.CoverImageUrl) ? Url.Content("~/images/demo/fallback.svg") : lead.CoverImageUrl)"
+                         alt="@lead.Title" loading="lazy" decoding="async" />
+                </a>
+                <div class="business-feature__lead-copy">
+                    <h3><a asp-controller="Article" asp-action="Detail" asp-route-slug="@lead.Slug">@lead.Title</a></h3>
+                    @if (!string.IsNullOrWhiteSpace(lead.Summary))
+                    {
+                        <p>@lead.Summary</p>
+                    }
+                </div>
+            </article>
+            @if (side is not null)
+            {
+                <article class="business-feature__side">
+                    <h3><a asp-controller="Article" asp-action="Detail" asp-route-slug="@side.Slug">@side.Title</a></h3>
+                    @if (!string.IsNullOrWhiteSpace(side.Summary))
+                    {
+                        <p>@side.Summary</p>
+                    }
+                </article>
+            }
+        </div>
+
+        @if (headlines.Any())
+        {
+            <ul class="business-feature__headlines" aria-label="Tin kinh doanh khác">
+                @foreach (var article in headlines)
+                {
+                    <li><a asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug">@article.Title</a></li>
+                }
+            </ul>
+        }
+
+        <div class="business-feature__market" aria-label="Theo dõi chủ đề thị trường">
+            <div class="business-feature__market-heading">
+                <strong>Điểm tin thị trường</strong>
+                <span>Từ các bài viết đã xuất bản</span>
+            </div>
+            <div class="business-feature__market-grid">
+                <a asp-controller="Search" asp-action="Index" asp-route-q="tỷ giá"><span>Tỷ giá</span><strong>Đọc tin mới</strong></a>
+                <a asp-controller="Search" asp-action="Index" asp-route-q="vàng"><span>Giá vàng</span><strong>Đọc tin mới</strong></a>
+                <a asp-controller="Search" asp-action="Index" asp-route-q="xăng dầu"><span>Xăng dầu</span><strong>Đọc tin mới</strong></a>
+            </div>
+            <p>VNews chưa cung cấp giá thị trường theo thời gian thực.</p>
+        </div>
+
+        @if (extra.Any())
+        {
+            <ul class="business-feature__extra" aria-label="Xem thêm tin kinh doanh">
+                @foreach (var article in extra)
+                {
+                    <li><a asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug">@article.Title</a></li>
+                }
+            </ul>
+        }
+        <a class="business-feature__all" asp-controller="Category" asp-action="Index" asp-route-slug="@Model.Category.Slug">Xem tất cả tin Kinh doanh →</a>
+    </section>
+}
