@@ -32,19 +32,6 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
         return (id, author.Id);
     }
 
-    private async Task<(string Email, string Id)> CreateUserAsync(string role, string displayName = "Người dùng thử")
-    {
-        using var scope = _factory.Services.CreateScope();
-        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var email = $"{role.ToLowerInvariant()}-{Guid.NewGuid():N}@example.test";
-        var user = new ApplicationUser { UserName = email, Email = email, DisplayName = displayName, EmailConfirmed = true };
-        Assert.True((await users.CreateAsync(user, "TestPassword123!")).Succeeded);
-        await users.AddToRoleAsync(user, role);
-        return (email, user.Id);
-    }
-
-    private static async Task<string> PageAsync(HttpClient client, string path) => WebUtility.HtmlDecode(await client.GetStringAsync(path));
-
     // ---------- statistics, search, paging ----------
 
     [Fact]
@@ -55,7 +42,7 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
         await CreateArticleAsync("author@vnews.local", $"Chờ {marker}", submit: true);
 
         using var scope = _factory.Services.CreateScope();
-        var svc = scope.ServiceProvider.GetRequiredService<IArticleCommandService>();
+        var svc = scope.ServiceProvider.GetRequiredService<IArticleCmsQueryService>();
         var db = scope.ServiceProvider.GetRequiredService<VNewsDbContext>();
         var author = (await scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>().FindByEmailAsync("author@vnews.local"))!;
 
@@ -76,7 +63,7 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
         for (var i = 0; i < 3; i++) await CreateArticleAsync("author@vnews.local", $"Thời tiết đặc biệt {marker} số {i}", submit: false);
 
         using var scope = _factory.Services.CreateScope();
-        var svc = scope.ServiceProvider.GetRequiredService<IArticleCommandService>();
+        var svc = scope.ServiceProvider.GetRequiredService<IArticleCmsQueryService>();
 
         var found = await svc.ListForCmsAsync(null, null, 1, 15, search: $"thoi tiet dac biet {marker}");
         Assert.Equal(3, found.TotalCount);
@@ -100,7 +87,7 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
         var second = await CreateArticleAsync("author@vnews.local", $"Mới {marker}", submit: true);
 
         using var scope = _factory.Services.CreateScope();
-        var svc = scope.ServiceProvider.GetRequiredService<IArticleCommandService>();
+        var svc = scope.ServiceProvider.GetRequiredService<IArticleCmsQueryService>();
         var oldestFirst = (await svc.ListForCmsAsync("PendingReview", null, 1, 50, search: marker, oldestFirst: true)).Items.Select(i => i.Id).ToList();
 
         Assert.Equal(new[] { first.Id, second.Id }, oldestFirst);
@@ -114,7 +101,8 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
     [InlineData("Rejected", true, false, true, true, false, false)]
     [InlineData("PendingReview", true, false, false, false, false, false)]
     [InlineData("PendingReview", false, true, false, false, true, true)]
-    [InlineData("Published", false, true, false, false, false, false)]
+    [InlineData("Published", false, true, true, false, false, false)]   // editors/admins may edit what is published
+    [InlineData("Published", true, false, false, false, false, false)]   // an author may not, even their own
     public void RowActions_FollowTheWorkflowRules(string status, bool owner, bool privileged, bool edit, bool submit, bool publish, bool reject)
     {
         var actions = CmsRowActions.For(status, owner, privileged);
@@ -149,7 +137,7 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
     [Fact]
     public async Task Author_CannotSeeAnotherAuthorsArticleInTheList_OrOpenIt()
     {
-        var other = await CreateUserAsync(Roles.Author, "Tác giả khác");
+        var other = await _factory.CreateUserAsync(Roles.Author, "Tác giả khác");
         var theirs = await CreateArticleAsync(other.Email, "Bài riêng của tác giả khác", submit: false);
 
         var client = await _factory.LoginCmsAsync("author@vnews.local");
@@ -190,7 +178,7 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
     public async Task Admin_CannotChangeOwnRole_ButCanChangeAnotherUsersRole()
     {
         var admin = await _factory.LoginCmsAsync("admin@vnews.local");
-        var target = await CreateUserAsync(Roles.Reader);
+        var target = await _factory.CreateUserAsync(Roles.Reader);
         string adminId;
         using (var scope = _factory.Services.CreateScope())
             adminId = (await scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>().FindByEmailAsync("admin@vnews.local"))!.Id;
@@ -208,7 +196,7 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
     public async Task UsersList_FiltersByRoleAndSearch()
     {
         var marker = Guid.NewGuid().ToString("N")[..8];
-        await CreateUserAsync(Roles.Editor, $"Biên tập {marker}");
+        await _factory.CreateUserAsync(Roles.Editor, $"Biên tập {marker}");
         var admin = await _factory.LoginCmsAsync("admin@vnews.local");
 
         var byName = await admin.GetStringAsync($"/cms/CmsUsers?q={marker}");
@@ -222,7 +210,7 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
     [Fact]
     public async Task Profile_ShowsRealRole_AndUpdatesTheDisplayName()
     {
-        var reader = await CreateUserAsync(Roles.Reader, "Độc giả ban đầu");
+        var reader = await _factory.CreateUserAsync(Roles.Reader, "Độc giả ban đầu");
         var client = await _factory.LoginCmsAsync(reader.Email, "TestPassword123!");
 
         var html = WebUtility.HtmlDecode(await client.GetStringAsync("/tai-khoan/ho-so"));
@@ -250,8 +238,8 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
     [Fact]
     public async Task SavedArticles_AreListedForTheOwner_CanBeRemoved_AndAreNotSharedBetweenUsers()
     {
-        var reader = await CreateUserAsync(Roles.Reader);
-        var stranger = await CreateUserAsync(Roles.Reader);
+        var reader = await _factory.CreateUserAsync(Roles.Reader);
+        var stranger = await _factory.CreateUserAsync(Roles.Reader);
         int articleId;
         string title;
         using (var scope = _factory.Services.CreateScope())
@@ -265,12 +253,12 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
         }
 
         var client = await _factory.LoginCmsAsync(reader.Email, "TestPassword123!");
-        Assert.Contains(title, await PageAsync(client, "/tai-khoan/bai-da-luu"));
+        Assert.Contains(title, await client.GetDecodedAsync("/tai-khoan/bai-da-luu"));
 
         var other = await _factory.LoginCmsAsync(stranger.Email, "TestPassword123!");
-        Assert.DoesNotContain(title, await PageAsync(other, "/tai-khoan/bai-da-luu"));
+        Assert.DoesNotContain(title, await other.GetDecodedAsync("/tai-khoan/bai-da-luu"));
         await other.PostFormAsync($"/tai-khoan/bai-da-luu/bo-luu/{articleId}", "/tai-khoan/bai-da-luu", new()); // must not remove someone else's
-        Assert.Contains(title, await PageAsync(client, "/tai-khoan/bai-da-luu"));
+        Assert.Contains(title, await client.GetDecodedAsync("/tai-khoan/bai-da-luu"));
 
         // the owner's page has the token; the stranger has no bookmark so no unsave form there.
         using (var scope = _factory.Services.CreateScope())
@@ -280,7 +268,7 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
 
         var remove = await client.PostFormAsync($"/tai-khoan/bai-da-luu/bo-luu/{articleId}", "/tai-khoan/bai-da-luu", new());
         Assert.Equal(HttpStatusCode.Redirect, remove.StatusCode);
-        Assert.DoesNotContain(title, await PageAsync(client, "/tai-khoan/bai-da-luu"));
+        Assert.DoesNotContain(title, await client.GetDecodedAsync("/tai-khoan/bai-da-luu"));
     }
 
     [Fact]
@@ -294,7 +282,7 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
     [Fact]
     public async Task TopBar_GreetsWithTheDisplayName_NotTheEmail()
     {
-        var reader = await CreateUserAsync(Roles.Reader, "Nguyễn Văn Thử");
+        var reader = await _factory.CreateUserAsync(Roles.Reader, "Nguyễn Văn Thử");
         var html = WebUtility.HtmlDecode(await (await _factory.LoginCmsAsync(reader.Email, "TestPassword123!")).GetStringAsync("/tai-khoan/ho-so"));
         Assert.Contains("<span class=\"app-user__name\">Nguyễn Văn Thử</span>", html);
     }
@@ -337,5 +325,20 @@ public sealed class RoleDashboardIntegrationTests : IClassFixture<IsolatedDbWebA
         var none = WebUtility.HtmlDecode(await client.GetStringAsync($"/cms/CmsArticles/Edit/{withoutCover}"));
         Assert.Contains("Chưa có ảnh bìa", none);
         Assert.Contains("Chọn ảnh", none);
+    }
+
+    [Fact]
+    public async Task AccountPages_PostTheirFormsToTheRightControllers_IncludingSignOut()
+    {
+        var reader = await _factory.CreateUserAsync(Roles.Reader);
+        var client = await _factory.LoginCmsAsync(reader.Email!, TestUsers.Password);
+
+        var profile = await client.GetDecodedAsync("/tai-khoan/ho-so");
+        Assert.Contains("action=\"/tai-khoan/dang-xuat\"", profile);   // sign-out lives in AccountController, the page in ReaderAccountController
+        Assert.Contains("action=\"/tai-khoan/ho-so\"", profile);
+
+        var logout = await client.PostFormAsync("/tai-khoan/dang-xuat", "/tai-khoan/ho-so", new());
+        Assert.Equal(HttpStatusCode.Redirect, logout.StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, (await client.GetAsync("/tai-khoan/ho-so")).StatusCode); // signed out: the page asks for sign-in again
     }
 }

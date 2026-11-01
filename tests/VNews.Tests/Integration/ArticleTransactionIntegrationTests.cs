@@ -159,7 +159,7 @@ public class ArticleTransactionIntegrationTests : IClassFixture<IsolatedDbWebApp
         try
         {
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                InScope(async (svc, _) => { await svc.UpdateDraftAsync(id, Request(categoryId, "Tieu de moi khong duoc luu"), original.RowVersion, "author-1"); return 0; }));
+                InScope(async (svc, _) => { await svc.UpdateAsync(id, Request(categoryId, "Tieu de moi khong duoc luu"), original.RowVersion, "author-1"); return 0; }));
         }
         finally { _factory.AuditFailure.Fail = false; }
 
@@ -173,11 +173,11 @@ public class ArticleTransactionIntegrationTests : IClassFixture<IsolatedDbWebApp
         var stale = (await Reload(id)).RowVersion;
         var categoryId = await FirstCategoryId();
 
-        await InScope(async (svc, _) => { await svc.UpdateDraftAsync(id, Request(categoryId, "Lan sua thu nhat"), stale, "author-1"); return 0; });
+        await InScope(async (svc, _) => { await svc.UpdateAsync(id, Request(categoryId, "Lan sua thu nhat"), stale, "author-1"); return 0; });
         Assert.Equal(1, await AuditCount("Update", id));
 
         await Assert.ThrowsAsync<ArticleConcurrencyException>(() =>
-            InScope(async (svc, _) => { await svc.UpdateDraftAsync(id, Request(categoryId, "Lan sua thu hai (stale)"), stale, "author-1"); return 0; }));
+            InScope(async (svc, _) => { await svc.UpdateAsync(id, Request(categoryId, "Lan sua thu hai (stale)"), stale, "author-1"); return 0; }));
 
         Assert.Equal("Lan sua thu nhat", (await Reload(id)).Title);
         Assert.Equal(1, await AuditCount("Update", id));
@@ -192,7 +192,7 @@ public class ArticleTransactionIntegrationTests : IClassFixture<IsolatedDbWebApp
         var categoryId = await FirstCategoryId();
 
         await Assert.ThrowsAsync<ArticleForbiddenException>(() =>
-            InScope(async (svc, _) => { await svc.UpdateDraftAsync(id, Request(categoryId, "Bi chiem quyen"), rowVersion, "author-2"); return 0; }));
+            InScope(async (svc, _) => { await svc.UpdateAsync(id, Request(categoryId, "Bi chiem quyen"), rowVersion, "author-2"); return 0; }));
         await Assert.ThrowsAsync<ArticleForbiddenException>(() =>
             InScope(async (svc, _) => { await svc.SubmitForReviewAsync(id, "author-2"); return 0; }));
         Assert.Equal(ArticleStatus.Draft, (await Reload(id)).Status);
@@ -211,7 +211,7 @@ public class ArticleTransactionIntegrationTests : IClassFixture<IsolatedDbWebApp
         await Assert.ThrowsAsync<ArticleNotFoundException>(() => InScope(async (s, _) => { await s.PublishAsync(missing, "e", "E"); return 0; }));
         await Assert.ThrowsAsync<ArticleNotFoundException>(() => InScope(async (s, _) => { await s.RejectAsync(missing, "e", "E", "ly do"); return 0; }));
         await Assert.ThrowsAsync<ArticleNotFoundException>(() => InScope(async (s, _) => { await s.SubmitForReviewAsync(missing, "e", true); return 0; }));
-        await Assert.ThrowsAsync<ArticleNotFoundException>(() => InScope(async (s, _) => { await s.UpdateDraftAsync(missing, Request(categoryId), new byte[8], "e", true); return 0; }));
+        await Assert.ThrowsAsync<ArticleNotFoundException>(() => InScope(async (s, _) => { await s.UpdateAsync(missing, Request(categoryId), new byte[8], "e", true); return 0; }));
     }
 
     [Fact]
