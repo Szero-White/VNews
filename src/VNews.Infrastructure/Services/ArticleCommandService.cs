@@ -94,8 +94,31 @@ public class ArticleCommandService : IArticleCommandService
         }
     }
 
+    // Accent- and case-insensitive matching, same idea as the public search (đ/Đ are replaced on the column side).
+    private const string SearchCollation = "Latin1_General_100_CI_AI";
+
+    public async Task<CmsStatsDto> GetCmsStatsAsync(string? authorUserId, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Articles.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(authorUserId))
+        {
+            query = query.Where(a => a.AuthorUserId == authorUserId);
+        }
+
+        var counts = await query.GroupBy(a => a.Status).Select(g => new { g.Key, Count = g.Count() }).ToListAsync(cancellationToken);
+        int Of(ArticleStatus status) => counts.FirstOrDefault(c => c.Key == status)?.Count ?? 0;
+        return new CmsStatsDto
+        {
+            Draft = Of(ArticleStatus.Draft),
+            PendingReview = Of(ArticleStatus.PendingReview),
+            Rejected = Of(ArticleStatus.Rejected),
+            Published = Of(ArticleStatus.Published),
+        };
+    }
+
     public async Task<PagedResult<ArticleCmsListItemDto>> ListForCmsAsync(
-        string? statusFilter, string? authorUserId, int page, int pageSize, CancellationToken cancellationToken = default)
+        string? statusFilter, string? authorUserId, int page, int pageSize, CancellationToken cancellationToken = default,
+        string? search = null, bool oldestFirst = false)
     {
         page = page < 1 ? 1 : page;
         pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
@@ -112,7 +135,17 @@ public class ArticleCommandService : IArticleCommandService
             query = query.Where(a => a.Status == status);
         }
 
-        var ordered = query.OrderByDescending(a => a.UpdatedAt ?? a.CreatedAt);
+        foreach (var token in VNews.Application.Common.SearchText.Tokenize(search))
+        {
+            var pattern = $"%{token}%";
+            query = query.Where(a =>
+                EF.Functions.Like(EF.Functions.Collate(a.Title, SearchCollation).Replace("đ", "d"), pattern)
+                || EF.Functions.Like(EF.Functions.Collate(a.AuthorName, SearchCollation).Replace("đ", "d"), pattern));
+        }
+
+        var ordered = oldestFirst
+            ? query.OrderBy(a => a.UpdatedAt ?? a.CreatedAt).ThenBy(a => a.Id)
+            : query.OrderByDescending(a => a.UpdatedAt ?? a.CreatedAt).ThenByDescending(a => a.Id);
 
         var totalCount = await ordered.CountAsync(cancellationToken);
 
@@ -130,7 +163,9 @@ public class ArticleCommandService : IArticleCommandService
                 AuthorUserId = a.AuthorUserId,
                 CreatedAt = a.CreatedAt,
                 UpdatedAt = a.UpdatedAt,
-                PublishedAt = a.PublishedAt
+                PublishedAt = a.PublishedAt,
+                ReviewNote = a.ReviewNote,
+                CoverImageUrl = a.CoverImageUrl
             })
             .ToListAsync(cancellationToken);
 

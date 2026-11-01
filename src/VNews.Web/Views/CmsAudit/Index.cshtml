@@ -1,0 +1,41 @@
+@using VNews.Web.Helpers
+@model PagedResult<AuditRowViewModel>
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Nhật ký hoạt động";
+    ViewData["AppNav"] = "audit";
+    ViewData["Crumbs"] = new (string, string?)[] { ("Quản trị", null), ("Nhật ký hoạt động", null) };
+}
+<div class="page-head">
+    <div class="page-head__text">
+        <h1 class="app-page-title">Nhật ký hoạt động</h1>
+        <p class="page-head__sub">Các thao tác tạo, sửa, gửi duyệt, xuất bản và từ chối bài viết, mới nhất ở trên.</p>
+    </div>
+</div>
+<section class="card">
+    @if (Model.Items.Count == 0)
+    {
+        <div class="empty"><svg class="icon" aria-hidden="true"><use href="#i-log" /></svg><p class="empty__title">Chưa có hoạt động nào được ghi lại</p></div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table--cards">
+                <thead><tr><th scope="col">Thời gian</th><th scope="col">Người thực hiện</th><th scope="col">Thao tác</th><th scope="col">Đối tượng</th><th scope="col">Chi tiết</th></tr></thead>
+                <tbody>
+                    @foreach (var a in Model.Items)
+                    {
+                        <tr>
+                            <td data-label="Thời gian" style="white-space:nowrap">@a.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td data-label="Người thực hiện">@a.UserDisplayName</td>
+                            <td data-label="Thao tác"><span class="badge badge--draft">@AuditLabels.Action(a.Action)</span></td>
+                            <td data-label="Đối tượng">@AuditLabels.Entity(a.EntityType) #@a.EntityId</td>
+                            <td data-label="Chi tiết">@a.Detail</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_AppPager" model="@(new AppPagerModel { Page = Model.Page, PageSize = Model.PageSize, TotalCount = Model.TotalCount, Controller = "CmsAudit", Noun = "bản ghi" })" />
+    }
+</section>

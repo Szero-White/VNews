@@ -1,0 +1,43 @@
+@model SavedArticlesViewModel
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Bài đã lưu";
+    ViewData["AppNav"] = "saved";
+    ViewData["Crumbs"] = new (string, string?)[] { ("Tài khoản", null), ("Bài đã lưu", null) };
+}
+<div class="page-head">
+    <div class="page-head__text">
+        <h1 class="app-page-title">Bài đã lưu</h1>
+        <p class="page-head__sub">@Model.Items.TotalCount bài viết bạn đã lưu để đọc sau.</p>
+    </div>
+</div>
+<section class="card">
+    @if (Model.Items.Items.Count == 0)
+    {
+        <div class="empty">
+            <svg class="icon" aria-hidden="true"><use href="#i-bookmark" /></svg>
+            <p class="empty__title">Bạn chưa lưu bài viết nào</p>
+            <p class="empty__text">Nhấn biểu tượng lưu ở bài viết để đọc lại sau.</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn--primary">Đọc tin mới</a>
+        </div>
+    }
+    else
+    {
+        <ul class="saved-list">
+            @foreach (var a in Model.Items.Items)
+            {
+                <li class="saved-item">
+                    @if (!string.IsNullOrWhiteSpace(a.CoverImageUrl)) { <img class="saved-item__img" src="@a.CoverImageUrl" alt="" loading="lazy" /> } else { <span class="saved-item__img"></span> }
+                    <div>
+                        <a class="saved-item__title" asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
+                        <span class="saved-item__meta">@a.CategoryName@(a.PublishedAt is null ? "" : " · " + a.PublishedAt.Value.ToLocalTime().ToString("dd/MM/yyyy")) · lưu ngày @a.SavedAtUtc.ToLocalTime().ToString("dd/MM/yyyy")</span>
+                    </div>
+                    <form asp-action="RemoveSaved" asp-route-id="@a.ArticleId" method="post">
+                        <button type="submit" class="btn btn--secondary btn--sm" aria-label="Bỏ lưu: @a.Title">Bỏ lưu</button>
+                    </form>
+                </li>
+            }
+        </ul>
+        <partial name="_AppPager" model="@(new AppPagerModel { Page = Model.Items.Page, PageSize = Model.Items.PageSize, TotalCount = Model.Items.TotalCount, Controller = "Account", Action = "SavedArticles", Noun = "bài" })" />
+    }
+</section>

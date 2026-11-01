@@ -58,8 +58,8 @@ public class ProductionBootstrapAdminTests : IClassFixture<ProductionBootstrapFa
             new() { ["Email"] = "owner@example.test", ["Password"] = "Str0ng-Operator-Secret!" });
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.EndsWith("/CmsUsers", response.Headers.Location!.OriginalString);
-        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/cms/CmsUsers")).StatusCode);
+        Assert.EndsWith("/CmsOverview", response.Headers.Location!.OriginalString);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/cms/CmsOverview")).StatusCode);
     }
 
     [Fact]

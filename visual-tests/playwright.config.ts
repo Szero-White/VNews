@@ -16,6 +16,7 @@ const buildConfig = process.env.E2E_BUILD_CONFIG ?? 'Debug';
 
 export default defineConfig({
   testDir: '.',
+  globalSetup: './global-setup.ts',
   timeout: 30000,
   reporter: [['list']],
   use: {

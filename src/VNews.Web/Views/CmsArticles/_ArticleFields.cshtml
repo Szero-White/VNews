@@ -1,0 +1,71 @@
+@model ArticleSaveRequest
+@* Fields shared by the create and edit pages. ViewData["Categories"], ViewData["ReadOnly"] (bool). *@
+@{
+    var categories = (IReadOnlyList<CategoryDto>)ViewData["Categories"]!;
+    var readOnly = ViewData["ReadOnly"] is true;
+    var hasCover = !string.IsNullOrWhiteSpace(Model.CoverImageUrl);
+}
+<div class="app-validation" asp-validation-summary="All"></div>
+
+<div class="app-form-grid">
+    <div>
+        <div class="app-field">
+            <label asp-for="Title" class="app-label">Tiêu đề</label>
+            <input asp-for="Title" type="text" class="app-input" readonly="@readOnly" />
+            <span asp-validation-for="Title" class="app-field-error"></span>
+        </div>
+        <div class="app-field">
+            <label asp-for="Summary" class="app-label">Tóm tắt</label>
+            <textarea asp-for="Summary" class="app-textarea" rows="3" readonly="@readOnly"></textarea>
+            <span asp-validation-for="Summary" class="app-field-error"></span>
+        </div>
+        <div class="app-field">
+            <label asp-for="Body" class="app-label">Nội dung</label>
+            <textarea asp-for="Body" class="app-textarea" rows="16" readonly="@readOnly"></textarea>
+            <span asp-validation-for="Body" class="app-field-error"></span>
+        </div>
+    </div>
+    <div>
+        <div class="app-field">
+            <label asp-for="CategoryId" class="app-label">Chuyên mục</label>
+            <select asp-for="CategoryId" class="app-select" disabled="@readOnly">
+                <option value="">Chọn chuyên mục</option>
+                @foreach (var c in categories)
+                {
+                    <option value="@c.Id" selected="@(c.Id == Model.CategoryId)">@c.Name</option>
+                }
+            </select>
+            <span asp-validation-for="CategoryId" class="app-field-error"></span>
+        </div>
+
+        @* Cover image: preview of what is stored now, a native file input wrapped in a button-like label, the file name, and
+           "remove" (which empties CoverImageUrl: the save already accepts an empty value). cover-field.js drives the states. *@
+        <div class="app-field cover" data-cover data-upload-url="@Url.Action("UploadCoverImage", "CmsArticles")" data-readonly="@readOnly.ToString().ToLowerInvariant()">
+            <span class="app-label" id="cover-label">Ảnh bìa</span>
+            <div class="cover__stage" role="group" aria-labelledby="cover-label">
+                <img class="cover__img" data-cover-img src="@(hasCover ? Model.CoverImageUrl : "")" alt="Xem trước ảnh bìa" hidden="@(!hasCover)" />
+                <div class="cover__placeholder" data-cover-placeholder hidden="@hasCover">
+                    <svg class="icon" aria-hidden="true"><use href="#i-image" /></svg>
+                    <span data-cover-placeholder-text>Chưa có ảnh bìa</span>
+                </div>
+                <span class="cover__state" data-cover-state role="status" hidden="@(!hasCover)">@(hasCover ? "Ảnh hiện tại" : "")</span>
+            </div>
+            @if (!readOnly)
+            {
+                <div class="cover__bar">
+                    <label class="btn btn--secondary btn--sm cover__pick">
+                        <svg class="icon" aria-hidden="true"><use href="#i-upload" /></svg>
+                        <span data-cover-pick-label>@(hasCover ? "Thay ảnh" : "Chọn ảnh")</span>
+                        <input type="file" id="coverFile" class="cover__file" accept="image/jpeg,image/png,image/webp" />
+                    </label>
+                    <button type="button" class="btn btn--ghost btn--sm" data-cover-remove hidden="@(!hasCover)">Bỏ ảnh</button>
+                    <button type="button" class="btn btn--ghost btn--sm" data-cover-undo hidden>Hoàn tác</button>
+                </div>
+                <p class="app-hint" data-cover-file-name>JPG, PNG hoặc WebP, tối đa 5 MB.</p>
+            }
+            <div id="uploadStatus" class="app-hint cover__status" role="status"></div>
+            <input asp-for="CoverImageUrl" type="hidden" />
+            <span asp-validation-for="CoverImageUrl" class="app-field-error"></span>
+        </div>
+    </div>
+</div>

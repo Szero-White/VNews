@@ -1,30 +1,20 @@
 @model CategorySaveViewModel
 @{
+    Layout = "_AppLayout";
     ViewData["Title"] = "Sửa chuyên mục";
-    Layout = "_CmsLayout";
+    ViewData["AppNav"] = "categories";
+    ViewData["Crumbs"] = new (string, string?)[] { ("Quản trị", null), ("Chuyên mục", Url.Action("Index", "CmsCategories")), ("Sửa chuyên mục", null) };
 }
-
-<div class="cms-card">
-    <h1>Sửa chuyên mục</h1>
-    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="cms-form">
-        <div asp-validation-summary="All" class="cms-validation"></div>
-
-        <label asp-for="Name">Tên</label>
-        <input asp-for="Name" type="text" />
-
-        <label asp-for="Slug">Slug</label>
-        <input asp-for="Slug" type="text" />
-
-        <label asp-for="Description">Mô tả</label>
-        <textarea asp-for="Description" style="min-height:60px;"></textarea>
-
-        <label asp-for="DisplayOrder">Thứ tự hiển thị</label>
-        <input asp-for="DisplayOrder" type="number" />
-
-        <button type="submit" class="cms-btn" style="margin-top:16px;">Lưu</button>
-    </form>
-</div>
-
+<div class="page-head"><div class="page-head__text"><h1 class="app-page-title">Sửa chuyên mục</h1></div></div>
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="card" style="max-width:640px">
+    <div class="card__body">
+        <partial name="_CategoryFields" model="Model" />
+        <div class="app-form-actions">
+            <button type="submit" class="btn btn--primary">Lưu</button>
+            <a asp-action="Index" class="btn btn--secondary">Hủy</a>
+        </div>
+    </div>
+</form>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }

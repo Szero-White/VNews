@@ -1,37 +1,102 @@
-@model IReadOnlyList<UserListItemViewModel>
+@using VNews.Domain.Identity
+@using VNews.Web.Helpers
+@model UsersPageViewModel
 @{
-    ViewData["Title"] = "Quản lý người dùng";
-    Layout = "_CmsLayout";
-    var allRoles = (string[])ViewBag.AllRoles;
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Người dùng";
+    ViewData["AppNav"] = "users";
+    ViewData["Crumbs"] = new (string, string?)[] { ("Quản trị", null), ("Người dùng", null) };
+    var query = new Dictionary<string, string?> { ["q"] = Model.Query, ["role"] = Model.Role };
 }
 
-<div class="cms-card">
-    <h1>Người dùng</h1>
-    <table class="cms-table">
-        <thead>
-            <tr><th>Email</th><th>Tên hiển thị</th><th>Vai trò</th><th>Gán vai trò</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var u in Model)
-            {
-                <tr>
-                    <td>@u.Email</td>
-                    <td>@u.DisplayName</td>
-                    <td>@string.Join(", ", u.Roles)</td>
-                    <td>
-                        <form asp-action="SetRole" method="post" class="cms-actions">
-                            <input type="hidden" name="userId" value="@u.Id" />
-                            <select name="role">
-                                @foreach (var r in allRoles)
-                                {
-                                    <option value="@r" selected="@(u.Roles.Contains(r))">@r</option>
-                                }
-                            </select>
-                            <button type="submit" class="cms-btn cms-btn--secondary">Gán</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+<div class="page-head">
+    <div class="page-head__text">
+        <h1 class="app-page-title">Người dùng</h1>
+        <p class="page-head__sub">Quản lý vai trò của @Model.Users.TotalCount tài khoản. Mỗi tài khoản có một vai trò.</p>
+    </div>
 </div>
+
+<section class="stats" aria-label="Số tài khoản theo vai trò">
+    @foreach (var r in Roles.All)
+    {
+        <a class="stat stat--neutral @(Model.Role == r ? "is-current" : "")" href="@Url.Action("Index", new { role = r })"><span class="stat__label">@AppFormat.RoleLabel(r)</span><span class="stat__value">@(Model.UsersByRole.TryGetValue(r, out var n) ? n : 0)</span><span class="stat__hint">tài khoản</span></a>
+    }
+</section>
+
+<section class="card" aria-labelledby="users-title">
+    <div class="card__head"><h2 class="card__title" id="users-title">Danh sách tài khoản</h2></div>
+    <form method="get" class="filters" role="search" aria-label="Lọc người dùng">
+        <div class="filters__search">
+            <svg class="icon" aria-hidden="true"><use href="#i-search" /></svg>
+            <label for="q" class="sr-only">Tìm theo email hoặc tên</label>
+            <input id="q" name="q" value="@Model.Query" maxlength="100" class="app-input" placeholder="Tìm theo email hoặc tên" />
+        </div>
+        <label for="role" class="sr-only">Vai trò</label>
+        <select id="role" name="role" class="app-select" data-autosubmit>
+            <option value="">Tất cả vai trò</option>
+            @foreach (var r in Roles.All)
+            {
+                <option value="@r" selected="@(Model.Role == r)">@AppFormat.RoleLabel(r)</option>
+            }
+        </select>
+        <button type="submit" class="btn btn--secondary">Lọc</button>
+        @if (Model.Role is not null || Model.Query is not null) { <a asp-action="Index" class="btn btn--ghost">Xóa bộ lọc</a> }
+    </form>
+
+    @if (Model.Users.Items.Count == 0)
+    {
+        <div class="empty">
+            <svg class="icon" aria-hidden="true"><use href="#i-users" /></svg>
+            <p class="empty__title">Không tìm thấy tài khoản phù hợp</p>
+            <p class="empty__text">Thử đổi từ khóa hoặc vai trò.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table--cards">
+                <thead>
+                    <tr><th scope="col">Tài khoản</th><th scope="col">Vai trò hiện tại</th><th scope="col">Đổi vai trò</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model.Users.Items)
+                    {
+                        var self = u.Id == Model.CurrentUserId;
+                        var current = AppFormat.PrimaryRole(u.Roles);
+                        <tr>
+                            <td class="table__cell-title">
+                                <span class="table__title" style="max-width:320px">@u.DisplayName@if (self) { <span class="badge badge--demo" style="margin-left:8px">Bạn</span> }</span>
+                                <span class="table__sub">@u.Email</span>
+                            </td>
+                            <td data-label="Vai trò hiện tại">
+                                @if (u.Roles.Count == 0) { <span class="table__sub">Chưa có vai trò</span> }
+                                @foreach (var r in u.Roles) { <span class="badge badge--@r.ToLowerInvariant()">@AppFormat.RoleLabel(r)</span> }
+                            </td>
+                            <td data-label="Đổi vai trò">
+                                @if (self)
+                                {
+                                    <span class="table__sub">Không thể đổi vai trò của chính mình</span>
+                                }
+                                else
+                                {
+                                    <form asp-action="SetRole" method="post" class="table__actions" style="justify-content:flex-start" data-confirm="Đổi vai trò của @u.Email? Quyền truy cập của tài khoản sẽ thay đổi ngay." data-confirm-title="Đổi vai trò" data-confirm-label="Đổi vai trò">
+                                        <input type="hidden" name="userId" value="@u.Id" />
+                                        <label for="role-@u.Id" class="sr-only">Vai trò mới của @u.Email</label>
+                                        <select id="role-@u.Id" name="role" class="app-select" style="width:auto;min-width:160px">
+                                            @foreach (var r in Roles.All)
+                                            {
+                                                <option value="@r" selected="@(r == current)">@AppFormat.RoleLabel(r)</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn--secondary btn--sm">Lưu</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_AppPager" model="@(new AppPagerModel { Page = Model.Users.Page, PageSize = Model.Users.PageSize, TotalCount = Model.Users.TotalCount, Controller = "CmsUsers", Query = query, Noun = "tài khoản" })" />
+    }
+</section>

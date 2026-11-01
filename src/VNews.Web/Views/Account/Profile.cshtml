@@ -1,22 +1,112 @@
+@using VNews.Web.Helpers
 @model ProfileViewModel
 @{
-    ViewData["Title"] = "Tài khoản của tôi";
-    Layout = "_ReaderAuthLayout";
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Hồ sơ của tôi";
+    ViewData["AppNav"] = "profile";
+    ViewData["Crumbs"] = new (string, string?)[] { ("Tài khoản", null), ("Hồ sơ của tôi", null) };
+    var primary = AppFormat.PrimaryRole(Model.Roles);
 }
-<section class="reader-auth__card" aria-labelledby="profile-title">
-    <p class="reader-auth__kicker">HỒ SƠ ĐỘC GIẢ</p>
-    <h1 id="profile-title">Xin chào, @Model.DisplayName</h1>
-    <p class="reader-auth__lead">Tài khoản của bạn trên VNews.</p>
-    <dl class="reader-auth__profile">
-        <dt>Tên hiển thị</dt><dd>@Model.DisplayName</dd>
-        <dt>Email</dt><dd>@Model.Email</dd>
-    </dl>
-    <a class="reader-auth__submit reader-auth__button-link" asp-controller="Home" asp-action="Saved">Xem bài đã lưu</a>
-    @if (Model.IsStaff)
-    {
-        <a class="reader-auth__secondary" asp-controller="CmsArticles" asp-action="Index">Đi đến CMS</a>
-    }
-    <form asp-controller="Account" asp-action="Logout" method="post">
-        <button type="submit" class="reader-auth__secondary reader-auth__logout">Đăng xuất</button>
-    </form>
+
+<div class="page-head">
+    <div class="page-head__text">
+        <h1 class="app-page-title">Hồ sơ của tôi</h1>
+    </div>
+    <div class="page-head__actions">
+        <a asp-controller="Home" asp-action="Index" class="btn btn--secondary">Về trang tin</a>
+        @if (Model.IsStaff)
+        {
+            <a asp-controller="CmsArticles" asp-action="Index" class="btn btn--primary">Vào tòa soạn</a>
+        }
+    </div>
+</div>
+
+<section class="card" aria-label="Thông tin tài khoản">
+    <div class="profile-hero">
+        <span class="profile-hero__avatar" aria-hidden="true">@AppFormat.Initials(Model.DisplayName)</span>
+        <div>
+            <h2 class="profile-hero__name" id="profile-title">Xin chào, @Model.DisplayName</h2>
+            <div class="profile-hero__meta">
+                @foreach (var r in Model.Roles.OrderBy(r => Array.IndexOf(new[] { "Admin", "Editor", "Author", "Reader" }, r)))
+                {
+                    <span class="badge badge--@r.ToLowerInvariant()">@AppFormat.RoleLabel(r)</span>
+                }
+                @if (Model.IsDemo) { <span class="badge badge--demo">Tài khoản demo</span> }
+                <span>@Model.Email</span>
+            </div>
+        </div>
+    </div>
 </section>
+
+<div class="two-col" style="margin-top:24px">
+    <section class="card" aria-labelledby="saved-title">
+        <div class="card__head">
+            <h2 class="card__title" id="saved-title">Bài đã lưu <span class="card__hint">(@Model.SavedCount)</span></h2>
+            @if (Model.SavedCount > 0) { <a asp-action="SavedArticles" class="btn btn--ghost btn--sm">Xem tất cả</a> }
+        </div>
+        @if (Model.RecentSaved.Count == 0)
+        {
+            <div class="empty">
+                <svg class="icon" aria-hidden="true"><use href="#i-bookmark" /></svg>
+                <p class="empty__title">Bạn chưa lưu bài viết nào</p>
+                <p class="empty__text">Nhấn biểu tượng lưu ở bài viết để đọc lại sau.</p>
+                <a asp-controller="Home" asp-action="Index" class="btn btn--primary">Đọc tin mới</a>
+            </div>
+        }
+        else
+        {
+            <ul class="saved-list">
+                @foreach (var a in Model.RecentSaved)
+                {
+                    <li class="saved-item">
+                        @if (!string.IsNullOrWhiteSpace(a.CoverImageUrl)) { <img class="saved-item__img" src="@a.CoverImageUrl" alt="" loading="lazy" /> } else { <span class="saved-item__img"></span> }
+                        <div>
+                            <a class="saved-item__title" asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
+                            <span class="saved-item__meta">@a.CategoryName@(a.PublishedAt is null ? "" : " · " + a.PublishedAt.Value.ToLocalTime().ToString("dd/MM/yyyy"))</span>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+
+    <div>
+        <section class="card" aria-labelledby="info-title">
+            <div class="card__head"><h2 class="card__title" id="info-title">Thông tin</h2></div>
+            <div class="card__body">
+                <dl class="kv">
+                    <dt>Tên hiển thị</dt><dd>@Model.DisplayName</dd>
+                    <dt>Email</dt><dd>@Model.Email</dd>
+                    <dt>Vai trò</dt><dd>@AppFormat.RoleLabel(primary)</dd>
+                </dl>
+            </div>
+        </section>
+
+        <section class="card" aria-labelledby="edit-title">
+            <div class="card__head"><h2 class="card__title" id="edit-title">Đổi tên hiển thị</h2></div>
+            <div class="card__body">
+                @if (Model.IsDemo)
+                {
+                    <p class="card__hint">Tài khoản demo là bản xem thử nên không thể chỉnh sửa hồ sơ.</p>
+                }
+                else
+                {
+                    <form asp-action="Profile" method="post">
+                        <div class="app-field">
+                            <label for="DisplayName" class="app-label">Tên hiển thị</label>
+                            <input id="DisplayName" name="DisplayName" value="@Model.DisplayName" class="app-input" required minlength="2" maxlength="80" autocomplete="name" />
+                            <p class="app-hint">Từ 2 đến 80 ký tự. Email và vai trò không thay đổi ở đây.</p>
+                        </div>
+                        <div class="app-form-actions">
+                            <button type="submit" class="btn btn--primary">Lưu thay đổi</button>
+                        </div>
+                    </form>
+                }
+            </div>
+        </section>
+
+        <form asp-action="Logout" method="post" style="margin-top:24px">
+            <button type="submit" class="btn btn--secondary"><svg class="icon" aria-hidden="true"><use href="#i-logout" /></svg>Đăng xuất</button>
+        </form>
+    </div>
+</div>

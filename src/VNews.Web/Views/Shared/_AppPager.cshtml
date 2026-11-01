@@ -1,0 +1,45 @@
+@model VNews.Web.Models.Cms.AppPagerModel
+@* Server-side pager for the account / newsroom lists. Keeps the active filters in every link. *@
+@{
+    var last = Model.TotalPages;
+    var from = Model.TotalCount == 0 ? 0 : (Model.Page - 1) * Model.PageSize + 1;
+    var to = Math.Min(Model.Page * Model.PageSize, Model.TotalCount);
+
+    string PageUrl(int p)
+    {
+        var values = new RouteValueDictionary();
+        foreach (var kv in Model.Query) { if (!string.IsNullOrEmpty(kv.Value)) values[kv.Key] = kv.Value; }
+        if (p > 1) values["page"] = p;
+        return Url.Action(Model.Action, Model.Controller, values)!;
+    }
+
+    var numbers = new List<int>();
+    if (last <= 7) { for (var p = 1; p <= last; p++) numbers.Add(p); }
+    else
+    {
+        foreach (var p in new[] { 1, Model.Page - 1, Model.Page, Model.Page + 1, last })
+        {
+            if (p >= 1 && p <= last && !numbers.Contains(p)) numbers.Add(p);
+        }
+        numbers.Sort();
+    }
+}
+@if (Model.TotalCount > 0)
+{
+    <div class="pager">
+        <span>Hiển thị @from–@to trong @Model.TotalCount @Model.Noun</span>
+        @if (last > 1)
+        {
+            <nav class="pager__links" aria-label="Phân trang">
+                @if (Model.Page > 1) { <a class="pager__link" href="@PageUrl(Model.Page - 1)" rel="prev" aria-label="Trang trước">‹</a> }
+                @for (var i = 0; i < numbers.Count; i++)
+                {
+                    var p = numbers[i];
+                    if (i > 0 && p - numbers[i - 1] > 1) { <span class="pager__link" aria-hidden="true" style="border:0">…</span> }
+                    <a class="pager__link @(p == Model.Page ? "is-current" : "")" href="@PageUrl(p)" aria-label="Trang @p" aria-current="@(p == Model.Page ? "page" : null)">@p</a>
+                }
+                @if (Model.Page < last) { <a class="pager__link" href="@PageUrl(Model.Page + 1)" rel="next" aria-label="Trang sau">›</a> }
+            </nav>
+        }
+    </div>
+}

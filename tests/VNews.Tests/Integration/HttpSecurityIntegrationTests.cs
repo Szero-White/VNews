@@ -66,7 +66,10 @@ public class HttpSecurityIntegrationTests : IClassFixture<IsolatedDbWebApplicati
         // Razor HTML-encodes attribute values (a base64 nonce may contain '+' => "&#x2B;"); browsers decode it back,
         // so compare the decoded markup.
         var html = System.Net.WebUtility.HtmlDecode(await first.Content.ReadAsStringAsync());
-        Assert.Contains($"<script nonce=\"{nonce1}\">", html);
+        // The cover upload script is now a same-origin file; any inline script that remains must carry this request's nonce.
+        Assert.Contains("/js/cover-field.js", html);
+        foreach (Match inline in Regex.Matches(html, @"<script(?![^>]*\ssrc=)[^>]*>"))
+            Assert.Contains($"nonce=\"{nonce1}\"", inline.Value);
         // No inline event handlers remain that the policy would block.
         Assert.DoesNotMatch(@"\son[a-z]+\s*=\s*""", html);
     }

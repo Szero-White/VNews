@@ -1,10 +1,14 @@
 @{
+    Layout = "_AppLayout";
     ViewData["Title"] = "Không có quyền truy cập";
-    Layout = "_CmsLayout";
+    ViewData["AppNav"] = "";
+    ViewData["Crumbs"] = new (string, string?)[] { ("Không có quyền truy cập", null) };
 }
-
-<div class="cms-card">
-    <h1>403 — Không có quyền truy cập</h1>
-    <p>Tài khoản của bạn không có quyền thực hiện thao tác này.</p>
-    <a asp-controller="Home" asp-action="Index" class="cms-btn">Về trang chủ</a>
-</div>
+<section class="card" style="max-width:560px">
+    <div class="empty">
+        <svg class="icon" aria-hidden="true"><use href="#i-shield" /></svg>
+        <h1 class="empty__title">403 — Không có quyền truy cập</h1>
+        <p class="empty__text">Tài khoản của bạn không có quyền thực hiện thao tác này.</p>
+        <a asp-controller="Home" asp-action="Index" class="btn btn--primary">Về trang chủ</a>
+    </div>
+</section>

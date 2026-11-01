@@ -8,7 +8,7 @@ import { test, expect, Page } from '@playwright/test';
 // These are geometry assertions, not link/element-count checks.
 
 async function articleUrl(page: Page): Promise<string> {
-  const list = await (await page.request.get('/api/v1/articles?pageSize=50')).json();
+  const list = await (await page.request.get('/api/v1/articles?category=cong-nghe&pageSize=50')).json(); // category filter: other specs publish cover-less articles into the newest slots
   const pick = list.items.find((i: any) => i.categorySlug === 'cong-nghe' && i.coverImageUrl) ?? list.items[0];
   return `/tin/${pick.slug}`;
 }
@@ -95,8 +95,9 @@ test('desktop: "Xem nhiều" is a thumbnail + headline list with a short rule un
     els.map((e) => { const b = e.getBoundingClientRect(); return { w: b.width, h: b.height, y: b.y + scrollY, x: b.x }; }));
   for (const t of thumbs) { near(t.w, 110, 0, 'thumb width'); near(t.h, 66, 0, 'thumb height'); }
   near((thumbs[4].y - thumbs[0].y) / 4, 100, 1, 'row pitch');
-  const loaded = await page.locator('.popular-list__thumb img').evaluateAll((els) => els.map((e) => (e as HTMLImageElement).complete && (e as HTMLImageElement).naturalWidth > 0));
-  expect(loaded.every(Boolean), 'thumbnails load from real article covers').toBe(true);
+  // Thumbnails are lazy-loaded: poll until they have loaded instead of sampling the instant the page is ready (a race under load).
+  await expect.poll(async () => (await page.locator('.popular-list__thumb img').evaluateAll((els) => els.map((e) => (e as HTMLImageElement).complete && (e as HTMLImageElement).naturalWidth > 0))).every(Boolean),
+    { message: 'thumbnails load from real article covers' }).toBe(true);
 
   // Headline to the right of the thumbnail, 10px gap, serif 14px/22.4px.
   const item = await box(page, '.popular-list__item');

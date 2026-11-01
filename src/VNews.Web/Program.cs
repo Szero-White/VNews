@@ -20,8 +20,10 @@ builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 // One-click demo sign-in: OFF unless DemoAuth:Enabled=true, and even then Development + a demo/test database + loopback only.
 builder.Services.Configure<VNews.Web.Demo.DemoAuthOptions>(builder.Configuration.GetSection(VNews.Web.Demo.DemoAuthOptions.SectionName));
 builder.Services.AddSingleton<VNews.Web.Demo.DemoAuthGate>();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<VNews.Web.Demo.DemoAccountService>();
 builder.Services.AddScoped<VNews.Web.Demo.RequireDemoAuthFilter>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Identity.IUserClaimsPrincipalFactory<VNews.Domain.Identity.ApplicationUser>, VNews.Web.Security.DisplayNameClaimsFactory>();
 
 // Auth/antiforgery cookies: never readable by script, never sent cross-site on POST. Secure is
 // forced outside Development; Development (plain http://localhost) keeps working.
@@ -32,6 +34,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.SecurePolicy = cookieSecurePolicy;
 });
+// A role change must apply on the user next request, not when the cookie expires: re-validate the security stamp every request.
+builder.Services.Configure<Microsoft.AspNetCore.Identity.SecurityStampValidatorOptions>(o => o.ValidationInterval = TimeSpan.Zero);
 builder.Services.AddAntiforgery(options =>
 {
     options.Cookie.HttpOnly = true;
@@ -155,6 +159,12 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 app.MapControllerRoute(
+    name: "account-saved",
+    pattern: "tai-khoan/bai-da-luu",
+    defaults: new { controller = "Account", action = "SavedArticles" })
+    .WithStaticAssets();
+
+app.MapControllerRoute(
     name: "account-profile",
     pattern: "tai-khoan/ho-so",
     defaults: new { controller = "Account", action = "Profile" })
@@ -181,7 +191,7 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name: "cms",
     pattern: "cms/{controller=CmsArticles}/{action=Index}/{id?}",
-    constraints: new { controller = "CmsArticles|CmsCategories|CmsUsers" })
+    constraints: new { controller = "CmsArticles|CmsCategories|CmsUsers|CmsOverview|CmsAudit" })
     .WithStaticAssets();
 
 app.MapControllerRoute(

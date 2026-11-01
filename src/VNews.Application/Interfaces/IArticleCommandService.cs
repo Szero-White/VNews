@@ -5,8 +5,14 @@ namespace VNews.Application.Interfaces;
 
 public interface IArticleCommandService
 {
+    /// <param name="search">Optional words matched (accent- and case-insensitively) against the title or the author name.</param>
+    /// <param name="oldestFirst">Review queues work oldest first; everything else lists the most recently changed first.</param>
     Task<PagedResult<ArticleCmsListItemDto>> ListForCmsAsync(
-        string? statusFilter, string? authorUserId, int page, int pageSize, CancellationToken cancellationToken = default);
+        string? statusFilter, string? authorUserId, int page, int pageSize, CancellationToken cancellationToken = default,
+        string? search = null, bool oldestFirst = false);
+
+    /// <summary>Counts per status; pass an author id to count only that author's articles.</summary>
+    Task<CmsStatsDto> GetCmsStatsAsync(string? authorUserId, CancellationToken cancellationToken = default);
 
     Task<ArticleEditDto?> GetForEditAsync(int articleId, CancellationToken cancellationToken = default);
 

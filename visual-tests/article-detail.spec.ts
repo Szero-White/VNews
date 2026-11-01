@@ -68,7 +68,8 @@ test('mobile article: single column, no overflow, side column stacks below', asy
   const aside = (await page.locator('.article-layout__aside').boundingBox())!;
   expect(main.width).toBeGreaterThan(330);
   expect(aside.y).toBeGreaterThan(main.y + main.height - 1);
-  const cover = await page.locator('.article-detail__cover').boundingBox();
+  // The cover is optional (articles created in the CMS may have none); boundingBox() would wait for a missing element.
+  const cover = await page.locator('.article-detail__cover').count() ? await page.locator('.article-detail__cover').boundingBox() : null;
   if (cover) expect(cover.x + cover.width).toBeLessThanOrEqual(391);
   for (const card of await page.locator('.article-related__card').all()) {
     const box = (await card.boundingBox())!;

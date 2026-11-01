@@ -3,7 +3,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using VNews.Application.Common;
+using VNews.Domain.Entities;
 using VNews.Domain.Identity;
+using VNews.Infrastructure.Persistence;
+using VNews.Web.Demo;
 using VNews.Web.Models.Account;
 using VNews.Web.Security;
 
@@ -18,12 +23,14 @@ public sealed class AccountController : Controller
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<AccountController> _logger;
+    private readonly VNewsDbContext _db;
 
-    public AccountController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ILogger<AccountController> logger)
+    public AccountController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ILogger<AccountController> logger, VNewsDbContext db)
     {
         _signInManager = signInManager;
         _userManager = userManager;
         _logger = logger;
+        _db = db;
     }
 
     [HttpGet]
@@ -123,13 +130,98 @@ public sealed class AccountController : Controller
         return LocalRedirect(PostLoginDestination.For(Url, new[] { Roles.Reader }, SafeReturnUrl(model.ReturnUrl)));
     }
 
+    private IQueryable<SavedArticle> SavedOf(string userId) =>
+        _db.SavedArticles.AsNoTracking().Where(x => x.UserId == userId && x.Article.Status == ArticleStatus.Published);
+
+    // An expression (not a method call) so EF translates it into the SQL projection.
+    private static readonly System.Linq.Expressions.Expression<Func<SavedArticle, SavedArticleRow>> RowProjection =
+        x => new SavedArticleRow(x.ArticleId, x.Article.Slug, x.Article.Title, x.Article.CoverImageUrl, x.Article.Category.Name, x.Article.PublishedAt, x.SavedAtUtc);
+
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> Profile()
+    public async Task<IActionResult> Profile(CancellationToken cancellationToken)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user is null) return Challenge();
-        return View(new ProfileViewModel(user.DisplayName, user.Email ?? string.Empty, IsStaff()));
+
+        var recent = await SavedOf(user.Id).OrderByDescending(x => x.SavedAtUtc).Take(4).Select(RowProjection).ToListAsync(cancellationToken);
+        return View(new ProfileViewModel
+        {
+            DisplayName = user.DisplayName,
+            Email = user.Email ?? string.Empty,
+            Roles = (await _userManager.GetRolesAsync(user)).ToList(),
+            IsStaff = IsStaff(),
+            IsDemo = User.HasClaim(DemoPersonas.ClaimType, "true"),
+            SavedCount = await SavedOf(user.Id).CountAsync(cancellationToken),
+            RecentSaved = recent,
+        });
+    }
+
+    /// <summary>Changes the display name only. Roles, e-mail and password are never touched here; demo accounts are read-only.</summary>
+    [Authorize]
+    [HttpPost]
+    [ActionName("Profile")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateProfile(UpdateProfileModel model)
+    {
+        if (User.HasClaim(DemoPersonas.ClaimType, "true"))
+        {
+            TempData["Error"] = "Tài khoản demo không thể đổi hồ sơ.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).FirstOrDefault() ?? "Tên hiển thị không hợp lệ.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null) return Challenge();
+
+        user.DisplayName = model.DisplayName.Trim();
+        var result = await _userManager.UpdateAsync(user);
+        TempData[result.Succeeded ? "Message" : "Error"] = result.Succeeded ? "Đã cập nhật tên hiển thị." : "Không thể cập nhật hồ sơ lúc này.";
+        // Refresh the cookie so the new name shows immediately.
+        if (result.Succeeded) await _signInManager.RefreshSignInAsync(user);
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> SavedArticles(int page = 1, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null) return Challenge();
+
+        const int pageSize = 12;
+        var total = await SavedOf(user.Id).CountAsync(cancellationToken);
+        var lastPage = Math.Max(1, (int)Math.Ceiling(total / (double)pageSize));
+        page = Math.Clamp(page, 1, lastPage);
+        var rows = await SavedOf(user.Id).OrderByDescending(x => x.SavedAtUtc).Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(RowProjection).ToListAsync(cancellationToken);
+
+        return View(new SavedArticlesViewModel
+        {
+            DisplayName = user.DisplayName,
+            Items = new PagedResult<SavedArticleRow> { Items = rows, Page = page, PageSize = pageSize, TotalCount = total },
+        });
+    }
+
+    [Authorize]
+    [HttpPost("tai-khoan/bai-da-luu/bo-luu/{id:int}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveSaved(int id, CancellationToken cancellationToken)
+    {
+        var userId = _userManager.GetUserId(User);
+        var saved = await _db.SavedArticles.FirstOrDefaultAsync(x => x.UserId == userId && x.ArticleId == id, cancellationToken);
+        if (saved is not null)
+        {
+            _db.SavedArticles.Remove(saved);
+            await _db.SaveChangesAsync(cancellationToken);
+            TempData["Message"] = "Đã bỏ lưu bài viết.";
+        }
+        return RedirectToAction(nameof(SavedArticles));
     }
 
     [HttpPost]

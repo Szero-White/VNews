@@ -46,8 +46,12 @@ test('many results paginate without repeating an article and the keyword survive
   await page.goto('/tim-kiem?q=bai+viet');
   const total = Number(await page.locator('.search-count strong').innerText());
   expect(total).toBeGreaterThan(12);
-  const pages = await page.locator('.pagination__item').count();
-  expect(pages).toBe(Math.ceil(total / 12));
+  // Up to 7 page numbers are all shown; beyond that the pager collapses (1 … current … last), and the last label is the page count.
+  // (Other specs publish articles whose titles match this keyword, so the result set grows over time.)
+  const pages = Math.ceil(total / 12);
+  const numbers = page.locator('.pagination__item');
+  if (pages <= 7) expect(await numbers.count()).toBe(pages);
+  else expect(Number(await numbers.last().innerText())).toBe(pages);
 
   const seen: string[] = [];
   for (let p = 1; p <= pages; p++) {

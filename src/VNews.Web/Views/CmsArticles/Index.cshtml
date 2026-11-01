@@ -1,86 +1,189 @@
-@model PagedResult<ArticleCmsListItemDto>
+@using VNews.Web.Helpers
+@model CmsWorkspaceViewModel
 @{
-    ViewData["Title"] = "Quản lý bài viết";
-    Layout = "_CmsLayout";
+    Layout = "_AppLayout";
+    var privileged = Model.IsPrivileged;
+    ViewData["Title"] = privileged ? "Không gian biên tập" : "Bài viết của tôi";
+    ViewData["AppNav"] = Model.Status == "PendingReview" && privileged ? "queue" : "articles";
+    ViewData["Crumbs"] = new (string, string?)[] { ("Tòa soạn", null), (privileged ? "Không gian biên tập" : "Bài viết của tôi", null) };
+    var s = Model.Stats;
+    var query = new Dictionary<string, string?> { ["status"] = Model.Status, ["q"] = Model.Query };
+
+    string StatusLink(string st) => Url.Action("Index", "CmsArticles", new { status = st })!;
+    bool IsOwner(ArticleCmsListItemDto a) => a.AuthorUserId == Model.CurrentUserId;
 }
 
-<div class="cms-card">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-        <h1 style="margin:0;">Bài viết @(ViewBag.IsPrivileged ? "(tất cả)" : "(của tôi)")</h1>
-        <a asp-action="Create" class="cms-btn">+ Tạo bài mới</a>
+<div class="page-head">
+    <div class="page-head__text">
+        <h1 class="app-page-title">@(privileged ? "Không gian biên tập" : "Bài viết của tôi")</h1>
+        <p class="page-head__sub">Xin chào, <strong>@Model.DisplayName</strong> <span class="badge badge--@(Model.RoleLabel == "Quản trị viên" ? "admin" : privileged ? "editor" : "author")">@Model.RoleLabel</span></p>
     </div>
-
-    <form method="get" style="margin: 12px 0;">
-        <select name="status" class="js-autosubmit">
-            <option value="">-- Tất cả trạng thái --</option>
-            <option value="Draft" selected="@(ViewBag.StatusFilter == "Draft")">Nháp</option>
-            <option value="PendingReview" selected="@(ViewBag.StatusFilter == "PendingReview")">Chờ duyệt</option>
-            <option value="Published" selected="@(ViewBag.StatusFilter == "Published")">Đã xuất bản</option>
-            <option value="Rejected" selected="@(ViewBag.StatusFilter == "Rejected")">Bị từ chối</option>
-        </select>
-    </form>
-
-    <table class="cms-table">
-        <thead>
-            <tr>
-                <th>Tiêu đề</th>
-                <th>Chuyên mục</th>
-                <th>Tác giả</th>
-                <th>Trạng thái</th>
-                <th>Cập nhật</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model.Items)
-            {
-                <tr>
-                    <td>@item.Title</td>
-                    <td>@item.CategoryName</td>
-                    <td>@item.AuthorName</td>
-                    <td><span class="cms-badge cms-badge--@item.Status.ToLowerInvariant()">@item.Status</span></td>
-                    <td>@((item.UpdatedAt ?? item.CreatedAt).ToString("dd/MM/yyyy HH:mm"))</td>
-                    <td class="cms-actions">
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="cms-btn cms-btn--secondary">Sửa</a>
-                        @if (item.Status is "Draft" or "Rejected")
-                        {
-                            <form asp-action="SubmitForReview" asp-route-id="@item.Id" method="post" style="display:inline">
-                                <button type="submit" class="cms-btn">Gửi duyệt</button>
-                            </form>
-                        }
-                        @if (item.Status == "PendingReview" && ViewBag.IsPrivileged)
-                        {
-                            <form asp-action="Publish" asp-route-id="@item.Id" method="post" style="display:inline">
-                                <button type="submit" class="cms-btn cms-btn--success">Xuất bản</button>
-                            </form>
-                            <form asp-action="Reject" asp-route-id="@item.Id" method="post" style="display:inline" class="js-reject-form">
-                                <input type="hidden" name="reason" value="" />
-                                <button type="submit" class="cms-btn cms-btn--danger">Từ chối</button>
-                            </form>
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-
-    @if (!Model.Items.Any())
-    {
-        <p style="color:#666; margin-top:12px;">Chưa có bài viết nào.</p>
-    }
+    <div class="page-head__actions">
+        <a asp-action="Create" class="btn btn--primary"><svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>Viết bài mới</a>
+    </div>
 </div>
 
-@section Scripts {
-    <script nonce="@Context.Items["csp-nonce"]">
-        document.querySelectorAll('select.js-autosubmit').forEach(function (select) {
-            select.addEventListener('change', function () { select.form.submit(); });
-        });
-        document.querySelectorAll('form.js-reject-form').forEach(function (form) {
-            form.addEventListener('submit', function (e) {
-                var reason = prompt('Lý do từ chối:');
-                if (!reason) { e.preventDefault(); return; }
-                form.querySelector('input[name="reason"]').value = reason;
-            });
-        });
-    </script>
+<section class="stats" aria-label="Thống kê bài viết">
+    <a class="stat stat--draft @(Model.Status == "Draft" ? "is-current" : "")" href="@StatusLink("Draft")"><span class="stat__label">Bản nháp</span><span class="stat__value">@s.Draft</span><span class="stat__hint">@(privileged ? "Chưa gửi duyệt" : "Đang soạn")</span></a>
+    <a class="stat stat--pending @(Model.Status == "PendingReview" ? "is-current" : "")" href="@StatusLink("PendingReview")"><span class="stat__label">Chờ duyệt</span><span class="stat__value">@s.PendingReview</span><span class="stat__hint">@(privileged ? "Cần biên tập viên xử lý" : "Đang chờ biên tập")</span></a>
+    <a class="stat stat--rejected @(Model.Status == "Rejected" ? "is-current" : "")" href="@StatusLink("Rejected")"><span class="stat__label">Cần chỉnh sửa</span><span class="stat__value">@s.Rejected</span><span class="stat__hint">Đã trả lại kèm lý do</span></a>
+    <a class="stat stat--published @(Model.Status == "Published" ? "is-current" : "")" href="@StatusLink("Published")"><span class="stat__label">Đã xuất bản</span><span class="stat__value">@s.Published</span><span class="stat__hint">Đang hiển thị công khai</span></a>
+</section>
+
+@if (Model.IsDashboard)
+{
+    <section class="card" aria-labelledby="attention-title">
+        <div class="card__head">
+            <div>
+                <h2 class="card__title" id="attention-title">@Model.AttentionTitle</h2>
+                <p class="card__hint">@Model.AttentionHint</p>
+            </div>
+        </div>
+        @if (Model.Attention.Count == 0)
+        {
+            <div class="empty">
+                <svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>
+                <p class="empty__title">@(privileged ? "Không có bài nào đang chờ duyệt" : "Chưa có bản nháp nào")</p>
+                <p class="empty__text">@(privileged ? "Hàng chờ đã được xử lý hết." : "Bắt đầu với một bài viết mới.")</p>
+                @if (!privileged) { <a asp-action="Create" class="btn btn--primary">Viết bài mới</a> }
+            </div>
+        }
+        else
+        {
+            <ul class="list-plain">
+                @foreach (var a in Model.Attention)
+                {
+                    <li>
+                        <div>
+                            <a class="table__title" asp-action="Edit" asp-route-id="@a.Id">@a.Title</a>
+                            <span class="table__sub">@a.CategoryName · @a.AuthorName · @((a.UpdatedAt ?? a.CreatedAt).ToString("dd/MM/yyyy HH:mm"))</span>
+                            @if (a.Status == "Rejected" && !string.IsNullOrWhiteSpace(a.ReviewNote)) { <span class="table__note">Lý do: @a.ReviewNote</span> }
+                        </div>
+                        <a asp-action="Edit" asp-route-id="@a.Id" class="btn btn--secondary btn--sm">@(privileged ? "Xem xét" : "Chỉnh sửa")</a>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
 }
+
+<section class="card" aria-labelledby="list-title">
+    <div class="card__head">
+        <h2 class="card__title" id="list-title">@(Model.Status is null ? (privileged ? "Tất cả bài viết" : "Bài viết của bạn") : CmsStatus.Label(Model.Status))</h2>
+        <span class="card__hint">@Model.List.TotalCount bài</span>
+    </div>
+    <form method="get" class="filters" role="search" aria-label="Lọc bài viết">
+        <div class="filters__search">
+            <svg class="icon" aria-hidden="true"><use href="#i-search" /></svg>
+            <label for="q" class="sr-only">Tìm theo tiêu đề</label>
+            <input id="q" name="q" value="@Model.Query" maxlength="100" class="app-input" placeholder="Tìm theo tiêu đề" />
+        </div>
+        <label for="status" class="sr-only">Trạng thái</label>
+        <select id="status" name="status" class="app-select" data-autosubmit>
+            <option value="">Tất cả trạng thái</option>
+            @foreach (var st in CmsStatus.All)
+            {
+                <option value="@st" selected="@(Model.Status == st)">@CmsStatus.Label(st)</option>
+            }
+        </select>
+        <button type="submit" class="btn btn--secondary">Lọc</button>
+        @if (Model.Status is not null || Model.Query is not null)
+        {
+            <a asp-action="Index" class="btn btn--ghost">Xóa bộ lọc</a>
+        }
+    </form>
+
+    @if (Model.List.Items.Count == 0)
+    {
+        <div class="empty">
+            <svg class="icon" aria-hidden="true"><use href="#i-file" /></svg>
+            @if (Model.Status is not null || Model.Query is not null)
+            {
+                @if (Model.Query is null && Model.Status is not null)
+                {
+                    <p class="empty__title">Không có bài viết “@CmsStatus.Label(Model.Status)”</p>
+                    <p class="empty__text">@CmsStatus.Hint(Model.Status).</p>
+                }
+                else
+                {
+                    <p class="empty__title">Không tìm thấy bài viết phù hợp</p>
+                    <p class="empty__text">Thử đổi từ khóa hoặc bỏ bộ lọc trạng thái.</p>
+                }
+                <a asp-action="Index" class="btn btn--secondary">Xóa bộ lọc</a>
+            }
+            else
+            {
+                <p class="empty__title">Chưa có bài viết nào</p>
+                <p class="empty__text">@(privileged ? "Bài viết sẽ xuất hiện ở đây khi tác giả tạo bản nháp." : "Hãy viết bài đầu tiên của bạn.")</p>
+                <a asp-action="Create" class="btn btn--primary">Viết bài mới</a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table--cards">
+                <thead>
+                    <tr>
+                        <th scope="col">Bài viết</th>
+                        <th scope="col">Chuyên mục</th>
+                        @if (privileged) { <th scope="col">Tác giả</th> }
+                        <th scope="col">Trạng thái</th>
+                        <th scope="col">@(Model.Status == "PendingReview" ? "Cập nhật (cũ nhất trước)" : "Cập nhật")</th>
+                        <th scope="col"><span class="sr-only">Thao tác</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model.List.Items)
+                    {
+                        var act = CmsRowActions.For(a.Status, IsOwner(a), privileged);
+                        var canOpen = a.Status == "PendingReview" && (IsOwner(a) || privileged);
+                        <tr>
+                            <td class="table__cell-title">
+                                <div class="article-cell">
+                                    @if (!string.IsNullOrWhiteSpace(a.CoverImageUrl)) { <img class="article-cell__thumb" src="@a.CoverImageUrl" alt="" loading="lazy" /> }
+                                    else { <span class="article-cell__thumb article-cell__thumb--none" title="Chưa có ảnh bìa"><svg class="icon" aria-hidden="true"><use href="#i-image" /></svg><span class="sr-only">Chưa có ảnh bìa</span></span> }
+                                    <div class="article-cell__text">
+                                        <a class="table__title" asp-action="Edit" asp-route-id="@a.Id">@a.Title</a>
+                                        @if (a.Status == "Rejected" && !string.IsNullOrWhiteSpace(a.ReviewNote)) { <span class="table__note">Lý do trả lại: @a.ReviewNote</span> }
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-label="Chuyên mục">@a.CategoryName</td>
+                            @if (privileged) { <td data-label="Tác giả">@a.AuthorName</td> }
+                            <td data-label="Trạng thái"><span class="badge badge--@CmsStatus.Css(a.Status)" title="@CmsStatus.Hint(a.Status)">@CmsStatus.Label(a.Status)</span></td>
+                            <td data-label="Cập nhật">@((a.UpdatedAt ?? a.CreatedAt).ToString("dd/MM/yyyy HH:mm"))</td>
+                            <td>
+                                <div class="table__actions">
+                                    @if (act.CanViewPublic) { <a asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug" class="btn btn--secondary btn--sm">Xem</a> }
+                                    @if (canOpen) { <a asp-action="Edit" asp-route-id="@a.Id" class="btn btn--secondary btn--sm">Xem</a> }
+                                    @if (act.CanEdit) { <a asp-action="Edit" asp-route-id="@a.Id" class="btn btn--secondary btn--sm">Sửa</a> }
+                                    @if (act.CanSubmit)
+                                    {
+                                        <form asp-action="SubmitForReview" asp-route-id="@a.Id" method="post" class="inline-form" data-confirm="Gửi bài “@a.Title” cho biên tập viên duyệt? Bạn sẽ không sửa được bài trong lúc chờ duyệt." data-confirm-title="Gửi duyệt" data-confirm-label="Gửi duyệt">
+                                            <button type="submit" class="btn btn--primary btn--sm">Gửi duyệt</button>
+                                        </form>
+                                    }
+                                    @if (act.CanPublish)
+                                    {
+                                        <form asp-action="Publish" asp-route-id="@a.Id" method="post" class="inline-form" data-confirm="Xuất bản bài “@a.Title”? Bài sẽ hiển thị công khai ngay." data-confirm-title="Duyệt và xuất bản" data-confirm-label="Duyệt">
+                                            <button type="submit" class="btn btn--primary btn--sm">Duyệt</button>
+                                        </form>
+                                    }
+                                    @if (act.CanReject)
+                                    {
+                                        <form asp-action="Reject" asp-route-id="@a.Id" method="post" class="inline-form js-reject-form" data-confirm="Từ chối bài “@a.Title”. Tác giả sẽ thấy lý do này để chỉnh sửa." data-confirm-title="Từ chối bài viết" data-confirm-label="Từ chối" data-confirm-danger data-reason>
+                                            <input type="hidden" name="reason" value="" />
+                                            <button type="submit" class="btn btn--danger btn--sm">Từ chối</button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_AppPager" model="@(new AppPagerModel { Page = Model.List.Page, PageSize = Model.List.PageSize, TotalCount = Model.List.TotalCount, Controller = "CmsArticles", Query = query, Noun = "bài" })" />
+    }
+</section>

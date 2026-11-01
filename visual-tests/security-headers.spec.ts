@@ -77,10 +77,12 @@ async function ensurePendingArticle(browser: Browser, baseURL: string) {
   await author.getByRole('button', { name: 'Tạo bản nháp' }).click();
   await author.waitForURL(/\/CmsArticles\/Edit\/\d+/i);
   await author.getByRole('button', { name: /Gửi duyệt/ }).click();
+  await author.locator('#app-confirm [data-confirm-accept]').click();
+  await author.waitForURL(/\/cms/);
   await context.close();
 }
 
-test('CMS: reject button works without an inline handler (cancel keeps the form unsent)', async ({ page, browser, baseURL }) => {
+test('CMS: reject opens the confirmation dialog without an inline handler; cancel keeps the form unsent, a reason is required', async ({ page, browser, baseURL }) => {
   const problems = watchViolations(page);
   await loginCms(page, 'editor@vnews.local');
   await page.goto('/cms/CmsArticles?status=PendingReview');
@@ -91,13 +93,16 @@ test('CMS: reject button works without an inline handler (cancel keeps the form 
   const rejectForm = page.locator('form.js-reject-form').first();
   await expect(rejectForm).toHaveCount(1);
 
-  let prompted = false;
-  page.on('dialog', async dialog => { prompted = true; await dialog.dismiss(); });
   const urlBefore = page.url();
   await rejectForm.locator('button[type="submit"]').click();
 
-  // The prompt only appears if the nonce-protected script attached its submit listener.
-  await expect.poll(() => prompted).toBe(true);
+  // The dialog only opens if the nonce-protected script attached its submit listener.
+  const dialog = page.locator('#app-confirm');
+  await expect(dialog).toBeVisible();
+  await dialog.locator('[data-confirm-accept]').click();
+  await expect(dialog.locator('.app-field-error')).toBeVisible(); // a reason is required
+  await dialog.locator('[data-confirm-cancel]').click();
+  await expect(dialog).toBeHidden();
   expect(page.url()).toBe(urlBefore);
   expect(problems).toEqual([]);
 });

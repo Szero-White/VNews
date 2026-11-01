@@ -1,0 +1,104 @@
+@using VNews.Web.Helpers
+@using VNews.Web.Demo
+@* Shell for everything after sign-in that is not the public news site: the account pages and the whole newsroom.
+   One layout for every role (Reader, Author, Editor, Admin, demo or real): sidebar + top bar + content.
+   ViewData: Title, AppNav (active sidebar entry), Crumbs ((string Text, string? Url)[]). *@
+@{
+    var roles = User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList();
+    var primaryRole = AppFormat.PrimaryRole(roles);
+    var displayName = User.FindFirst("DisplayName")?.Value ?? User.Identity?.Name ?? string.Empty;
+    var isDemo = User.HasClaim(DemoPersonas.ClaimType, "true");
+    var crumbs = ViewData["Crumbs"] as (string Text, string? Url)[] ?? Array.Empty<(string, string?)>();
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#a61b46" />
+    <title>@ViewData["Title"] · VNews</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap" media="print" data-font-swap />
+    <link rel="stylesheet" href="~/css/brand-logo.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/auth-tokens.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app-ui.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/demo-login.css" asp-append-version="true" />
+    @await RenderSectionAsync("Head", required: false)
+    <script src="~/js/font-swap.js" asp-append-version="true" defer></script>
+</head>
+<body class="vn-app">
+    <a class="app-skip" href="#app-main">Bỏ qua điều hướng, đến nội dung</a>
+    <partial name="_AppIcons" />
+    <div class="app-shell">
+        <aside id="app-sidebar" class="app-sidebar" aria-label="Menu">
+            <div class="app-sidebar__brand">
+                <a class="vn-logo app-sidebar__logo" asp-controller="Home" asp-action="Index" aria-label="VNews - Về trang tin"><partial name="_BrandMark" /></a>
+                <button type="button" class="app-icon-btn app-sidebar__close" data-app-menu-close aria-label="Đóng menu"><svg class="icon" aria-hidden="true"><use href="#i-x" /></svg></button>
+            </div>
+            <partial name="_AppSidebar" />
+            <div class="app-sidebar__foot">
+                <a class="app-nav__link" asp-controller="Home" asp-action="Index"><svg class="icon" aria-hidden="true"><use href="#i-external" /></svg><span>Xem trang tin</span></a>
+            </div>
+        </aside>
+        <div id="app-backdrop" class="app-backdrop" hidden></div>
+
+        <div class="app-body">
+            <header class="app-topbar">
+                <button type="button" class="app-icon-btn app-menu-btn" id="app-menu-btn" aria-controls="app-sidebar" aria-expanded="false" aria-label="Mở menu"><svg class="icon" aria-hidden="true"><use href="#i-menu" /></svg></button>
+                <nav class="app-breadcrumb" aria-label="Đường dẫn">
+                    <ol>
+                        @foreach (var crumb in crumbs)
+                        {
+                            <li>@if (crumb.Url is not null) { <a href="@crumb.Url">@crumb.Text</a> } else { <span aria-current="page">@crumb.Text</span> }</li>
+                        }
+                    </ol>
+                </nav>
+                <div class="app-user">
+                    <span class="app-avatar" aria-hidden="true">@AppFormat.Initials(displayName)</span>
+                    <span class="app-user__text">
+                        <span class="app-user__name">@displayName</span>
+                        <span class="app-user__role">@AppFormat.RoleLabel(primaryRole)@(isDemo ? " · demo" : "")</span>
+                    </span>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="app-user__logout">
+                        <button type="submit" class="app-icon-btn" aria-label="Đăng xuất" title="Đăng xuất"><svg class="icon" aria-hidden="true"><use href="#i-logout" /></svg></button>
+                    </form>
+                </div>
+            </header>
+
+            <main id="app-main" class="app-main" tabindex="-1">
+                @if (TempData["Message"] is string message)
+                {
+                    <div class="app-alert app-alert--success" role="status"><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg><span>@message</span><button type="button" class="app-alert__close" data-dismiss aria-label="Đóng thông báo"><svg class="icon" aria-hidden="true"><use href="#i-x" /></svg></button></div>
+                }
+                @if (TempData["Error"] is string error)
+                {
+                    <div class="app-alert app-alert--error" role="alert"><svg class="icon" aria-hidden="true"><use href="#i-alert" /></svg><span>@error</span><button type="button" class="app-alert__close" data-dismiss aria-label="Đóng thông báo"><svg class="icon" aria-hidden="true"><use href="#i-x" /></svg></button></div>
+                }
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    @* One confirmation dialog for every important action (publish, reject, ...), opened by app-shell.js. *@
+    <dialog id="app-confirm" class="app-dialog" aria-labelledby="app-confirm-title" aria-describedby="app-confirm-text">
+        <form method="dialog" class="app-dialog__form">
+            <h2 id="app-confirm-title" class="app-dialog__title">Xác nhận</h2>
+            <p id="app-confirm-text" class="app-dialog__text"></p>
+            <div class="app-dialog__reason" hidden>
+                <label for="app-confirm-reason" class="app-label">Lý do (bắt buộc)</label>
+                <textarea id="app-confirm-reason" class="app-textarea" rows="3" maxlength="500"></textarea>
+                <p class="app-field-error" role="alert" hidden>Vui lòng nhập lý do.</p>
+            </div>
+            <div class="app-dialog__actions">
+                <button type="button" class="btn btn--secondary" data-confirm-cancel>Hủy</button>
+                <button type="button" class="btn btn--primary" data-confirm-accept>Xác nhận</button>
+            </div>
+        </form>
+    </dialog>
+
+    <partial name="_DemoBadge" />
+    <script src="~/js/app-shell.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

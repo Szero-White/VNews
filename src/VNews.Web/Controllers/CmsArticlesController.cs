@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using VNews.Application.Common;
 using VNews.Application.DTOs.Cms;
 using VNews.Application.Interfaces;
+using VNews.Web.Models.Cms;
 using VNews.Domain.Identity;
 
 namespace VNews.Web.Controllers;
@@ -32,14 +33,54 @@ public class CmsArticlesController : Controller
     private string CurrentUserId => _userManager.GetUserId(User)!;
     private bool IsPrivileged => User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Editor);
 
-    public async Task<IActionResult> Index(string? status, int page = 1, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Index(string? status, string? q, int page = 1, CancellationToken cancellationToken = default)
     {
+        // Authors only ever see their own articles; editors and admins see everything.
         var authorFilter = IsPrivileged ? null : CurrentUserId;
-        var result = await _articleCommandService.ListForCmsAsync(status, authorFilter, page, 20, cancellationToken);
+        status = VNews.Web.Helpers.CmsStatus.All.Contains(status ?? string.Empty) ? status : null;
+        q = string.IsNullOrWhiteSpace(q) ? null : q.Trim()[..Math.Min(q.Trim().Length, 100)];
 
-        ViewBag.StatusFilter = status;
-        ViewBag.IsPrivileged = IsPrivileged;
-        return View(result);
+        var stats = await _articleCommandService.GetCmsStatsAsync(authorFilter, cancellationToken);
+        var list = await _articleCommandService.ListForCmsAsync(status, authorFilter, page, 15, cancellationToken, q,
+            oldestFirst: status == "PendingReview");
+
+        // What needs attention: editors/admins the review queue (oldest first); authors the articles sent back, else drafts.
+        IReadOnlyList<ArticleCmsListItemDto> attention;
+        string attentionTitle, attentionHint;
+        if (IsPrivileged)
+        {
+            attention = (await _articleCommandService.ListForCmsAsync("PendingReview", null, 1, 5, cancellationToken, oldestFirst: true)).Items;
+            attentionTitle = "Bài cần xử lý";
+            attentionHint = "Bài đang chờ duyệt, cũ nhất ở trên cùng.";
+        }
+        else
+        {
+            attention = (await _articleCommandService.ListForCmsAsync("Rejected", authorFilter, 1, 5, cancellationToken)).Items;
+            attentionTitle = "Cần chỉnh sửa";
+            attentionHint = "Bài được biên tập viên trả lại kèm lý do.";
+            if (attention.Count == 0)
+            {
+                attention = (await _articleCommandService.ListForCmsAsync("Draft", authorFilter, 1, 5, cancellationToken)).Items;
+                attentionTitle = "Bản nháp đang viết";
+                attentionHint = "Hoàn thiện rồi gửi duyệt khi sẵn sàng.";
+            }
+        }
+
+        var user = await _userManager.GetUserAsync(User);
+        return View(new CmsWorkspaceViewModel
+        {
+            Stats = stats,
+            List = list,
+            Attention = attention,
+            AttentionTitle = attentionTitle,
+            AttentionHint = attentionHint,
+            Status = status,
+            Query = q,
+            IsPrivileged = IsPrivileged,
+            CurrentUserId = CurrentUserId,
+            DisplayName = user?.DisplayName ?? User.Identity?.Name ?? string.Empty,
+            RoleLabel = VNews.Web.Helpers.AppFormat.RoleLabel(VNews.Web.Helpers.AppFormat.PrimaryRole(User.FindAll(ClaimTypes.Role).Select(c => c.Value))),
+        });
     }
 
     [HttpGet]

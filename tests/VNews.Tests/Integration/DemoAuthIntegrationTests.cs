@@ -63,7 +63,12 @@ public class DemoAuthIntegrationTests : IClassFixture<DemoAuthWebApplicationFact
             Assert.Single(forms, f => f.Contains($"name=\"role\" value=\"{key}\""));
         }
         Assert.All(forms, f => Assert.Contains("name=\"__RequestVerificationToken\"", f));
-        foreach (var title in new[] { "Demo Độc giả", "Demo Tác giả", "Demo Biên tập viên", "Demo Quản trị viên" }) Assert.Contains(title, html);
+        foreach (var title in new[] { "Độc giả", "Tác giả", "Biên tập viên", "Quản trị viên" })
+        {
+            Assert.Contains($"<h3 class=\"demo-card__title\">{title}</h3>", html);
+            Assert.Contains($"aria-label=\"Vào demo {title}\"", html); // the buttons differ only by their accessible name
+        }
+        Assert.Equal(4, Regex.Matches(html, ">Vào demo</button>").Count); // identical, short visible text: nothing wraps
 
         // No password, account address, token or role id in the markup, and no demo JavaScript at all.
         Assert.DoesNotContain("Demo@12345", html);
@@ -178,18 +183,18 @@ public class DemoAuthIntegrationTests : IClassFixture<DemoAuthWebApplicationFact
     }
 
     [Fact]
-    public async Task AdminDemo_LandsOnUserAdministration_AndCanOpenEveryNewsroomArea()
+    public async Task AdminDemo_LandsOnTheSystemOverview_AndCanOpenEveryNewsroomArea()
     {
         var client = _factory.NewClient();
         var response = await PostDemoAsync(client, "admin");
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.EndsWith("/CmsUsers", Location(response));
+        Assert.EndsWith("/CmsOverview", Location(response));
 
         foreach (var path in new[] { Location(response), "/cms/CmsCategories", "/cms/CmsArticles", "/cms/CmsArticles/Create" })
         {
             Assert.Equal(HttpStatusCode.OK, (await client.GetAsync(path)).StatusCode);
         }
-        var cms = await client.GetStringAsync("/cms/CmsUsers");
+        var cms = await client.GetStringAsync("/cms/CmsOverview");
         Assert.Contains("class=\"demo-badge\"", cms);
         Assert.Contains("DEMO</strong> · Quản trị viên", WebUtility.HtmlDecode(cms));
     }
@@ -406,7 +411,7 @@ public class UnifiedSignInIntegrationTests : IClassFixture<IsolatedDbWebApplicat
     [Theory]
     [InlineData("author@vnews.local", "/cms")]
     [InlineData("editor@vnews.local", "status=PendingReview")]
-    [InlineData("admin@vnews.local", "/CmsUsers")]
+    [InlineData("admin@vnews.local", "/CmsOverview")]
     public async Task StaffSignIn_GoesToTheirOwnAreaOfTheNewsroom(string email, string expectedPart)
     {
         var client = _factory.NewClient();

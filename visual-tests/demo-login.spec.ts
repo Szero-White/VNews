@@ -24,12 +24,12 @@ test('login page: four role cards with descriptions, buttons and no secrets anyw
   const cards = page.locator('.demo-login--page .demo-card');
   await expect(cards).toHaveCount(4);
   for (const [title, button, desc] of [
-    ['Demo Độc giả', 'Vào Demo Độc giả', 'Đọc tin, lưu bài viết'],
-    ['Demo Tác giả', 'Vào Demo Tác giả', 'Viết bài, lưu bản nháp'],
-    ['Demo Biên tập viên', 'Vào Demo Biên tập viên', 'duyệt hoặc từ chối'],
-    ['Demo Quản trị viên', 'Vào Demo Quản trị viên', 'Quản lý chuyên mục và người dùng'],
+    ['Độc giả', 'Vào demo Độc giả', 'Đọc tin, lưu bài viết'],
+    ['Tác giả', 'Vào demo Tác giả', 'Viết bài, lưu bản nháp'],
+    ['Biên tập viên', 'Vào demo Biên tập viên', 'duyệt hoặc từ chối'],
+    ['Quản trị viên', 'Vào demo Quản trị viên', 'Quản lý chuyên mục và người dùng'],
   ]) {
-    const card = cards.filter({ hasText: title });
+    const card = cards.filter({ has: page.locator('.demo-card__title', { hasText: title }) });
     await expect(card).toHaveCount(1);
     await expect(card).toContainText(desc);
     await expect(card.getByRole('button', { name: button })).toBeVisible();
@@ -77,23 +77,24 @@ test('Demo Reader: lands on the public site, shows the demo badge, saves an arti
 test('Demo Author: lands in the newsroom, creates a draft, sends it for review; no admin areas', async ({ page }) => {
   await demoLogin(page, 'author');
   await expect(page).toHaveURL(/\/cms/);
-  await expect(page.locator('.cms-topbar')).toBeVisible();
+  await expect(page.locator('.app-topbar')).toBeVisible();
   await expect(badge(page)).toContainText('Tác giả');
 
   const title = `Bản nháp demo tác giả ${Date.now()}`;
-  await page.getByRole('link', { name: '+ Tạo bài mới' }).click();
+  await page.locator('.page-head__actions').getByRole('link', { name: 'Viết bài mới' }).click();
   await page.locator('#Title').fill(title);
   await page.locator('#CategoryId').selectOption({ index: 1 });
   await page.locator('#Summary').fill('Tóm tắt của bản nháp do tác giả demo tạo ra.');
   await page.locator('#Body').fill('<p>Nội dung bản nháp của tác giả demo.</p>');
   await page.getByRole('button', { name: 'Tạo bản nháp' }).click();
-  await expect(page.locator('.cms-alert--success')).toContainText('Đã tạo bản nháp');
+  await expect(page.locator('.app-alert--success')).toContainText('Đã tạo bản nháp');
 
   await page.goto('/cms');
   const row = page.locator('tr', { hasText: title });
-  await expect(row).toContainText('Draft');
+  await expect(row).toContainText('Bản nháp');
   await row.getByRole('button', { name: 'Gửi duyệt' }).click();
-  await expect(page.locator('tr', { hasText: title })).toContainText('PendingReview');
+  await page.locator('#app-confirm [data-confirm-accept]').click();
+  await expect(page.locator('tr', { hasText: title })).toContainText('Chờ duyệt');
 
   await expect(page.getByRole('link', { name: 'Người dùng' })).toHaveCount(0); // no admin menu for authors
   for (const path of ['/cms/CmsUsers', '/cms/CmsCategories']) {
@@ -116,14 +117,17 @@ test('Demo Editor: lands in the review queue, sees an author\'s pending article 
   await author.getByRole('button', { name: 'Tạo bản nháp' }).click();
   await author.goto('/cms');
   await author.locator('tr', { hasText: title }).getByRole('button', { name: 'Gửi duyệt' }).click();
+  await author.locator('#app-confirm [data-confirm-accept]').click();
+  await expect(author.locator('.app-alert--success')).toContainText('Đã gửi duyệt');
   await authorContext.close();
 
   await demoLogin(page, 'editor');
   await expect(page).toHaveURL(/\/cms(\/CmsArticles)?\?status=PendingReview/);
   await expect(badge(page)).toContainText('Biên tập viên');
+  await page.goto(`/cms?status=PendingReview&q=${encodeURIComponent(title)}`); // the queue is oldest first and paged
   const row = page.locator('tr', { hasText: title });
   await expect(row).toBeVisible();
-  await expect(row.getByRole('button', { name: 'Xuất bản' })).toBeVisible();
+  await expect(row.getByRole('button', { name: 'Duyệt', exact: true })).toBeVisible();
   await expect(row.getByRole('button', { name: 'Từ chối' })).toBeVisible();
   for (const path of ['/cms/CmsUsers', '/cms/CmsCategories']) {
     await page.goto(path);
@@ -131,24 +135,28 @@ test('Demo Editor: lands in the review queue, sees an author\'s pending article 
   }
 });
 
-test('Demo Admin: lands on user administration with the whole CMS available', async ({ page }) => {
+test('Demo Admin: lands on the system overview with the whole CMS available', async ({ page }) => {
   await demoLogin(page, 'admin');
-  await expect(page).toHaveURL(/\/cms\/CmsUsers/);
-  await expect(page.getByRole('heading', { name: 'Người dùng' })).toBeVisible();
+  await expect(page).toHaveURL(/\/cms\/CmsOverview/);
+  await expect(page.getByRole('heading', { name: 'Tổng quan hệ thống' })).toBeVisible();
   await expect(badge(page)).toContainText('Quản trị viên');
-  await expect(page.getByRole('link', { name: 'Chuyên mục' })).toBeVisible();
+  const sidebar = page.locator('.app-sidebar');
+  await expect(sidebar.getByRole('link', { name: 'Chuyên mục' })).toBeVisible();
+
+  await sidebar.getByRole('link', { name: 'Người dùng' }).click();
+  await expect(page.getByRole('heading', { name: 'Người dùng', level: 1 })).toBeVisible();
   await expect(page.locator('td', { hasText: 'demo.admin@demo.vnews.local' })).toBeVisible();
 
-  await page.getByRole('link', { name: 'Chuyên mục' }).click();
-  await expect(page.locator('.cms-card h1')).toBeVisible();
+  await sidebar.getByRole('link', { name: 'Chuyên mục' }).click();
+  await expect(page.locator('.app-page-title')).toBeVisible();
   await expect(page).toHaveURL(/CmsCategories/);
-  await page.getByRole('link', { name: 'Bài viết' }).click();
+  await sidebar.getByRole('link', { name: 'Tất cả bài viết' }).click();
   await expect(page).toHaveURL(/\/cms/);
 });
 
 test('leaving demo mode signs out: protected pages ask for sign-in again, the badge is gone, normal sign-out works too', async ({ page }) => {
   await demoLogin(page, 'admin');
-  await expect(page).toHaveURL(/CmsUsers/);
+  await expect(page).toHaveURL(/CmsOverview/);
   await signOutFromBadge(page);
   await expect(page).toHaveURL('/');
   await expect(badge(page)).toHaveCount(0);
@@ -163,14 +171,14 @@ test('leaving demo mode signs out: protected pages ask for sign-in again, the ba
   // Same through the account page's own sign-out button.
   await demoLogin(page, 'reader');
   await page.goto('/tai-khoan/ho-so');
-  await page.getByRole('button', { name: 'Đăng xuất' }).click();
+  await page.locator('main').getByRole('button', { name: 'Đăng xuất' }).click();
   await expect(page).toHaveURL('/');
   await expect(badge(page)).toHaveCount(0);
 });
 
 test('switching demo role replaces the session', async ({ page }) => {
   await demoLogin(page, 'admin');
-  await expect(page).toHaveURL(/CmsUsers/);
+  await expect(page).toHaveURL(/CmsOverview/);
   await signOutFromBadge(page);
   await demoLogin(page, 'reader');
   await expect(badge(page)).toContainText('Độc giả');
@@ -231,7 +239,7 @@ test('shared sign-in page: legacy CMS address forwards, wrong password errors, s
   await page.locator('input[name="Password"]').fill(STAFF.password);
   await page.locator('.reader-auth__submit').click();
   await expect(page).toHaveURL(/\/cms/);
-  await expect(page.locator('.cms-topbar')).toBeVisible();
+  await expect(page.locator('.app-topbar')).toBeVisible();
 });
 
 test('an outside return URL never leaves the site after signing in', async ({ page }) => {
@@ -257,7 +265,7 @@ test('one logo everywhere: header, dialog, sign-in page and CMS share the same m
   await page.goto('/tai-khoan/dang-nhap');
   const auth = await mark('.reader-auth__logo .vn-logo__mark');
   await demoLogin(page, 'author');
-  const cms = await mark('.cms-topbar .vn-logo__mark');
+  const cms = await mark('.app-sidebar .vn-logo__mark');
 
   for (const other of [dialog, auth, cms]) {
     expect(other.text).toBe('V');
@@ -266,19 +274,19 @@ test('one logo everywhere: header, dialog, sign-in page and CMS share the same m
     expect(other.ratio).toBe(header.ratio);
     expect(other.family).toBe(header.family);
   }
-  await expect(page.locator('.cms-topbar .vn-logo__name')).toHaveText('NEWS');
+  await expect(page.locator('.app-sidebar .vn-logo__name')).toHaveText('NEWS');
 });
 
-test('typography: the welcome heading and dialog title use the headline face; Vietnamese marks render attached', async ({ page }) => {
+test('typography: sign-in heading and dialog title use the same UI font as the forms; Vietnamese marks render attached', async ({ page }) => {
   await page.goto('/tai-khoan/dang-nhap');
   const h1 = page.locator('#login-title');
   await expect(h1).toHaveText('Chào mừng trở lại');
-  expect((await h1.evaluate((e) => getComputedStyle(e).fontFamily)).split(',')[0].replace(/"/g, '')).toBe('Merriweather');
-  expect(await h1.evaluate((e) => [getComputedStyle(e).fontSize, getComputedStyle(e).lineHeight])).toEqual(['29px', '36.25px']);
+  expect((await h1.evaluate((e) => getComputedStyle(e).fontFamily)).split(',')[0].replace(/"/g, '')).toBe('Arial');
+  expect(await h1.evaluate((e) => [getComputedStyle(e).fontSize, getComputedStyle(e).lineHeight, getComputedStyle(e).fontWeight])).toEqual(['28px', '36px', '700']);
   await page.goto('/');
   await page.locator('.masthead__account-link').first().click();
   const title = page.locator('#reader-login-dialog-title');
-  expect((await title.evaluate((e) => getComputedStyle(e).fontFamily)).split(',')[0].replace(/"/g, '')).toBe('Merriweather');
+  expect((await title.evaluate((e) => getComputedStyle(e).fontFamily)).split(',')[0].replace(/"/g, '')).toBe('Arial');
 });
 
 test('mobile 390: sign-in page, demo cards and dialog fit the screen', async ({ page }) => {
@@ -326,7 +334,7 @@ test('register: a new reader signs up through the form, signs out, then signs in
 
   await page.goto('/tai-khoan/ho-so');
   await expect(page.locator('#profile-title')).toContainText('Độc giả thử nghiệm');
-  await page.getByRole('button', { name: 'Đăng xuất' }).click();
+  await page.locator('main').getByRole('button', { name: 'Đăng xuất' }).click();
   await page.goto('/cms');
   await expect(page).toHaveURL(/\/tai-khoan\/dang-nhap/);
 
@@ -379,8 +387,11 @@ test('sign-in and register look like one product: same typography, fields, butto
   };
   const login = await probe('/tai-khoan/dang-nhap');
   const register = await probe('/tai-khoan/dang-ky');
-  expect(register).toEqual(login);
-  expect(login.h1!['font-family']).toContain('Merriweather');
+  // The sign-in page has no kicker label (removed on request); the registration page keeps its own, which must use the UI font.
+  expect(login.kicker).toBeNull();
+  expect(register.kicker!['font-family']).toContain('Arial');
+  expect({ ...register, kicker: null }).toEqual({ ...login, kicker: null });
+  expect(login.h1!['font-family']).toContain('Arial');
   expect(login.input!['font-family']).toContain('Arial');
   expect(login.button!['background-color']).toBe('rgb(166, 27, 70)');
   expect(login.logo!['background-color']).toBe('rgb(166, 27, 70)');
@@ -391,19 +402,19 @@ test('the CMS uses the same typography as the site and its logo keeps the red ma
   await demoLogin(page, 'author');
   await page.goto('/cms/CmsArticles/Create');
   const info = await page.evaluate(() => {
-    const topbar = document.querySelector('.cms-topbar')!.getBoundingClientRect();
+    const topbar = document.querySelector('.app-sidebar')!.getBoundingClientRect();
     return {
       bodyFamily: getComputedStyle(document.body).fontFamily,
-      h1Family: getComputedStyle(document.querySelector('.cms-card h1')!).fontFamily,
+      h1Family: getComputedStyle(document.querySelector('.app-page-title')!).fontFamily,
       topbarX: topbar.x, topbarW: topbar.width, vw: document.documentElement.clientWidth,
-      mark: getComputedStyle(document.querySelector('.cms-topbar .vn-logo__mark')!).backgroundColor,
-      markW: document.querySelector('.cms-topbar .vn-logo__mark')!.getBoundingClientRect().width,
+      mark: getComputedStyle(document.querySelector('.app-sidebar .vn-logo__mark')!).backgroundColor,
+      markW: document.querySelector('.app-sidebar .vn-logo__mark')!.getBoundingClientRect().width,
     };
   });
   expect(info.bodyFamily.startsWith('Arial')).toBe(true);
-  expect(info.h1Family).toContain('Merriweather');
+  expect(info.h1Family).toContain('Arial');
   expect(info.topbarX).toBe(0);
-  expect(info.topbarW).toBe(info.vw);
+  expect(info.topbarW).toBeLessThan(info.vw);
   expect(info.mark).toBe('rgb(166, 27, 70)');
   expect(info.markW).toBeGreaterThanOrEqual(22); // 24px logo: the mark is about 1.08em of its 0.84em text size, plus skew
 });

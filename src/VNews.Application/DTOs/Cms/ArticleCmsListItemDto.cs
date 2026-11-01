@@ -12,4 +12,10 @@ public class ArticleCmsListItemDto
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public DateTime? PublishedAt { get; set; }
+
+    /// <summary>Why an editor sent the article back (only set for Rejected articles).</summary>
+    public string? ReviewNote { get; set; }
+
+    /// <summary>The cover image, so lists can show whether an article has one.</summary>
+    public string? CoverImageUrl { get; set; }
 }

@@ -1,0 +1,22 @@
+@model CategorySaveViewModel
+<div class="app-validation" asp-validation-summary="All"></div>
+<div class="app-field">
+    <label asp-for="Name" class="app-label">Tên</label>
+    <input asp-for="Name" type="text" class="app-input" />
+    <span asp-validation-for="Name" class="app-field-error"></span>
+</div>
+<div class="app-field">
+    <label asp-for="Slug" class="app-label">Đường dẫn (chữ thường, số, gạch ngang)</label>
+    <input asp-for="Slug" type="text" class="app-input" />
+    <span asp-validation-for="Slug" class="app-field-error"></span>
+</div>
+<div class="app-field">
+    <label asp-for="Description" class="app-label">Mô tả</label>
+    <textarea asp-for="Description" class="app-textarea" rows="3"></textarea>
+    <span asp-validation-for="Description" class="app-field-error"></span>
+</div>
+<div class="app-field">
+    <label asp-for="DisplayOrder" class="app-label">Thứ tự hiển thị</label>
+    <input asp-for="DisplayOrder" type="number" class="app-input" />
+    <span asp-validation-for="DisplayOrder" class="app-field-error"></span>
+</div>

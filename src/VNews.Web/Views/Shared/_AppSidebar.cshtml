@@ -1,0 +1,44 @@
+@using Microsoft.AspNetCore.Html
+@using VNews.Domain.Identity
+@using VNews.Web.Helpers
+@* Navigation of the account / newsroom area. Entries are decided by the user's real roles; the server still authorizes
+   every page, so hiding an entry is a convenience, never the protection. The active entry comes from ViewData["AppNav"]. *@
+@{
+    var active = ViewData["AppNav"] as string ?? string.Empty;
+    var isAdmin = User.IsInRole(Roles.Admin);
+    var isEditor = User.IsInRole(Roles.Editor);
+    var isStaff = isAdmin || isEditor || User.IsInRole(Roles.Author);
+    var privileged = isAdmin || isEditor;
+
+    IHtmlContent Item(string key, string icon, string label, string url)
+    {
+        var current = key == active;
+        return new HtmlString($"<li><a class=\"app-nav__link{(current ? " is-active" : "")}\" href=\"{System.Net.WebUtility.HtmlEncode(url)}\"{(current ? " aria-current=\"page\"" : "")}><svg class=\"icon\" aria-hidden=\"true\"><use href=\"#i-{icon}\"/></svg><span>{System.Net.WebUtility.HtmlEncode(label)}</span></a></li>");
+    }
+}
+<nav class="app-nav" aria-label="Điều hướng chính">
+    @if (isStaff)
+    {
+        <p class="app-nav__heading">Tòa soạn</p>
+        <ul class="app-nav__list">
+            @if (isAdmin) { @Item("overview", "dashboard", "Tổng quan", Url.Action("Index", "CmsOverview")!) }
+            @Item("articles", "file", privileged ? "Tất cả bài viết" : "Bài viết của tôi", Url.Action("Index", "CmsArticles")!)
+            @if (privileged) { @Item("queue", "inbox", "Hàng chờ duyệt", Url.Action("Index", "CmsArticles", new { status = "PendingReview" })!) }
+            @Item("create", "plus", "Viết bài mới", Url.Action("Create", "CmsArticles")!)
+        </ul>
+    }
+    @if (isAdmin)
+    {
+        <p class="app-nav__heading">Quản trị</p>
+        <ul class="app-nav__list">
+            @Item("users", "users", "Người dùng", Url.Action("Index", "CmsUsers")!)
+            @Item("categories", "folder", "Chuyên mục", Url.Action("Index", "CmsCategories")!)
+            @Item("audit", "log", "Nhật ký hoạt động", Url.Action("Index", "CmsAudit")!)
+        </ul>
+    }
+    <p class="app-nav__heading">Tài khoản</p>
+    <ul class="app-nav__list">
+        @Item("profile", "user", "Hồ sơ của tôi", Url.Action("Profile", "Account")!)
+        @Item("saved", "bookmark", "Bài đã lưu", Url.Action("SavedArticles", "Account")!)
+    </ul>
+</nav>

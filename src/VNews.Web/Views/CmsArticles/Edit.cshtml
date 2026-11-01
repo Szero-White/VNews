@@ -1,92 +1,73 @@
+@using VNews.Web.Helpers
+@using VNews.Domain.Identity
 @model ArticleSaveRequest
 @{
-    ViewData["Title"] = "Sửa bài viết";
-    Layout = "_CmsLayout";
-    var categories = (IReadOnlyList<CategoryDto>)ViewBag.Categories;
+    Layout = "_AppLayout";
     var article = (ArticleEditDto)ViewBag.Article;
+    var privileged = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Editor);
+    var editable = article.Status is "Draft" or "Rejected";
+    ViewData["Title"] = editable ? "Sửa bài viết" : "Xem bài viết";
+    ViewData["AppNav"] = "articles";
+    ViewData["Crumbs"] = new (string, string?)[] { ("Tòa soạn", null), ("Bài viết", Url.Action("Index", "CmsArticles")), (editable ? "Sửa bài viết" : "Xem bài viết", null) };
+    ViewData["Categories"] = ViewBag.Categories;
+    ViewData["ReadOnly"] = !editable;
 }
 
-<div class="cms-card">
-    <h1>Sửa bài viết <span class="cms-badge cms-badge--@article.Status.ToLowerInvariant()">@article.Status</span></h1>
-
-    @if (!string.IsNullOrWhiteSpace(article.ReviewNote))
-    {
-        <div class="cms-alert cms-alert--error">Lý do từ chối trước đó: @article.ReviewNote</div>
-    }
-
-    <form asp-action="Edit" asp-route-id="@article.Id" method="post" class="cms-form">
-        <input type="hidden" name="rowVersionBase64" value="@Convert.ToBase64String(article.RowVersion)" />
-        <div asp-validation-summary="All" class="cms-validation"></div>
-
-        <label asp-for="Title">Tiêu đề</label>
-        <input asp-for="Title" type="text" />
-
-        <label asp-for="CategoryId">Chuyên mục</label>
-        <select asp-for="CategoryId">
-            @foreach (var c in categories)
-            {
-                <option value="@c.Id" selected="@(c.Id == Model.CategoryId)">@c.Name</option>
-            }
-        </select>
-
-        <label asp-for="Summary">Tóm tắt</label>
-        <textarea asp-for="Summary" style="min-height:80px;"></textarea>
-
-        <label>Ảnh bìa</label>
-        <input type="file" id="coverFile" accept="image/jpeg,image/png,image/webp" />
-        <input asp-for="CoverImageUrl" type="text" style="margin-top:6px;" />
-        <div id="uploadStatus" style="font-size:0.85rem; margin-top:4px;"></div>
-        @if (!string.IsNullOrWhiteSpace(Model.CoverImageUrl))
+<div class="page-head">
+    <div class="page-head__text">
+        <h1 class="app-page-title">@(editable ? "Sửa bài viết" : "Xem bài viết")</h1>
+        <p class="page-head__sub"><span class="badge badge--@CmsStatus.Css(article.Status)">@CmsStatus.Label(article.Status)</span> <span>@CmsStatus.Hint(article.Status)</span></p>
+    </div>
+    <div class="page-head__actions">
+        @if (article.Status == "Published")
         {
-            <img src="@Model.CoverImageUrl" alt="cover" style="max-width:240px; margin-top:8px; display:block;" />
+            <a asp-controller="Article" asp-action="Detail" asp-route-slug="@article.Slug" class="btn btn--secondary">Xem trên trang tin</a>
         }
-
-        <label asp-for="Body">Nội dung</label>
-        <textarea asp-for="Body"></textarea>
-
-        <div class="cms-actions" style="margin-top:16px;">
-            <button type="submit" class="cms-btn">Lưu thay đổi</button>
-            <a asp-action="Index" class="cms-btn cms-btn--secondary">Quay lại danh sách</a>
-        </div>
-    </form>
-
-    @if (article.Status is "Draft" or "Rejected")
-    {
-        <form asp-action="SubmitForReview" asp-route-id="@article.Id" method="post" style="margin-top:12px;">
-            <button type="submit" class="cms-btn cms-btn--success">Gửi duyệt</button>
-        </form>
-    }
+        @if (article.Status == "PendingReview" && privileged)
+        {
+            <form asp-action="Publish" asp-route-id="@article.Id" method="post" class="inline-form" data-confirm="Xuất bản bài “@article.Title”? Bài sẽ hiển thị công khai ngay." data-confirm-title="Duyệt và xuất bản" data-confirm-label="Duyệt">
+                <button type="submit" class="btn btn--primary">Duyệt</button>
+            </form>
+            <form asp-action="Reject" asp-route-id="@article.Id" method="post" class="inline-form" data-confirm="Từ chối bài “@article.Title”. Tác giả sẽ thấy lý do này để chỉnh sửa." data-confirm-title="Từ chối bài viết" data-confirm-label="Từ chối" data-confirm-danger data-reason>
+                <input type="hidden" name="reason" value="" />
+                <button type="submit" class="btn btn--danger">Từ chối</button>
+            </form>
+        }
+    </div>
 </div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script nonce="@Context.Items["csp-nonce"]">
-        document.getElementById('coverFile').addEventListener('change', async function (e) {
-            var file = e.target.files[0];
-            if (!file) return;
-            var status = document.getElementById('uploadStatus');
-            status.textContent = 'Đang tải lên...';
+@if (!string.IsNullOrWhiteSpace(article.ReviewNote))
+{
+    <div class="app-alert app-alert--error" role="alert"><svg class="icon" aria-hidden="true"><use href="#i-alert" /></svg><span>Lý do biên tập viên trả lại: @article.ReviewNote</span></div>
+}
 
-            var form = new FormData();
-            form.append('file', file);
-            var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-            try {
-                var res = await fetch('@Url.Action("UploadCoverImage", "CmsArticles")', {
-                    method: 'POST',
-                    headers: { 'RequestVerificationToken': token },
-                    body: form
-                });
-                var data = await res.json();
-                if (res.ok) {
-                    document.querySelector('[name="CoverImageUrl"]').value = data.url;
-                    status.textContent = 'Đã tải lên: ' + data.url;
-                } else {
-                    status.textContent = 'Lỗi: ' + data.error;
-                }
-            } catch (err) {
-                status.textContent = 'Lỗi tải lên.';
+<form asp-action="Edit" asp-route-id="@article.Id" method="post" class="card">
+    <input type="hidden" name="rowVersionBase64" value="@Convert.ToBase64String(article.RowVersion)" />
+    <div class="card__body">
+        <partial name="_ArticleFields" model="Model" view-data="ViewData" />
+        <div class="app-form-actions">
+            @if (editable)
+            {
+                <button type="submit" class="btn btn--primary">Lưu thay đổi</button>
             }
-        });
-    </script>
+            <a asp-action="Index" class="btn btn--secondary">Quay lại danh sách</a>
+        </div>
+    </div>
+</form>
+
+@if (editable)
+{
+    <form asp-action="SubmitForReview" asp-route-id="@article.Id" method="post" class="card" data-confirm="Gửi bài “@article.Title” cho biên tập viên duyệt? Bạn sẽ không sửa được bài trong lúc chờ duyệt." data-confirm-title="Gửi duyệt" data-confirm-label="Gửi duyệt">
+        <div class="card__body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div>
+                <h2 class="card__title">Sẵn sàng đăng?</h2>
+                <p class="card__hint">Lưu thay đổi trước, rồi gửi bài cho biên tập viên duyệt.</p>
+            </div>
+            <button type="submit" class="btn btn--primary">Gửi duyệt</button>
+        </div>
+    </form>
+}
+
+@section Scripts {
+    <partial name="_UploadScript" />
 }

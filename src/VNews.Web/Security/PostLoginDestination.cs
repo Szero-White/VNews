@@ -24,7 +24,7 @@ public static class PostLoginDestination
             return newsroom && !staff ? Home(url) : safeReturnUrl;
         }
 
-        if (granted.Contains(Roles.Admin)) return url.Action("Index", "CmsUsers") ?? "/cms";
+        if (granted.Contains(Roles.Admin)) return url.Action("Index", "CmsOverview") ?? "/cms";
         if (granted.Contains(Roles.Editor)) return url.Action("Index", "CmsArticles", new { status = "PendingReview" }) ?? "/cms";
         if (granted.Contains(Roles.Author)) return url.Action("Index", "CmsArticles") ?? "/cms";
         return Home(url);

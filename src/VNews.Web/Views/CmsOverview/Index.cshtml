@@ -1,0 +1,88 @@
+@using VNews.Web.Helpers
+@model CmsOverviewViewModel
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Tổng quan hệ thống";
+    ViewData["AppNav"] = "overview";
+    ViewData["Crumbs"] = new (string, string?)[] { ("Tòa soạn", null), ("Tổng quan", null) };
+    var s = Model.Stats;
+}
+
+<div class="page-head">
+    <div class="page-head__text">
+        <h1 class="app-page-title">Tổng quan hệ thống</h1>
+        <p class="page-head__sub">Số liệu lấy trực tiếp từ cơ sở dữ liệu.</p>
+    </div>
+    <div class="page-head__actions">
+        <a asp-controller="CmsArticles" asp-action="Create" class="btn btn--primary"><svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>Viết bài mới</a>
+    </div>
+</div>
+
+<section class="stats" aria-label="Thống kê bài viết">
+    <a class="stat stat--draft" href="@Url.Action("Index", "CmsArticles", new { status = "Draft" })"><span class="stat__label">Bản nháp</span><span class="stat__value">@s.Draft</span><span class="stat__hint">Chưa gửi duyệt</span></a>
+    <a class="stat stat--pending" href="@Url.Action("Index", "CmsArticles", new { status = "PendingReview" })"><span class="stat__label">Chờ duyệt</span><span class="stat__value">@s.PendingReview</span><span class="stat__hint">Cần xử lý</span></a>
+    <a class="stat stat--rejected" href="@Url.Action("Index", "CmsArticles", new { status = "Rejected" })"><span class="stat__label">Cần chỉnh sửa</span><span class="stat__value">@s.Rejected</span><span class="stat__hint">Đã trả lại tác giả</span></a>
+    <a class="stat stat--published" href="@Url.Action("Index", "CmsArticles", new { status = "Published" })"><span class="stat__label">Đã xuất bản</span><span class="stat__value">@s.Published</span><span class="stat__hint">Tổng @s.Total bài</span></a>
+</section>
+
+<section class="stats" aria-label="Thống kê hệ thống">
+    <a class="stat stat--neutral" asp-controller="CmsUsers" asp-action="Index"><span class="stat__label">Tài khoản</span><span class="stat__value">@Model.Users</span><span class="stat__hint">Tất cả vai trò</span></a>
+    <a class="stat stat--neutral" asp-controller="CmsCategories" asp-action="Index"><span class="stat__label">Chuyên mục</span><span class="stat__value">@Model.Categories</span><span class="stat__hint">Đang hiển thị</span></a>
+    @foreach (var r in new[] { "Editor", "Author" })
+    {
+        <a class="stat stat--neutral" href="@Url.Action("Index", "CmsUsers", new { role = r })"><span class="stat__label">@AppFormat.RoleLabel(r)</span><span class="stat__value">@(Model.UsersByRole.TryGetValue(r, out var n) ? n : 0)</span><span class="stat__hint">tài khoản</span></a>
+    }
+</section>
+
+<div class="two-col">
+    <section class="card" aria-labelledby="queue-title">
+        <div class="card__head">
+            <h2 class="card__title" id="queue-title">Bài đang chờ duyệt</h2>
+            <a asp-controller="CmsArticles" asp-action="Index" asp-route-status="PendingReview" class="btn btn--ghost btn--sm">Xem tất cả</a>
+        </div>
+        @if (Model.PendingQueue.Count == 0)
+        {
+            <div class="empty"><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg><p class="empty__title">Hàng chờ trống</p><p class="empty__text">Không có bài nào cần duyệt.</p></div>
+        }
+        else
+        {
+            <ul class="list-plain">
+                @foreach (var a in Model.PendingQueue)
+                {
+                    <li>
+                        <div>
+                            <a class="table__title" asp-controller="CmsArticles" asp-action="Edit" asp-route-id="@a.Id">@a.Title</a>
+                            <span class="table__sub">@a.AuthorName · @a.CategoryName · @((a.UpdatedAt ?? a.CreatedAt).ToString("dd/MM/yyyy HH:mm"))</span>
+                        </div>
+                        <a asp-controller="CmsArticles" asp-action="Edit" asp-route-id="@a.Id" class="btn btn--secondary btn--sm">Xem xét</a>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+
+    <section class="card" aria-labelledby="audit-title">
+        <div class="card__head">
+            <h2 class="card__title" id="audit-title">Hoạt động gần đây</h2>
+            <a asp-controller="CmsAudit" asp-action="Index" class="btn btn--ghost btn--sm">Nhật ký</a>
+        </div>
+        @if (Model.RecentAudit.Count == 0)
+        {
+            <div class="empty"><svg class="icon" aria-hidden="true"><use href="#i-log" /></svg><p class="empty__title">Chưa có hoạt động</p></div>
+        }
+        else
+        {
+            <ul class="list-plain">
+                @foreach (var a in Model.RecentAudit)
+                {
+                    <li>
+                        <div>
+                            <strong>@AuditLabels.Action(a.Action)</strong>
+                            <span class="table__sub">@a.UserDisplayName · @a.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm")</span>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</div>

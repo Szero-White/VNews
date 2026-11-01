@@ -1,29 +1,47 @@
 @model IReadOnlyList<CategoryDto>
 @{
-    ViewData["Title"] = "Quản lý chuyên mục";
-    Layout = "_CmsLayout";
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Chuyên mục";
+    ViewData["AppNav"] = "categories";
+    ViewData["Crumbs"] = new (string, string?)[] { ("Quản trị", null), ("Chuyên mục", null) };
 }
 
-<div class="cms-card">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h1 style="margin:0;">Chuyên mục</h1>
-        <a asp-action="Create" class="cms-btn">+ Tạo chuyên mục</a>
+<div class="page-head">
+    <div class="page-head__text">
+        <h1 class="app-page-title">Chuyên mục</h1>
+        <p class="page-head__sub">@Model.Count chuyên mục hiển thị trên trang tin.</p>
     </div>
-
-    <table class="cms-table">
-        <thead>
-            <tr><th>Tên</th><th>Slug</th><th>Mô tả</th><th></th></tr>
-        </thead>
-        <tbody>
-            @foreach (var c in Model)
-            {
-                <tr>
-                    <td>@c.Name</td>
-                    <td>@c.Slug</td>
-                    <td>@c.Description</td>
-                    <td><a asp-action="Edit" asp-route-id="@c.Id" class="cms-btn cms-btn--secondary">Sửa</a></td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="page-head__actions">
+        <a asp-action="Create" class="btn btn--primary"><svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>Tạo chuyên mục</a>
+    </div>
 </div>
+
+<section class="card">
+    @if (Model.Count == 0)
+    {
+        <div class="empty">
+            <svg class="icon" aria-hidden="true"><use href="#i-folder" /></svg>
+            <p class="empty__title">Chưa có chuyên mục nào</p>
+            <a asp-action="Create" class="btn btn--primary">Tạo chuyên mục</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table--cards">
+                <thead><tr><th scope="col">Tên</th><th scope="col">Đường dẫn</th><th scope="col">Mô tả</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+                <tbody>
+                    @foreach (var c in Model)
+                    {
+                        <tr>
+                            <td class="table__cell-title"><span class="table__title">@c.Name</span></td>
+                            <td data-label="Đường dẫn"><span class="table__sub">/chuyen-muc/@c.Slug</span></td>
+                            <td data-label="Mô tả">@c.Description</td>
+                            <td><div class="table__actions"><a asp-action="Edit" asp-route-id="@c.Id" class="btn btn--secondary btn--sm">Sửa</a></div></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
