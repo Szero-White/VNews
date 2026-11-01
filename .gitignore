@@ -23,3 +23,4 @@ visual-tests/playwright-report/
 _ui_backup/
 # Local research snapshots (e.g. MHTML captures of third-party sites) — never pushed/committed
 experiments/
+App_Data/
