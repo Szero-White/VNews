@@ -1,3 +1,6 @@
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
+using VNews.Web.Middleware;
 using Microsoft.AspNetCore.Identity;
 using VNews.Application.Interfaces;
 using VNews.Domain.Identity;
@@ -12,6 +15,50 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+
+// Auth/antiforgery cookies: never readable by script, never sent cross-site on POST. Secure is
+// forced outside Development; Development (plain http://localhost) keeps working.
+var cookieSecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = cookieSecurePolicy;
+});
+builder.Services.AddAntiforgery(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = cookieSecurePolicy;
+});
+
+// Brute-force protection for sign-in / registration POSTs, per client IP.
+// (Behind a reverse proxy, enable ForwardedHeaders so RemoteIpAddress is the real client.)
+var authPermitLimit = builder.Configuration.GetValue("RateLimiting:Auth:PermitLimit", 10);
+var authWindowSeconds = builder.Configuration.GetValue("RateLimiting:Auth:WindowSeconds", 60);
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = authPermitLimit,
+            Window = TimeSpan.FromSeconds(authWindowSeconds),
+            QueueLimit = 0
+        }));
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("VNews.RateLimiting");
+        logger.LogWarning("Rate limit hit on {Path} from {RemoteIp}.", context.HttpContext.Request.Path.Value, context.HttpContext.Connection.RemoteIpAddress);
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
+        }
+        context.HttpContext.Response.ContentType = "text/plain; charset=utf-8";
+        await context.HttpContext.Response.WriteAsync("Bạn thao tác quá nhanh. Vui lòng đợi một lúc rồi thử lại.", cancellationToken);
+    };
+});
 
 var app = builder.Build();
 
@@ -26,9 +73,22 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
+// Security headers first, so error responses carry them too.
+app.UseMiddleware<SecurityHeadersMiddleware>();
+
+// /api: unhandled exceptions become ProblemDetails (all environments, never a stack trace).
+app.UseWhen(ctx => ctx.Request.Path.StartsWithSegments("/api"),
+    branch => branch.UseExceptionHandler(errorApp => errorApp.Run(ctx =>
+    {
+        ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        return Task.CompletedTask;
+    })));
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    // MVC: friendly Vietnamese error page with a trace id (no stack trace).
+    app.UseWhen(ctx => !ctx.Request.Path.StartsWithSegments("/api"),
+        branch => branch.UseExceptionHandler("/Home/Error"));
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
@@ -37,6 +97,7 @@ app.UseStatusCodePagesWithReExecute("/Home/PageNotFound", "?statusCode={0}");
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

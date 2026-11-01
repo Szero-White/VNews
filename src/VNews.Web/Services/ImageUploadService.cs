@@ -2,95 +2,109 @@ using VNews.Application.Interfaces;
 
 namespace VNews.Web.Services;
 
+/// <summary>
+/// Raster images only (JPEG, PNG, WebP). SVG is intentionally NOT accepted: it is an XML document
+/// that can carry script, and uploads are served from the site's own origin.
+/// Every upload must agree on three independent signals — file extension, declared MIME type and
+/// the real leading bytes — and is stored under a generated name whose extension comes from the
+/// detected format, never from the client.
+/// </summary>
 public class ImageUploadService : IImageUploadService
 {
-    private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp", ".svg" };
-    private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "image/jpeg", "image/png", "image/webp", "image/svg+xml"
-    };
     private const long MaxBytes = 3 * 1024 * 1024;
 
-    private readonly IWebHostEnvironment _environment;
+    private enum ImageFormat { Jpeg, Png, WebP }
 
-    public ImageUploadService(IWebHostEnvironment environment)
+    private static readonly Dictionary<string, (ImageFormat Format, string ContentType)> ByExtension =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            [".jpg"] = (ImageFormat.Jpeg, "image/jpeg"),
+            [".jpeg"] = (ImageFormat.Jpeg, "image/jpeg"),
+            [".png"] = (ImageFormat.Png, "image/png"),
+            [".webp"] = (ImageFormat.WebP, "image/webp"),
+        };
+
+    private static readonly byte[] PngSignature = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+
+    private readonly IWebHostEnvironment _environment;
+    private readonly ILogger<ImageUploadService> _logger;
+
+    public ImageUploadService(IWebHostEnvironment environment, ILogger<ImageUploadService> logger)
     {
         _environment = environment;
+        _logger = logger;
     }
 
     public async Task<ImageUploadResult> SaveAsync(Stream content, string originalFileName, string contentType, long length, CancellationToken cancellationToken = default)
     {
         if (length <= 0 || length > MaxBytes)
         {
-            return new ImageUploadResult { Success = false, ErrorMessage = "Ảnh phải nhỏ hơn 3MB." };
+            return Reject("size", "Ảnh phải nhỏ hơn 3MB.", length);
         }
 
-        var extension = Path.GetExtension(originalFileName);
-        if (string.IsNullOrWhiteSpace(extension) || !AllowedExtensions.Contains(extension))
+        var extension = Path.GetExtension(originalFileName ?? string.Empty);
+        if (string.IsNullOrWhiteSpace(extension) || !ByExtension.TryGetValue(extension, out var expected))
         {
-            return new ImageUploadResult { Success = false, ErrorMessage = "Chỉ chấp nhận ảnh .jpg, .jpeg, .png, .webp, .svg." };
+            return Reject("extension", "Chỉ chấp nhận ảnh .jpg, .jpeg, .png, .webp.", length);
         }
 
-        if (!AllowedContentTypes.Contains(contentType))
+        // The declared MIME type must be the one that belongs to this extension (no "image/png" on a .jpg).
+        var mime = (contentType ?? string.Empty).Split(';')[0].Trim();
+        if (!string.Equals(mime, expected.ContentType, StringComparison.OrdinalIgnoreCase))
         {
-            return new ImageUploadResult { Success = false, ErrorMessage = "Loại nội dung tệp không hợp lệ." };
+            return Reject("content-type", "Loại nội dung tệp không khớp với phần mở rộng.", length);
         }
 
+        // Never trust the declared length: read at most MaxBytes + 1 and fail if the stream is bigger.
         using var memoryStream = new MemoryStream();
-        await content.CopyToAsync(memoryStream, cancellationToken);
-        var bytes = memoryStream.ToArray();
-
-        if (!IsValidImageSignature(bytes, extension))
+        var buffer = new byte[8192];
+        int read;
+        while ((read = await content.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken)) > 0)
         {
-            return new ImageUploadResult { Success = false, ErrorMessage = "Nội dung tệp không khớp với định dạng ảnh khai báo." };
+            if (memoryStream.Length + read > MaxBytes)
+            {
+                return Reject("size-actual", "Ảnh phải nhỏ hơn 3MB.", length);
+            }
+
+            memoryStream.Write(buffer, 0, read);
+        }
+
+        var bytes = memoryStream.ToArray();
+        if (!HasSignature(bytes, expected.Format))
+        {
+            return Reject("signature", "Nội dung tệp không khớp với định dạng ảnh khai báo.", length);
         }
 
         var uploadsRoot = Path.Combine(_environment.WebRootPath, "uploads", "articles");
         Directory.CreateDirectory(uploadsRoot);
 
-        var safeFileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
-        var fullPath = Path.Combine(uploadsRoot, safeFileName);
+        var storedExtension = expected.Format switch
+        {
+            ImageFormat.Jpeg => ".jpg",
+            ImageFormat.Png => ".png",
+            _ => ".webp"
+        };
+        var safeFileName = $"{Guid.NewGuid():N}{storedExtension}";
+        await File.WriteAllBytesAsync(Path.Combine(uploadsRoot, safeFileName), bytes, cancellationToken);
 
-        await File.WriteAllBytesAsync(fullPath, bytes, cancellationToken);
-
+        _logger.LogInformation("Cover image uploaded: {StoredFile} ({Format}, {Bytes} bytes).", safeFileName, expected.Format, bytes.Length);
         return new ImageUploadResult { Success = true, Url = $"/uploads/articles/{safeFileName}" };
     }
 
-    private static bool IsValidImageSignature(byte[] bytes, string extension)
+    private ImageUploadResult Reject(string reason, string message, long declaredLength)
     {
-        if (extension.Equals(".svg", StringComparison.OrdinalIgnoreCase))
-        {
-            // SVG is text-based; reject anything containing <script to reduce XSS risk via uploaded SVG.
-            var text = System.Text.Encoding.UTF8.GetString(bytes, 0, Math.Min(bytes.Length, 4096));
-            return text.Contains("<svg", StringComparison.OrdinalIgnoreCase)
-                && !text.Contains("<script", StringComparison.OrdinalIgnoreCase)
-                && !text.Contains("onload=", StringComparison.OrdinalIgnoreCase);
-        }
-
-        if (bytes.Length < 8)
-        {
-            return false;
-        }
-
-        // JPEG: FF D8 FF
-        if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
-        {
-            return true;
-        }
-
-        // PNG: 89 50 4E 47 0D 0A 1A 0A
-        if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47)
-        {
-            return true;
-        }
-
-        // WEBP: "RIFF"...."WEBP"
-        if (bytes.Length >= 12 && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46
-            && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50)
-        {
-            return true;
-        }
-
-        return false;
+        // Only the reason code and size are logged: the client-supplied file name is untrusted input.
+        _logger.LogWarning("Image upload rejected: {Reason} (declared {DeclaredBytes} bytes).", reason, declaredLength);
+        return new ImageUploadResult { Success = false, ErrorMessage = message };
     }
+
+    private static bool HasSignature(byte[] bytes, ImageFormat format) => format switch
+    {
+        ImageFormat.Jpeg => bytes.Length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF,
+        ImageFormat.Png => bytes.Length >= 8 && bytes.AsSpan(0, 8).SequenceEqual(PngSignature),
+        ImageFormat.WebP => bytes.Length >= 12
+            && bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F'
+            && bytes[8] == 'W' && bytes[9] == 'E' && bytes[10] == 'B' && bytes[11] == 'P',
+        _ => false
+    };
 }

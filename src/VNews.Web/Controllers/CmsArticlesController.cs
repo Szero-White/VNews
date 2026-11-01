@@ -63,9 +63,18 @@ public class CmsArticlesController : Controller
         var user = await _userManager.GetUserAsync(User);
         var authorName = user?.DisplayName ?? displayName;
 
-        var id = await _articleCommandService.CreateDraftAsync(request, CurrentUserId, authorName, cancellationToken);
-        TempData["Message"] = "Đã tạo bản nháp.";
-        return RedirectToAction(nameof(Edit), new { id });
+        try
+        {
+            var id = await _articleCommandService.CreateDraftAsync(request, CurrentUserId, authorName, cancellationToken);
+            TempData["Message"] = "Đã tạo bản nháp.";
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+        catch (ArticleWorkflowException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            ViewBag.Categories = await _categoryQueryService.GetAllAsync(cancellationToken);
+            return View(request);
+        }
     }
 
     [HttpGet]
@@ -109,10 +118,26 @@ public class CmsArticlesController : Controller
             return View(request);
         }
 
+        if (!TryReadRowVersion(rowVersionBase64, out var rowVersion))
+        {
+            ModelState.AddModelError(string.Empty, "Phiên bản bài viết không hợp lệ. Vui lòng tải lại trang và thử lại.");
+            ViewBag.Categories = await _categoryQueryService.GetAllAsync(cancellationToken);
+            ViewBag.Article = existing;
+            return View(request);
+        }
+
         try
         {
-            await _articleCommandService.UpdateDraftAsync(id, request, Convert.FromBase64String(rowVersionBase64), CurrentUserId, cancellationToken);
+            await _articleCommandService.UpdateDraftAsync(id, request, rowVersion, CurrentUserId, IsPrivileged, cancellationToken);
             TempData["Message"] = "Đã lưu thay đổi.";
+        }
+        catch (EntityNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ArticleForbiddenException)
+        {
+            return Forbid();
         }
         catch (ArticleWorkflowException ex)
         {
@@ -149,10 +174,18 @@ public class CmsArticlesController : Controller
 
         try
         {
-            await _articleCommandService.SubmitForReviewAsync(id, CurrentUserId, cancellationToken);
+            await _articleCommandService.SubmitForReviewAsync(id, CurrentUserId, IsPrivileged, cancellationToken);
             TempData["Message"] = "Đã gửi duyệt.";
         }
-        catch (ArticleWorkflowException ex)
+        catch (EntityNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ArticleForbiddenException)
+        {
+            return Forbid();
+        }
+        catch (Exception ex) when (ex is ArticleWorkflowException or ArticleConcurrencyException)
         {
             TempData["Error"] = ex.Message;
         }
@@ -171,7 +204,11 @@ public class CmsArticlesController : Controller
             await _articleCommandService.PublishAsync(id, CurrentUserId, user?.DisplayName ?? "Editor", cancellationToken);
             TempData["Message"] = "Đã xuất bản bài viết.";
         }
-        catch (ArticleWorkflowException ex)
+        catch (EntityNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (Exception ex) when (ex is ArticleWorkflowException or ArticleConcurrencyException)
         {
             TempData["Error"] = ex.Message;
         }
@@ -190,7 +227,11 @@ public class CmsArticlesController : Controller
             await _articleCommandService.RejectAsync(id, CurrentUserId, user?.DisplayName ?? "Editor", reason, cancellationToken);
             TempData["Message"] = "Đã từ chối bài viết.";
         }
-        catch (ArticleWorkflowException ex)
+        catch (EntityNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (Exception ex) when (ex is ArticleWorkflowException or ArticleConcurrencyException)
         {
             TempData["Error"] = ex.Message;
         }
@@ -217,6 +258,24 @@ public class CmsArticlesController : Controller
         }
 
         return Ok(new { url = result.Url });
+    }
+
+    private static bool TryReadRowVersion(string? base64, out byte[] rowVersion)
+    {
+        rowVersion = Array.Empty<byte>();
+        if (string.IsNullOrWhiteSpace(base64) || base64.Length > 64)
+        {
+            return false;
+        }
+
+        var buffer = new byte[base64.Length];
+        if (!Convert.TryFromBase64String(base64, buffer, out var written) || written == 0)
+        {
+            return false;
+        }
+
+        rowVersion = buffer[..written];
+        return true;
     }
 
     private static ArticleSaveRequest ToSaveRequest(ArticleEditDto dto) => new()

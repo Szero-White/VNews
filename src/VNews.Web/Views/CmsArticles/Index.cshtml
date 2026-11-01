@@ -11,7 +11,7 @@
     </div>
 
     <form method="get" style="margin: 12px 0;">
-        <select name="status" onchange="this.form.submit()">
+        <select name="status" class="js-autosubmit">
             <option value="">-- Tất cả trạng thái --</option>
             <option value="Draft" selected="@(ViewBag.StatusFilter == "Draft")">Nháp</option>
             <option value="PendingReview" selected="@(ViewBag.StatusFilter == "PendingReview")">Chờ duyệt</option>
@@ -53,7 +53,7 @@
                             <form asp-action="Publish" asp-route-id="@item.Id" method="post" style="display:inline">
                                 <button type="submit" class="cms-btn cms-btn--success">Xuất bản</button>
                             </form>
-                            <form asp-action="Reject" asp-route-id="@item.Id" method="post" style="display:inline" onsubmit="return setReason(this)">
+                            <form asp-action="Reject" asp-route-id="@item.Id" method="post" style="display:inline" class="js-reject-form">
                                 <input type="hidden" name="reason" value="" />
                                 <button type="submit" class="cms-btn cms-btn--danger">Từ chối</button>
                             </form>
@@ -71,12 +71,16 @@
 </div>
 
 @section Scripts {
-    <script>
-        function setReason(form) {
-            var reason = prompt('Lý do từ chối:');
-            if (!reason) { return false; }
-            form.querySelector('input[name="reason"]').value = reason;
-            return true;
-        }
+    <script nonce="@Context.Items["csp-nonce"]">
+        document.querySelectorAll('select.js-autosubmit').forEach(function (select) {
+            select.addEventListener('change', function () { select.form.submit(); });
+        });
+        document.querySelectorAll('form.js-reject-form').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                var reason = prompt('Lý do từ chối:');
+                if (!reason) { e.preventDefault(); return; }
+                form.querySelector('input[name="reason"]').value = reason;
+            });
+        });
     </script>
 }

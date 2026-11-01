@@ -10,13 +10,20 @@ public interface IArticleCommandService
 
     Task<ArticleEditDto?> GetForEditAsync(int articleId, CancellationToken cancellationToken = default);
 
-    /// <summary>Creates a new article as Draft, owned by the given author.</summary>
+    /// <summary>
+    /// Creates a new article as Draft, owned by the given author. The article and its audit-log
+    /// entry are committed in ONE transaction: if the audit write fails, no article is created.
+    /// </summary>
     Task<int> CreateDraftAsync(ArticleSaveRequest request, string authorUserId, string authorDisplayName, CancellationToken cancellationToken = default);
 
-    /// <summary>Updates an existing Draft or Rejected article. Throws on concurrency conflict (RowVersion mismatch).</summary>
-    Task UpdateDraftAsync(int articleId, ArticleSaveRequest request, byte[] rowVersion, string actingUserId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Updates an existing Draft or Rejected article.
+    /// Throws <see cref="Common.ArticleConcurrencyException"/> on RowVersion mismatch and
+    /// <see cref="Common.ArticleForbiddenException"/> when a non-privileged user does not own the article.
+    /// </summary>
+    Task UpdateDraftAsync(int articleId, ArticleSaveRequest request, byte[] rowVersion, string actingUserId, bool canManageAll = false, CancellationToken cancellationToken = default);
 
-    Task SubmitForReviewAsync(int articleId, string actingUserId, CancellationToken cancellationToken = default);
+    Task SubmitForReviewAsync(int articleId, string actingUserId, bool canManageAll = false, CancellationToken cancellationToken = default);
 
     Task PublishAsync(int articleId, string editorUserId, string editorDisplayName, CancellationToken cancellationToken = default);
 

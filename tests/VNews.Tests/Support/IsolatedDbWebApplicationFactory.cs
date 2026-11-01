@@ -2,27 +2,52 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using VNews.Application.Interfaces;
+using VNews.Infrastructure.Services;
 
 namespace VNews.Tests.Support;
 
 /// <summary>
 /// Each test fixture owns a unique, disposable LocalDB database.
 /// NEVER use or mutate the developer's VNewsDb database from tests.
+/// Also exposes the captured application log and a switch that makes the audit-log write fail.
 /// </summary>
-public sealed class IsolatedDbWebApplicationFactory : WebApplicationFactory<Program>
+public class IsolatedDbWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _databaseName = "VNewsTests_" + Guid.NewGuid().ToString("N");
 
+    public LogSink Logs { get; } = new();
+    public AuditFailureSwitch AuditFailure { get; } = new();
+
+    protected virtual string EnvironmentName => "Development";
+
+    // Default: a high ceiling so the many sign-ins made by unrelated tests (all from one fake IP)
+    // do not trip the limiter. RateLimitedWebApplicationFactory overrides this with the real, tight limit.
+    protected virtual IEnumerable<KeyValuePair<string, string?>> ExtraConfiguration => new[]
+    {
+        new KeyValuePair<string, string?>("RateLimiting:Auth:PermitLimit", "1000"),
+    };
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Development");
-        builder.ConfigureAppConfiguration((_, config) =>
+        builder.UseEnvironment(EnvironmentName);
+        // UseSetting feeds the host configuration that WebApplication.CreateBuilder reads BEFORE
+        // Program.cs runs. ConfigureAppConfiguration is applied too late for values Program/
+        // AddInfrastructure read eagerly (connection string, rate-limit options, environment),
+        // which silently pointed the "isolated" tests at the developer's VNewsDb.
+        builder.UseSetting("ConnectionStrings:DefaultConnection",
+            $"Server=(localdb)\\MSSQLLocalDB;Database={_databaseName};Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True");
+        foreach (var pair in ExtraConfiguration) builder.UseSetting(pair.Key, pair.Value);
+
+        builder.ConfigureLogging(logging => logging.AddProvider(Logs));
+
+        builder.ConfigureServices(services =>
         {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:DefaultConnection"] =
-                    $"Server=(localdb)\\MSSQLLocalDB;Database={_databaseName};Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True"
-            });
+            services.AddSingleton(AuditFailure);
+            services.AddScoped<AuditLogService>();
+            services.AddScoped<IAuditLogService, SwitchableAuditLogService>();
         });
     }
 
@@ -41,4 +66,20 @@ public sealed class IsolatedDbWebApplicationFactory : WebApplicationFactory<Prog
                               $"DROP DATABASE [{_databaseName}]; END";
         command.ExecuteNonQuery();
     }
+}
+
+/// <summary>Same app, but with a tight sign-in rate limit (3 POSTs per minute).</summary>
+public sealed class RateLimitedWebApplicationFactory : IsolatedDbWebApplicationFactory
+{
+    protected override IEnumerable<KeyValuePair<string, string?>> ExtraConfiguration => new[]
+    {
+        new KeyValuePair<string, string?>("RateLimiting:Auth:PermitLimit", "3"),
+        new KeyValuePair<string, string?>("RateLimiting:Auth:WindowSeconds", "60"),
+    };
+}
+
+/// <summary>Runs the app as Production to verify production-only hardening (Secure cookies, error page).</summary>
+public sealed class ProductionWebApplicationFactory : IsolatedDbWebApplicationFactory
+{
+    protected override string EnvironmentName => "Production";
 }

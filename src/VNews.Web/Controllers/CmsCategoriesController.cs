@@ -84,6 +84,10 @@ public class CmsCategoriesController : Controller
             TempData["Message"] = "Đã cập nhật chuyên mục.";
             return RedirectToAction(nameof(Index));
         }
+        catch (EntityNotFoundException)
+        {
+            return NotFound();
+        }
         catch (ArticleWorkflowException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);

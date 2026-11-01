@@ -33,7 +33,7 @@
         <textarea asp-for="Summary" style="min-height:80px;"></textarea>
 
         <label>Ảnh bìa</label>
-        <input type="file" id="coverFile" accept="image/jpeg,image/png,image/webp,image/svg+xml" />
+        <input type="file" id="coverFile" accept="image/jpeg,image/png,image/webp" />
         <input asp-for="CoverImageUrl" type="text" style="margin-top:6px;" />
         <div id="uploadStatus" style="font-size:0.85rem; margin-top:4px;"></div>
         @if (!string.IsNullOrWhiteSpace(Model.CoverImageUrl))
@@ -60,7 +60,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
+    <script nonce="@Context.Items["csp-nonce"]">
         document.getElementById('coverFile').addEventListener('change', async function (e) {
             var file = e.target.files[0];
             if (!file) return;

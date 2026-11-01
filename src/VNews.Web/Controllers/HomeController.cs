@@ -10,11 +10,13 @@ public class HomeController : Controller
 {
     private readonly IArticleQueryService _articleQueryService;
     private readonly IWebHostEnvironment _environment;
+    private readonly ILogger<HomeController> _logger;
 
-    public HomeController(IArticleQueryService articleQueryService, IWebHostEnvironment environment)
+    public HomeController(IArticleQueryService articleQueryService, IWebHostEnvironment environment, ILogger<HomeController> logger)
     {
         _articleQueryService = articleQueryService;
         _environment = environment;
+        _logger = logger;
     }
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -50,6 +52,23 @@ public class HomeController : Controller
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        var feature = HttpContext.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+        var traceId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+
+        if (feature?.Error is { } exception)
+        {
+            var (status, _) = VNews.Web.Middleware.ApiExceptionHandler.Map(exception);
+            Response.StatusCode = status;
+            if (status >= 500)
+            {
+                _logger.LogError(exception, "Unhandled exception on {Path}. TraceId {TraceId}.", feature.Path, traceId);
+            }
+            else
+            {
+                _logger.LogWarning("Handled {ExceptionType} on {Path} -> {Status}. TraceId {TraceId}.", exception.GetType().Name, feature.Path, status, traceId);
+            }
+        }
+
+        return View(new ErrorViewModel { RequestId = traceId });
     }
 }
