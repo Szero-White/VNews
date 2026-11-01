@@ -66,22 +66,6 @@ img {
   background: var(--vn-text);
 }
 
-/* Cover uses a photo already present in the VNews demo, not an external ad creative. */
-.house-promo {
-  height:270px; overflow:hidden; color:#fff;
-  background:linear-gradient(90deg,rgba(19,30,43,.93) 0%,rgba(28,40,53,.76) 38%,rgba(32,40,51,.08) 88%),
-    url("../images/demo/articles/34.jpg") center 52% / cover no-repeat;
-}
-.house-promo__inner { width:min(1100px,calc(100% - 36px)); height:100%; margin:auto; display:flex; align-items:center; justify-content:space-between; }
-.house-promo__copy { display:flex; flex-direction:column; align-items:flex-start; max-width:650px; }
-.house-promo__eyebrow { font:700 12px/1.4 Arial,sans-serif; letter-spacing:.18em; color:#f5d7d9; }
-.house-promo__headline { font:700 clamp(33px,3.5vw,49px)/1.17 Merriweather,"Times New Roman",Georgia,serif; letter-spacing:-.02em; margin:12px 0 8px; text-shadow:0 2px 9px rgba(0,0,0,.15); }
-.house-promo__support { font:14px/1.6 Arial,sans-serif; color:#f6f6f6; }
-.house-promo__link { display:inline-flex; align-items:center; gap:12px; margin-top:15px; border:1px solid rgba(255,255,255,.75); padding:8px 13px; font:700 12px/1.5 Arial,sans-serif; }
-.house-promo__link:hover { color:#303030; background:#fff; }
-.house-promo__edition { display:flex; align-items:center; gap:12px; opacity:.88; text-shadow:0 2px 7px rgba(0,0,0,.3); }
-.house-promo__edition span { font:700 93px/.85 Georgia,serif; letter-spacing:-.07em; }
-.house-promo__edition small { font:700 11px/1.45 Arial,sans-serif; letter-spacing:.16em; }
 
 /* The homepage banner is isolated in top-ad-banner.css. */
 
@@ -401,7 +385,7 @@ img {
 }
 
 @media (max-width: 480px) {
-  .masthead__brand { font-size:22px; }
+  .masthead__brand { --vn-logo-size:22px; }
 
   .story-row {
     flex-direction: column;
@@ -468,10 +452,7 @@ body {
   line-height: 1.1;
   flex-shrink: 0;
 }
-.masthead__brand { display:inline-flex; align-items:center; gap:5px; font:800 25px/1 Arial,Helvetica,sans-serif; color:#555; letter-spacing:-.035em; }
-.masthead__brand-mark { width:27px; height:29px; display:inline-grid; place-items:center; color:#fff; background:var(--vn-accent); border-radius:1px; font-size:21px; font-weight:900; transform:skewX(-4deg); }
-.masthead__brand-name { color:#666; letter-spacing:.055em; }
-.masthead__brand:hover .masthead__brand-name { color:var(--vn-accent); }
+/* Logo look lives in brand-logo.css (.vn-logo); .masthead__brand only keeps the header hook and its responsive size. */
 .masthead__motto {
   margin-top: 1px;
   font-size: 10px;
@@ -666,8 +647,7 @@ body {
 
 @media (max-width: 768px) {
   .masthead__inner { flex-wrap: nowrap; min-height: 56px; gap: 8px; }
-  .masthead__brand { font-size:22px; }
-  .masthead__brand-mark { width:25px; height:26px; font-size:19px; }
+  .masthead__brand { --vn-logo-size:22px; }
   .masthead__motto { font-size: 9px; }
   .masthead__menu-toggle { flex-shrink: 0; order: 1; margin-left: 0; }
   .masthead__search { order: 2; flex-shrink: 0; margin: 0; }
@@ -701,9 +681,6 @@ body {
   .primary-nav__inner { padding: 0 16px; }
   .primary-nav__home { margin-top: 0; flex-shrink: 0; }
   .category-nav__list li a { padding: 11px 0; font-size: 13px; }
-  /* The house promo is decorative copy on a photo; on small screens it has no room, so it is removed entirely
-     instead of leaving an empty white block above the header. */
-  .house-promo { display:none; }
 
   .primary-nav__latest { display:inline-flex; font-size:13px; }
   .site-main { padding-top: 0; }
@@ -719,4 +696,15 @@ body {
   .masthead__search summary { width: 30px; }
   .masthead__menu-toggle { padding: 5px; }
   .masthead__motto { font-size: 8px; letter-spacing: 0; }
+}
+
+/* Header geometry shared by every page except the homepage (which has its own banner above the masthead):
+   the reference header is 62px including its rule, and content starts 20px under the navigation. */
+@media (min-width: 769px) {
+  body:not(.page-home) .masthead__inner { min-height: 61px; }
+}
+body:not(.page-home) .site-main { padding-top: 20px; }
+/* Weather is page chrome; only the homepage keeps its strip on small screens. */
+@media (max-width: 768px) {
+  body:not(.page-home) .mobile-weather-row { display: none; }
 }

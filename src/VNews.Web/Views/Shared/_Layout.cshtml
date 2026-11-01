@@ -14,7 +14,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - VNews</title>
     <meta name="description" content="@(ViewData["Description"] ?? "VNews - Website tin tức minh họa và portfolio ASP.NET Core MVC.")" />
-    <meta name="theme-color" content="#a3123a" />
+    <meta name="theme-color" content="#a61b46" />
     @if (User.Identity?.IsAuthenticated == true)
     {
         <meta name="vnews-csrf-token" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
@@ -25,6 +25,7 @@
     <!-- Merriweather (SIL Open Font License, free for any use): headline typeface, matched to the
          editorial reference's measured computed style (font-family: Merriweather, serif; 700). -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap" />
+    <link rel="stylesheet" href="~/css/brand-logo.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/editorial.css" asp-append-version="true" />
     @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index")
@@ -37,6 +38,7 @@
     <link rel="stylesheet" href="~/css/reader-news-panel.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/top-ad-banner.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site-footer.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/mega-menu.css" asp-append-version="true" />
     @if (isArticle || isCategory)
     {
         <link rel="stylesheet" href="~/css/popular-list.css" asp-append-version="true" />
@@ -58,28 +60,11 @@
     <a class="skip-link" href="#main-content">Bỏ qua điều hướng, đến nội dung</a>
     <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 
-    @* A first-party demo ad occupies the homepage campaign area. Category pages retain the house promo
-       until redesigned; article pages start straight under the navigation (like the reference). *@
+    @* Only the homepage carries a first-party banner above the masthead. Every other page starts with the header,
+       like the reference, so navigation and content sit where readers expect them. *@
     @if (isHomepage && Configuration.GetValue("Features:ShowDemoAdSlot", true))
     {
         <partial name="_TopAdBanner" />
-    }
-    else if (!isHomepage && !isArticle)
-    {
-        @if (Configuration.GetValue("Features:ShowDemoAdSlot", true))
-        {
-            <aside class="house-promo" aria-label="Giới thiệu VNews">
-                <div class="house-promo__inner">
-                    <div class="house-promo__copy">
-                        <span class="house-promo__eyebrow">VNEWS · ĐIỂM TIN MỖI NGÀY</span>
-                        <strong class="house-promo__headline">Thế giới chuyển động.<br />Góc nhìn của bạn.</strong>
-                        <span class="house-promo__support">Tin tức, kiến thức và câu chuyện đáng chú ý.</span>
-                        <a asp-controller="Home" asp-action="Latest" class="house-promo__link">Khám phá tin mới <span aria-hidden="true">→</span></a>
-                    </div>
-                    <div class="house-promo__edition" aria-hidden="true"><span>24</span><small>GIỜ<br />MỖI NGÀY</small></div>
-                </div>
-            </aside>
-        }
     }
 
     <header class="masthead">
@@ -102,7 +87,7 @@
             </details>
 
             <div class="masthead__identity">
-                <a class="masthead__brand" asp-controller="Home" asp-action="Index" aria-label="VNews - Trang chủ"><span class="masthead__brand-mark" aria-hidden="true">V</span><span class="masthead__brand-name">NEWS</span></a>
+                <a class="vn-logo masthead__brand" asp-controller="Home" asp-action="Index" aria-label="VNews - Trang chủ"><partial name="_BrandMark" /></a>
                 <span class="masthead__motto">Bản tin dành cho người thích khám phá</span>
             </div>
 
@@ -167,6 +152,7 @@
         </div>
     </div>
 
+    <div id="mega-menu-overlay" class="mega-overlay" hidden></div>
     <nav id="primary-nav" class="primary-nav" aria-label="Chuyên mục tin tức">
         <div class="primary-nav__inner">
             <a class="primary-nav__home" asp-controller="Home" asp-action="Index" aria-label="Trang chủ" title="Trang chủ">
@@ -175,10 +161,12 @@
             @* Mobile has no utility rail; expose Latest in its horizontal category strip. *@
             <a class="primary-nav__latest" asp-controller="Home" asp-action="Latest">Mới nhất</a>
             @await Component.InvokeAsync("CategoryNav")
+            <button type="button" id="mega-menu-toggle" class="primary-nav__all" aria-haspopup="dialog" aria-expanded="false" aria-controls="mega-menu">
+                <span class="primary-nav__all-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span class="primary-nav__all-label">Tất cả chuyên mục</span>
+            </button>
         </div>
-        <button type="button" id="primary-nav-next" class="primary-nav__arrow primary-nav__arrow--next" aria-label="Xem thêm chuyên mục" hidden>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
-        </button>
+        @await Component.InvokeAsync("CategoryNav", new { variant = "mega" })
     </nav>
 
     <div class="mobile-weather-row">
@@ -198,6 +186,7 @@
     <div id="site-toast" class="site-toast" role="status" aria-live="polite" hidden></div>
 
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/mega-menu.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>

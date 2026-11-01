@@ -1,0 +1,57 @@
+/* "Tất cả chuyên mục" desktop menu (layout reference: the all-sections menu of vnexpress.net: a panel under the
+   navigation with the sections in columns, a utilities column, a close button and a dimmed page behind it). */
+
+.primary-nav__all { display: none; }
+/* The scroll arrow is positioned inside the strip (its right edge), not against the whole bar. */
+.category-nav { position: relative; }
+.category-nav .primary-nav__arrow { right: 0; }
+
+.mega-overlay { position: fixed; inset: 0; z-index: 55; background: rgba(0, 0, 0, .55); }
+.mega-overlay[hidden], .mega-menu[hidden] { display: none; }
+html.mega-open { overflow: hidden; }
+
+@media (min-width: 769px) {
+  .primary-nav__all {
+    display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto;
+    margin-left: 8px; padding: 0 4px 0 12px; height: 34px;
+    border: 0; border-left: 1px solid #e5e5e5; background: none; cursor: pointer;
+    font: 400 14px/20px Arial, Helvetica, sans-serif; color: #282828; white-space: nowrap;
+  }
+  .primary-nav__all:hover, .primary-nav__all[aria-expanded="true"] { color: var(--vn-accent); }
+  .primary-nav__all:focus-visible { outline: 2px solid var(--vn-accent); outline-offset: 2px; }
+  .primary-nav__all-icon { display: inline-flex; flex-direction: column; gap: 3px; width: 16px; }
+  .primary-nav__all-icon span { display: block; height: 2px; background: currentColor; border-radius: 1px; }
+  .primary-nav__inner { padding-right: 12px; }
+
+  .mega-menu {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 61;
+    background: #fff; border-top: 1px solid #e5e5e5; box-shadow: 0 12px 24px rgba(0, 0, 0, .18);
+    overflow-y: auto; overscroll-behavior: contain;
+  }
+  .mega-menu__inner { max-width: 1100px; margin: 0 auto; padding: 20px 0 32px; }
+  .mega-menu__head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; margin-bottom: 18px; border-bottom: 1px solid #e5e5e5; }
+  .mega-menu__title { margin: 0; font: 700 22px/1.3 Merriweather, "Times New Roman", Georgia, serif; color: #222; }
+  .mega-menu__close { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; background: #fff; font: 600 14px/1 Arial, sans-serif; color: #444; cursor: pointer; }
+  .mega-menu__close span { font-size: 20px; line-height: 1; }
+  .mega-menu__close:hover { color: var(--vn-accent); border-color: var(--vn-accent); }
+
+  .mega-menu__body { display: grid; grid-template-columns: minmax(0, 1fr) 260px; column-gap: 40px; align-items: start; }
+  /* Section headings in the accent colour, several to a row (the reference lists sub-sections under each heading;
+     VNews has no sub-categories yet, so only the real sections are shown). */
+  .mega-menu__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: 24px; row-gap: 4px; }
+  .mega-menu__list a { display: block; padding: 10px 0; font: 700 16px/24px Arial, Helvetica, sans-serif; color: var(--vn-accent); }
+  .mega-menu__list a:hover { color: #7d1233; text-decoration: underline; text-underline-offset: 4px; }
+  .mega-menu__utility a:hover { color: var(--vn-accent); }
+  .mega-menu__list a[aria-current="page"] { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; }
+  .mega-menu a:focus-visible { outline: 2px solid var(--vn-accent); outline-offset: 2px; }
+
+  .mega-menu__utility { padding-left: 32px; border-left: 1px solid #e5e5e5; }
+  .mega-menu__heading { margin: 0 0 8px; font: 700 12px/1.4 Arial, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #757575; }
+  .mega-menu__utility-list { list-style: none; margin: 0 0 22px; padding: 0; }
+  .mega-menu__utility-list a { display: block; padding: 7px 0; font: 400 15px/22px Arial, Helvetica, sans-serif; color: #333; }
+}
+
+@media (max-width: 768px) {
+  /* Phones use the drawer behind the hamburger; this menu never shows there. */
+  .mega-menu, .mega-overlay { display: none !important; }
+}

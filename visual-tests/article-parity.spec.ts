@@ -155,7 +155,7 @@ test('mobile 390: article starts right under the navigation, one column, readabl
   await expect(page.locator('.mobile-weather-row')).toBeHidden();
   const nav = await box(page, '#primary-nav');
   const bc = await box(page, '.article-topbar .breadcrumb');
-  near(nav.y + nav.h, 112, 2, 'navigation bottom');
+  near(nav.y + nav.h, 108, 2, 'navigation bottom'); // reference mobile header 58px + 50px strip
   near(bc.y - (nav.y + nav.h), 20, 2, 'breadcrumb below navigation');
 
   expect(await type(page, 'h1.article-detail__title')).toEqual({ family: 'Merriweather', size: '22px', lh: '35.75px', weight: '700' });
@@ -173,14 +173,20 @@ test('mobile 390: article starts right under the navigation, one column, readabl
   expect(await overflow(page)).toBeLessThanOrEqual(1);
 });
 
-test('listing pages keep the first-party promo on desktop only; the homepage keeps its own banner', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/chuyen-muc/cong-nghe');
-  await expect(page.locator('.house-promo')).toBeVisible();
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/chuyen-muc/cong-nghe');
-  await expect(page.locator('.house-promo')).toBeHidden(); // never an empty white block
+test('only the homepage has a banner above the masthead; listing pages start with header at 112px navigation bottom', async ({ page }) => {
+  for (const [width, height, navBottom] of [[1440, 900, 112], [390, 844, 108]]) {
+    await page.setViewportSize({ width, height });
+    for (const url of ['/chuyen-muc/cong-nghe', '/tin-moi-nhat', '/tim-kiem?q=gia']) {
+      await page.goto(url);
+      await expect(page.locator('.house-promo')).toHaveCount(0);
+      const masthead = await box(page, '.masthead');
+      const nav = await box(page, '#primary-nav');
+      near(masthead.y, 0, 0, url + ': masthead at the top');
+      near(masthead.h, width === 1440 ? 62 : 57, 1, url + ': header height');
+      near(nav.y + nav.h, navBottom, 1, url + ': navigation bottom @' + width);
+    }
+  }
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  await expect(page.locator('.top-ad-space')).toBeVisible();
+  await expect(page.locator('.top-ad-space')).toBeVisible(); // the homepage keeps its own banner
 });

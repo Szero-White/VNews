@@ -8,4 +8,8 @@
             <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@category.Slug" aria-current="@(isActive ? "page" : null)">@category.Name</a></li>
         }
     </ul>
+    @* Sits on the strip's own right edge, so it can never overlap neighbouring controls. *@
+    <button type="button" id="primary-nav-next" class="primary-nav__arrow primary-nav__arrow--next" aria-label="Xem thêm chuyên mục" hidden>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+    </button>
 </nav>

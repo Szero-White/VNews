@@ -1,0 +1,46 @@
+@model CategoryNavViewModel
+@* Desktop "Tất cả chuyên mục" menu. Categories come from the database (the same model as the strip and the
+   mobile drawer); the utility column only lists pages that exist. No sub-menus are invented: the data has no
+   parent categories yet. Opened and closed by mega-menu.js; it is hidden (and inert) when closed. *@
+<div id="mega-menu" class="mega-menu" role="dialog" aria-modal="true" aria-labelledby="mega-menu-title" hidden>
+    <div class="mega-menu__inner">
+        <div class="mega-menu__head">
+            <h2 id="mega-menu-title" class="mega-menu__title">Tất cả chuyên mục</h2>
+            <button type="button" class="mega-menu__close" data-mega-close aria-label="Đóng menu chuyên mục"><span aria-hidden="true">×</span> Đóng</button>
+        </div>
+        <div class="mega-menu__body">
+            <nav class="mega-menu__categories" aria-label="Chuyên mục">
+                <ul class="mega-menu__list">
+                    @foreach (var category in Model.Categories)
+                    {
+                        var isActive = string.Equals(category.Slug, Model.ActiveSlug, StringComparison.OrdinalIgnoreCase);
+                        <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@category.Slug" aria-current="@(isActive ? "page" : null)">@category.Name</a></li>
+                    }
+                </ul>
+            </nav>
+            <nav class="mega-menu__utility" aria-label="Tiện ích">
+                <p class="mega-menu__heading">Tiện ích</p>
+                <ul class="mega-menu__utility-list">
+                    <li><a asp-controller="Home" asp-action="Latest">Tin mới nhất</a></li>
+                    <li><a asp-controller="Home" asp-action="Saved">Bài đã lưu</a></li>
+                    <li><a asp-controller="Search" asp-action="Index">Tìm kiếm</a></li>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li><a asp-controller="Account" asp-action="Profile">Tài khoản của tôi</a></li>
+                    }
+                    else
+                    {
+                        <li><a asp-controller="Account" asp-action="Login" data-reader-login-open>Đăng nhập</a></li>
+                        <li><a asp-controller="Account" asp-action="Register">Đăng ký</a></li>
+                    }
+                </ul>
+                <p class="mega-menu__heading">Về VNews</p>
+                <ul class="mega-menu__utility-list">
+                    <li><a asp-controller="Pages" asp-action="About">Giới thiệu</a></li>
+                    <li><a asp-controller="Pages" asp-action="Terms">Điều khoản sử dụng</a></li>
+                    <li><a asp-controller="Pages" asp-action="Privacy">Chính sách bảo mật</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>

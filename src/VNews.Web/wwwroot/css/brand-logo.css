@@ -1,0 +1,17 @@
+:root { --vn-accent: #a61b46; } /* the VNews red, also used by site.css */
+/* The VNews logo, shared by the site header, the sign-in dialog, the sign-in pages and the newsroom CMS.
+   Size it with --vn-logo-size on the wrapper; everything scales with it. */
+.vn-logo {
+  --vn-logo-size: 25px;
+  display: inline-flex; align-items: center; gap: .2em;
+  font: 800 var(--vn-logo-size)/1 Arial, Helvetica, sans-serif; letter-spacing: -.035em; color: #555;
+  text-decoration: none;
+}
+.vn-logo__mark {
+  width: 1.08em; height: 1.16em; display: inline-grid; place-items: center;
+  color: #fff; background: var(--vn-accent, #a61b46); border-radius: 1px;
+  font-size: .84em; font-weight: 900; transform: skewX(-4deg);
+}
+.vn-logo__name { color: #666; letter-spacing: .055em; }
+a.vn-logo:hover .vn-logo__name { color: var(--vn-accent, #a61b46); }
+.vn-logo--on-dark, .vn-logo--on-dark .vn-logo__name { color: #fff; }

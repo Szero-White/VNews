@@ -17,12 +17,17 @@ public class CategoryNavViewComponent : ViewComponent
         _categoryQueryService = categoryQueryService;
     }
 
-    /// <param name="variant">"strip" (horizontal navigation) or "drawer" (list inside the mobile menu).</param>
+    /// <param name="variant">"strip" (horizontal navigation), "drawer" (list inside the mobile menu) or "mega" (desktop menu).</param>
     public async Task<IViewComponentResult> InvokeAsync(string variant = "strip")
     {
         var categories = await _categoryQueryService.GetAllAsync();
         var model = new CategoryNavViewModel { Categories = categories, ActiveSlug = ResolveActiveSlug() };
-        return variant == "drawer" ? View("Drawer", model) : View(model);
+        return variant switch
+        {
+            "drawer" => View("Drawer", model),
+            "mega" => View("Mega", model),
+            _ => View(model)
+        };
     }
 
     private string? ResolveActiveSlug()

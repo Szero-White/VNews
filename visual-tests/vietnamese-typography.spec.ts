@@ -47,8 +47,9 @@ test('reader news panel (tin mới + tin đã xem) does not use Georgia for head
   expect(family.toLowerCase()).toContain('merriweather');
 });
 
-test('promo banner headline renders ế correctly: no Georgia, Merriweather stack', async ({ page }) => {
-  await page.goto('/chuyen-muc/kinh-doanh');
-  const family = await page.locator('.house-promo__headline').evaluate(e => getComputedStyle(e).fontFamily);
+test('category page headings with ế (Thế giới) render in Merriweather, not Georgia', async ({ page }) => {
+  await page.goto('/chuyen-muc/the-gioi');
+  await expect(page.locator('h1.category-header__title')).toHaveText('Thế giới');
+  const family = await page.locator('h1.category-header__title').evaluate(e => getComputedStyle(e).fontFamily);
   expect(family.split(',')[0].replace(/["']/g, '').trim()).toBe('Merriweather');
 });

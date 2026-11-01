@@ -4,11 +4,6 @@
    navigation; 32px/48px serif headline; 18px/28.8px body; side column with 110x66 thumbnails.
    Colours, logo and copy stay VNews's own. */
 
-.page-article .site-main { padding-top: 20px; }
-/* Header is 62px tall on the reference including its rule; here the inner row's min-height plus the 1px border made 63. */
-.page-article .masthead__inner { min-height: 61px; }
-/* The weather strip is page chrome on small screens; article pages start straight at the breadcrumb. */
-.page-article .mobile-weather-row { display: none; }
 
 .container.article-layout {
   display: grid;

@@ -3,8 +3,6 @@
    780px main column + 300px side column (20px gap), a 500x300 lead image beside a grey text panel, three headline
    cards, then a list with 145x87 thumbnails. Colours, copy and data stay those of VNews. */
 
-.page-category .site-main { padding-top: 20px; }
-
 .container.category-page { max-width: 1100px; padding-left: 0; padding-right: 0; }
 .category-page .breadcrumb { margin: 0 0 8px; font-size: 14px; line-height: 17px; }
 
