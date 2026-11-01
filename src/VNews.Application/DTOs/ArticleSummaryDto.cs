@@ -12,3 +12,15 @@ public class ArticleSummaryDto
     public string CategoryName { get; set; } = string.Empty;
     public string CategorySlug { get; set; } = string.Empty;
 }
+
+public sealed class ArticleNeighborsDto
+{
+    public ArticleSummaryDto? Previous { get; init; }
+    public ArticleSummaryDto? Next { get; init; }
+}
+
+public sealed class CategoryGroupDto
+{
+    public required CategoryDto Category { get; init; }
+    public IReadOnlyList<ArticleSummaryDto> Articles { get; init; } = Array.Empty<ArticleSummaryDto>();
+}

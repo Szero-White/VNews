@@ -1,5 +1,16 @@
 namespace VNews.Application.Interfaces;
 
+/// <summary>The one place the cover-image size limit lives: the server check, the request cap and the form hint all read it.</summary>
+public static class ImageUploadLimits
+{
+    public const long MaxBytes = 3 * 1024 * 1024;
+
+    /// <summary>Request body cap: the file plus multipart framing.</summary>
+    public const long RequestBytes = MaxBytes + 512 * 1024;
+
+    public const string Label = "3 MB";
+}
+
 public class ImageUploadResult
 {
     public bool Success { get; init; }
