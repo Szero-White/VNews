@@ -25,6 +25,7 @@
             @Item("articles", "file", privileged ? "Tất cả bài viết" : "Bài viết của tôi", Url.Action("Index", "CmsArticles")!)
             @if (privileged) { @Item("queue", "inbox", "Hàng chờ duyệt", Url.Action("Index", "CmsArticles", new { status = "PendingReview" })!) }
             @Item("create", "plus", "Viết bài mới", Url.Action("Create", "CmsArticles")!)
+            @if (privileged) { @Item("comments", "inbox", "Bình luận", Url.Action("Index", "CmsComments")!) }
         </ul>
     }
     @if (isAdmin)

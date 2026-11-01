@@ -1,0 +1,85 @@
+@using VNews.Web.Helpers
+@model PagedResult<VNews.Application.DTOs.Cms.CommentAdminItemDto>
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Bình luận";
+    ViewData["AppNav"] = "comments";
+    ViewData["Crumbs"] = new (string, string?)[] { ("Tòa soạn", null), ("Bình luận", null) };
+    var status = (string?)ViewData["Status"];
+    var q = (string?)ViewData["Query"];
+    var query = new Dictionary<string, string?> { ["status"] = status, ["q"] = q };
+    string Label(string s) => s switch { "Visible" => "Đang hiển thị", "Hidden" => "Đã gỡ", "Deleted" => "Tác giả đã xóa", _ => s };
+    string Css(string s) => s switch { "Visible" => "published", "Hidden" => "rejected", _ => "trashed" };
+}
+<div class="page-head">
+    <div class="page-head__text">
+        <h1 class="app-page-title">Bình luận</h1>
+        <p class="page-head__sub">Gỡ bình luận vi phạm và khôi phục khi cần. Bình luận không bị xóa khỏi hệ thống.</p>
+    </div>
+</div>
+<section class="card" aria-labelledby="comments-title">
+    <h2 class="card__title" id="comments-title">Danh sách bình luận</h2>
+    <form method="get" class="filters" role="search" aria-label="Lọc bình luận">
+        <div class="filters__search">
+            <svg class="icon" aria-hidden="true"><use href="#i-search" /></svg>
+            <label class="sr-only" for="cmt-q">Tìm bình luận</label>
+            <input id="cmt-q" name="q" value="@q" maxlength="100" class="app-input" placeholder="Tìm theo nội dung, người viết, bài viết" />
+        </div>
+        <label class="sr-only" for="cmt-status">Trạng thái</label>
+        <select id="cmt-status" name="status" class="app-select" data-autosubmit>
+            <option value="">Tất cả trạng thái</option>
+            @foreach (var st in new[] { "Visible", "Hidden", "Deleted" })
+            {
+                <option value="@st" selected="@(status == st)">@Label(st)</option>
+            }
+        </select>
+        <button type="submit" class="btn btn--secondary">Lọc</button>
+        @if (status is not null || q is not null) { <a asp-action="Index" class="btn btn--ghost">Xóa lọc</a> }
+    </form>
+    @if (Model.Items.Count == 0)
+    {
+        <div class="empty"><svg class="icon" aria-hidden="true"><use href="#i-inbox" /></svg><p class="empty__title">Không có bình luận phù hợp</p></div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table--cards">
+                <thead><tr><th scope="col">Bình luận</th><th scope="col">Bài viết</th><th scope="col">Trạng thái</th><th scope="col">Thời gian</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead>
+                <tbody>
+                    @foreach (var c in Model.Items)
+                    {
+                        <tr>
+                            <td class="table__cell-title">
+                                <strong>@c.AuthorName</strong>@(c.IsReply ? " · trả lời" : "")
+                                <span class="table__note">@(c.Body.Length > 160 ? c.Body[..160] + "…" : c.Body)</span>
+                            </td>
+                            <td data-label="Bài viết">
+                                @if (c.ArticleIsPublic) { <a asp-controller="Article" asp-action="Detail" asp-route-slug="@c.ArticleSlug" asp-fragment="comment-@c.Id">@c.ArticleTitle</a> }
+                                else { @c.ArticleTitle }
+                            </td>
+                            <td data-label="Trạng thái"><span class="badge badge--@Css(c.Status)">@Label(c.Status)</span></td>
+                            <td data-label="Thời gian" style="white-space:nowrap">@c.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                <div class="table__actions">
+                                    @if (c.Status == "Visible")
+                                    {
+                                        <form asp-action="Hide" asp-route-id="@c.Id" asp-route-status="@status" asp-route-q="@q" asp-route-page="@Model.Page" method="post" class="inline-form" data-confirm="Gỡ bình luận của @c.AuthorName? Bình luận sẽ không còn hiển thị công khai nhưng có thể khôi phục." data-confirm-title="Gỡ bình luận" data-confirm-label="Gỡ bình luận" data-confirm-danger>
+                                            <button type="submit" class="btn btn--danger btn--sm">Gỡ</button>
+                                        </form>
+                                    }
+                                    else if (c.Status == "Hidden")
+                                    {
+                                        <form asp-action="Restore" asp-route-id="@c.Id" asp-route-status="@status" asp-route-q="@q" asp-route-page="@Model.Page" method="post" class="inline-form" data-confirm="Khôi phục bình luận của @c.AuthorName? Bình luận sẽ hiển thị lại công khai." data-confirm-title="Khôi phục bình luận" data-confirm-label="Khôi phục">
+                                            <button type="submit" class="btn btn--secondary btn--sm">Khôi phục</button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_AppPager" model="@(new AppPagerModel { Page = Model.Page, PageSize = Model.PageSize, TotalCount = Model.TotalCount, Controller = "CmsComments", Query = query, Noun = "bình luận" })" />
+    }
+</section>
