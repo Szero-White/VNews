@@ -14,12 +14,14 @@ public sealed class UserAdministrationService : IUserAdministrationService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly VNewsDbContext _context;
     private readonly ILogger<UserAdministrationService> _logger;
+    private readonly IAuditLogService _audit;
 
-    public UserAdministrationService(UserManager<ApplicationUser> userManager, VNewsDbContext context, ILogger<UserAdministrationService> logger)
+    public UserAdministrationService(UserManager<ApplicationUser> userManager, VNewsDbContext context, ILogger<UserAdministrationService> logger, IAuditLogService audit)
     {
         _userManager = userManager;
         _context = context;
         _logger = logger;
+        _audit = audit;
     }
 
     public async Task<PagedResult<UserListItemDto>> ListAsync(string? search, string? role, int page, int pageSize, CancellationToken cancellationToken = default)
@@ -43,7 +45,7 @@ public sealed class UserAdministrationService : IUserAdministrationService
         page = Math.Clamp(page, 1, lastPage);
 
         var users = await query.OrderBy(u => u.Email).Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(u => new { u.Id, u.Email, u.DisplayName })
+            .Select(u => new { u.Id, u.Email, u.DisplayName, u.LockoutEnd })
             .ToListAsync(cancellationToken);
 
         // The roles of the whole page in ONE query (not one query per user).
@@ -61,6 +63,7 @@ public sealed class UserAdministrationService : IUserAdministrationService
             Email = u.Email ?? string.Empty,
             DisplayName = u.DisplayName,
             Roles = rolesByUser[u.Id].ToList(),
+            IsLocked = u.LockoutEnd != null && u.LockoutEnd > DateTimeOffset.UtcNow,
         }).ToList();
         return new PagedResult<UserListItemDto> { Items = items, Page = page, PageSize = pageSize, TotalCount = total };
     }
@@ -75,6 +78,30 @@ public sealed class UserAdministrationService : IUserAdministrationService
                             select new { Role = g.Key, Count = g.Count() })
             .ToListAsync(cancellationToken);
         return Roles.All.ToDictionary(r => r, r => counts.FirstOrDefault(c => c.Role == r)?.Count ?? 0);
+    }
+
+    public async Task<(SetLockOutcome Outcome, string? Email)> SetLockedAsync(string actingUserId, string actingUserName, string targetUserId, bool locked, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByIdAsync(targetUserId);
+        if (user is null) return (SetLockOutcome.UserNotFound, null);
+        if (locked && user.Id == actingUserId) return (SetLockOutcome.CannotLockSelf, user.Email);
+
+        if (locked && await _userManager.IsInRoleAsync(user, Roles.Admin))
+        {
+            var activeAdmins = (await _userManager.GetUsersInRoleAsync(Roles.Admin)).Count(a => a.Id != user.Id && !(a.LockoutEnd > DateTimeOffset.UtcNow));
+            if (activeAdmins == 0) return (SetLockOutcome.LastAdministrator, user.Email);
+        }
+
+        await _userManager.SetLockoutEnabledAsync(user, true);
+        await _userManager.SetLockoutEndDateAsync(user, locked ? DateTimeOffset.MaxValue : null);
+        if (locked)
+        {
+            await _userManager.UpdateSecurityStampAsync(user); // ends the user's current sessions at their next request
+        }
+
+        await _audit.LogAsync(actingUserId, actingUserName, "ChangeLockout", "User", user.Id, $"{(locked ? "Khóa" : "Mở khóa")} tài khoản {user.Email}", cancellationToken);
+        _logger.LogInformation("Admin {AdminId} {Action} user {TargetUserId}.", actingUserId, locked ? "locked" : "unlocked", user.Id);
+        return (SetLockOutcome.Changed, user.Email);
     }
 
     public async Task<(SetRoleOutcome Outcome, string? Email)> SetRoleAsync(string actingUserId, string targetUserId, string role, CancellationToken cancellationToken = default)

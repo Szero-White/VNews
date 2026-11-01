@@ -35,6 +35,23 @@ public class CmsUsersController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetLocked(string userId, bool locked, CancellationToken cancellationToken)
+    {
+        var name = User.Identity?.Name ?? "Quản trị viên";
+        var (outcome, email) = await _users.SetLockedAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!, name, userId, locked, cancellationToken);
+        if (outcome == SetLockOutcome.UserNotFound) return NotFound();
+
+        TempData[outcome == SetLockOutcome.Changed ? "Message" : "Error"] = outcome switch
+        {
+            SetLockOutcome.Changed => locked ? $"Đã khóa tài khoản {email}." : $"Đã mở khóa tài khoản {email}.",
+            SetLockOutcome.CannotLockSelf => "Bạn không thể tự khóa tài khoản của mình.",
+            _ => "Hệ thống phải còn ít nhất một quản trị viên đang hoạt động.",
+        };
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> SetRole(string userId, string role, CancellationToken cancellationToken)
     {
         var (outcome, email) = await _users.SetRoleAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!, userId, role, cancellationToken);

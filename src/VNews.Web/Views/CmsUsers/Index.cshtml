@@ -56,7 +56,7 @@
         <div class="table-wrap">
             <table class="table table--cards">
                 <thead>
-                    <tr><th scope="col">Tài khoản</th><th scope="col">Vai trò hiện tại</th><th scope="col">Đổi vai trò</th></tr>
+                    <tr><th scope="col">Tài khoản</th><th scope="col">Vai trò hiện tại</th><th scope="col">Đổi vai trò</th><th scope="col">Tài khoản</th></tr>
                 </thead>
                 <tbody>
                     @foreach (var u in Model.Users.Items)
@@ -89,6 +89,17 @@
                                             }
                                         </select>
                                         <button type="submit" class="btn btn--secondary btn--sm">Lưu</button>
+                                    </form>
+                                }
+                            </td>
+                            <td data-label="Tài khoản">
+                                @if (u.IsLocked) { <span class="badge badge--rejected">Đã khóa</span> }
+                                @if (!self)
+                                {
+                                    <form asp-action="SetLocked" method="post" class="inline-form" data-confirm="@(u.IsLocked ? $"Mở khóa tài khoản {u.Email}? Người này đăng nhập lại được." : $"Khóa tài khoản {u.Email}? Người này không đăng nhập được và phiên hiện tại sẽ kết thúc. Dữ liệu được giữ nguyên.")" data-confirm-title="@(u.IsLocked ? "Mở khóa tài khoản" : "Khóa tài khoản")" data-confirm-label="@(u.IsLocked ? "Mở khóa" : "Khóa")" data-confirm-danger="@(u.IsLocked ? null : "")">
+                                        <input type="hidden" name="userId" value="@u.Id" />
+                                        <input type="hidden" name="locked" value="@(u.IsLocked ? "false" : "true")" />
+                                        <button type="submit" class="btn @(u.IsLocked ? "btn--secondary" : "btn--danger") btn--sm">@(u.IsLocked ? "Mở khóa" : "Khóa")</button>
                                     </form>
                                 }
                             </td>
