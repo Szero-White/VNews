@@ -277,6 +277,7 @@ img {
 
 .pagination {
   display: flex;
+  align-items: center;
   gap: 8px;
   margin-top: 24px;
   flex-wrap: wrap;
@@ -288,6 +289,17 @@ img {
   border-radius: 4px;
 }
 
+.pagination__nav {
+  padding: 6px 12px;
+  border: 1px solid var(--vn-border);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.pagination__nav:hover, .pagination__item:hover { border-color: var(--vn-accent); color: var(--vn-accent); }
+.pagination__gap { padding: 6px 2px; color: #757575; }
+
+.pagination__item.is-current:hover { color: #fff; }
 .pagination__item.is-current {
   background: var(--vn-accent);
   color: white;
@@ -631,7 +643,10 @@ body {
   line-height: 20px;
   white-space: nowrap;
 }
+.category-nav__list li a { display: block; }
 .category-nav__list li a:hover { color: var(--vn-accent); }
+/* Current category: colour plus a 2px rule (not colour alone); inset shadow adds no height. */
+.category-nav__list li a[aria-current="page"] { color: var(--vn-accent); box-shadow: inset 0 -2px 0 var(--vn-accent); }
 .site-main { padding: 22px 0 65px; }
 
 /* Homepage layout lives in homepage-v5.css and is loaded only on Home/Index;
@@ -672,6 +687,11 @@ body {
   .utility-drawer__inner { display: flex; flex-direction: column; gap: 2px; padding: 10px 16px 14px; }
   .utility-drawer__inner a { padding: 9px 0; color: #333; border-top: 1px solid var(--vn-border); }
   .utility-drawer__inner a:first-of-type { border-top: 0; }
+  .utility-drawer__heading { margin: 0 0 4px; font: 700 12px/1.4 Arial,sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #757575; }
+  .utility-drawer__cat-list { list-style: none; margin: 0 0 6px; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
+  .utility-drawer__cats .utility-drawer__cat-list a { display: block; min-height: 44px; padding: 11px 0; border-top: 1px solid var(--vn-border); font-weight: 600; }
+  .utility-drawer__cats .utility-drawer__cat-list a[aria-current="page"] { color: var(--vn-accent); }
+  .utility-drawer__cats + a { border-top: 1px solid var(--vn-border); }
   .utility-drawer .masthead__weather { padding: 9px 0; color: #696969; }
 
   .mobile-weather-row { display: block; padding: 7px 16px; border-bottom: 1px solid var(--vn-border); font-size: 12px; }
@@ -679,12 +699,11 @@ body {
 
   /* Category strip stays visible as a horizontal-scroll bar, same as the reference site, not hidden behind the hamburger. */
   .primary-nav__inner { padding: 0 16px; }
-  .primary-nav__arrow { display: none; }
   .primary-nav__home { margin-top: 0; flex-shrink: 0; }
   .category-nav__list li a { padding: 11px 0; font-size: 13px; }
-  /* Reference mobile has an unfilled ad area; reserve space without a false advert. */
-  .house-promo { height:184px; background:#fff; }
-  .house-promo__inner { display:none; }
+  /* The house promo is decorative copy on a photo; on small screens it has no room, so it is removed entirely
+     instead of leaving an empty white block above the header. */
+  .house-promo { display:none; }
 
   .primary-nav__latest { display:inline-flex; font-size:13px; }
   .site-main { padding-top: 0; }

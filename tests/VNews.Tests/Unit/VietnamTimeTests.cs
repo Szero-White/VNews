@@ -21,4 +21,26 @@ public class VietnamTimeTests
     [Fact]
     public void ToIso_CarriesTheOffset() =>
         Assert.Equal("2026-11-01T09:30:00+07:00", VietnamTime.ToIso(new DateTime(2026, 11, 1, 2, 30, 0, DateTimeKind.Utc)));
+
+    private static readonly DateTime Now = new(2026, 11, 1, 10, 0, 0, DateTimeKind.Utc);
+
+    [Theory]
+    [InlineData(0, "Vừa xong")]
+    [InlineData(30, "Vừa xong")]
+    [InlineData(60, "1 phút trước")]
+    [InlineData(59 * 60, "59 phút trước")]
+    [InlineData(3600, "1 giờ trước")]
+    [InlineData(23 * 3600 + 3599, "23 giờ trước")]
+    [InlineData(24 * 3600, "1 ngày trước")]
+    [InlineData(6 * 86400 + 80000, "6 ngày trước")]
+    [InlineData(-120, "Vừa xong")] // clock skew: published "in the future"
+    public void Ago_ChoosesTheRightUnit(int secondsAgo, string expected) =>
+        Assert.Equal(expected, VietnamTime.Ago(Now.AddSeconds(-secondsAgo), Now));
+
+    [Fact]
+    public void Ago_FromAWeekOn_ShowsTheVietnamLocalDate()
+    {
+        // 18:00 UTC on 20 Oct is already 21 Oct 01:00 in Vietnam.
+        Assert.Equal("21/10/2026", VietnamTime.Ago(new DateTime(2026, 10, 20, 18, 0, 0, DateTimeKind.Utc), Now));
+    }
 }

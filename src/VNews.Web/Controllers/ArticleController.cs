@@ -26,6 +26,7 @@ public class ArticleController : Controller
             return NotFound();
         }
 
+        HttpContext.Items[VNews.Web.ViewComponents.CategoryNavViewComponent.ActiveCategoryItemKey] = article.CategorySlug;
         var related = await _articleQueryService.GetByCategoryAsync(article.CategorySlug, 1, 8, cancellationToken);
         var mostViewed = await _articleQueryService.GetMostViewedAsync(5, article.Id, cancellationToken);
         return View(new ArticleDetailPageViewModel

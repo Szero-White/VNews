@@ -6,6 +6,8 @@ namespace VNews.Web.Controllers;
 
 public class CategoryController : Controller
 {
+    private const int PageSize = 12;
+
     private readonly IArticleQueryService _articleQueryService;
     private readonly ICategoryQueryService _categoryQueryService;
 
@@ -28,12 +30,20 @@ public class CategoryController : Controller
             return NotFound();
         }
 
-        var articles = await _articleQueryService.GetByCategoryAsync(slug, page, 12, cancellationToken);
+        var articles = await _articleQueryService.GetByCategoryAsync(slug, page, PageSize, cancellationToken);
 
+        // A page number past the end (stale link, hand-edited URL) shows the last real page, not an empty one.
+        if (articles.Items.Count == 0 && articles.TotalCount > 0 && page > articles.TotalPages)
+        {
+            articles = await _articleQueryService.GetByCategoryAsync(slug, articles.TotalPages, PageSize, cancellationToken);
+        }
+
+        var mostViewed = await _articleQueryService.GetMostViewedAsync(5, null, cancellationToken);
         return View(new CategoryPageViewModel
         {
             Category = category,
-            Articles = articles
+            Articles = articles,
+            MostViewed = mostViewed
         });
     }
 }

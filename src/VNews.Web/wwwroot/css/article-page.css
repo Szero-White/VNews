@@ -73,24 +73,12 @@
 
 /* Side column: stays in view while reading, just below the sticky navigation (50px + 20px). */
 .article-layout__aside { position: sticky; top: 70px; padding: 0; border: 0; }
-.aside-title { margin: 0 0 12px; font: 700 18px/28.8px Merriweather,"Times New Roman",Georgia,serif; color: #222; }
-.aside-title__text { position: relative; display: inline-block; }
-.aside-title__text::after { content: ""; position: absolute; left: 0; bottom: 0; width: 100%; height: 1px; background: var(--vn-accent); }
-.article-popular { list-style: none; margin: 0; padding: 0; }
-.article-popular__row { display: grid; grid-template-columns: 110px minmax(0,1fr); column-gap: 10px; align-items: start; box-sizing: content-box; min-height: 67px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid #ececec; }
-.article-popular__row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
-.article-popular__thumb { display: block; width: 110px; height: 66px; overflow: hidden; background: #eee; }
-.article-popular__thumb img { display: block; width: 110px; height: 66px; object-fit: cover; }
-.article-popular__item { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font: 400 14px/22.4px Merriweather,"Times New Roman",Georgia,serif; color: #222; }
-.article-popular__item:hover { color: var(--vn-accent); }
-
 @media (max-width: 1140px) {
   .container.article-layout { grid-template-columns: minmax(0,1fr) 300px; column-gap: 32px; padding: 0 20px; }
 }
 @media (max-width: 900px) {
   .container.article-layout { display: block; padding: 0 18px; }
   .article-layout__aside { position: static; margin-top: 36px; }
-  .article-popular { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); column-gap: 24px; }
 }
 @media (max-width: 600px) {
   .article-topbar { flex-direction: column; gap: 2px; margin-bottom: 20px; }
@@ -98,5 +86,4 @@
   .article-tool { padding: 10px 0; }
   .article-related__grid { gap: 16px 12px; }
   .article-related__card { font-size: 14px; }
-  .article-popular { display: block; }
 }

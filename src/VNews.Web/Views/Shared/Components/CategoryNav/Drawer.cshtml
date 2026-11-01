@@ -1,0 +1,12 @@
+@model CategoryNavViewModel
+
+<nav class="utility-drawer__cats" aria-label="Chuyên mục">
+    <p class="utility-drawer__heading">Chuyên mục</p>
+    <ul class="utility-drawer__cat-list">
+        @foreach (var category in Model.Categories)
+        {
+            var isActive = string.Equals(category.Slug, Model.ActiveSlug, StringComparison.OrdinalIgnoreCase);
+            <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@category.Slug" aria-current="@(isActive ? "page" : null)">@category.Name</a></li>
+        }
+    </ul>
+</nav>

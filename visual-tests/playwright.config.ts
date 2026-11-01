@@ -10,6 +10,9 @@ import { defineConfig } from '@playwright/test';
 const externalBaseUrl = process.env.E2E_BASE_URL;
 const port = 5399;
 const e2eDatabase = 'VNewsE2E'; // never "VNewsDb"
+// Build output the isolated server starts. Set E2E_BUILD_CONFIG=Verify (dotnet build tests/VNews.Tests -c Verify) when a
+// developer server keeps bin/Debug locked, so verification never has to stop that process.
+const buildConfig = process.env.E2E_BUILD_CONFIG ?? 'Debug';
 
 export default defineConfig({
   testDir: '.',
@@ -22,7 +25,7 @@ export default defineConfig({
   webServer: externalBaseUrl
     ? undefined
     : {
-        command: `dotnet bin/Debug/net10.0/VNews.Web.dll --urls http://localhost:${port}`,
+        command: `dotnet bin/${buildConfig}/net10.0/VNews.Web.dll --urls http://localhost:${port}`,
         cwd: '../src/VNews.Web',
         url: `http://localhost:${port}/`,
         reuseExistingServer: false,

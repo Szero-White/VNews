@@ -3,28 +3,50 @@
     var action = (string)ViewData["PaginationAction"]!;
     var slug = ViewData["PaginationSlug"] as string;
     var query = ViewData["PaginationQuery"] as string;
+    var current = Model.Page;
+    var last = Model.TotalPages;
+
+    string PageUrl(int p) =>
+        slug is not null ? Url.Action("Index", action, new { slug, page = p })!
+        : action == "Home" ? Url.Action("Latest", "Home", new { page = p })!
+        : Url.Action("Index", action, new { q = query, page = p })!;
+
+    // Up to 7 numbers are shown as they are; more collapse to 1 … (current-1, current, current+1) … last.
+    var numbers = new List<int>();
+    if (last <= 7)
+    {
+        for (var p = 1; p <= last; p++) numbers.Add(p);
+    }
+    else
+    {
+        foreach (var p in new[] { 1, current - 1, current, current + 1, last })
+        {
+            if (p >= 1 && p <= last && !numbers.Contains(p)) numbers.Add(p);
+        }
+        numbers.Sort();
+    }
 }
 
-@if (Model.TotalPages > 1)
+@if (last > 1)
 {
-    <nav class="pagination">
-        @for (var p = 1; p <= Model.TotalPages; p++)
+    <nav class="pagination" aria-label="Phân trang">
+        @if (current > 1)
         {
-            var isCurrent = p == Model.Page;
-            if (slug is not null)
+            <a class="pagination__nav" href="@PageUrl(current - 1)" rel="prev" aria-label="Trang trước"><span aria-hidden="true">‹</span> Trước</a>
+        }
+        @for (var i = 0; i < numbers.Count; i++)
+        {
+            var p = numbers[i];
+            if (i > 0 && p - numbers[i - 1] > 1)
             {
-                <a class="pagination__item @(isCurrent ? "is-current" : "")"
-                   asp-controller="@action" asp-action="Index" asp-route-slug="@slug" asp-route-page="@p">@p</a>
+                <span class="pagination__gap" aria-hidden="true">…</span>
             }
-            else if (action == "Home")
-            {
-                <a class="pagination__item @(isCurrent ? "is-current" : "")" asp-controller="Home" asp-action="Latest" asp-route-page="@p" aria-current="@(isCurrent ? "page" : null)">@p</a>
-            }
-            else
-            {
-                <a class="pagination__item @(isCurrent ? "is-current" : "")"
-                   asp-controller="@action" asp-action="Index" asp-route-q="@query" asp-route-page="@p">@p</a>
-            }
+            var isCurrent = p == current;
+            <a class="pagination__item @(isCurrent ? "is-current" : "")" href="@PageUrl(p)" aria-label="Trang @p" aria-current="@(isCurrent ? "page" : null)">@p</a>
+        }
+        @if (current < last)
+        {
+            <a class="pagination__nav" href="@PageUrl(current + 1)" rel="next" aria-label="Trang sau">Sau <span aria-hidden="true">›</span></a>
         }
     </nav>
 }

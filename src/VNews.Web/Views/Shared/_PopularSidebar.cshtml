@@ -1,0 +1,19 @@
+@* "Xem nhiều": real published articles ordered by the stored ViewCount, with their real cover images.
+   The caller supplies the surrounding <aside>. Missing covers use the bundled placeholder. *@
+@model IReadOnlyList<ArticleSummaryDto>
+@if (Model.Count > 0)
+{
+    <h2 class="popular-title"><span class="popular-title__text">Xem nhiều</span></h2>
+    <ol class="popular-list">
+        @foreach (var item in Model)
+        {
+            var thumb = string.IsNullOrWhiteSpace(item.CoverImageUrl) ? Url.Content("~/images/demo/fallback.svg") : item.CoverImageUrl;
+            <li class="popular-list__row">
+                <a class="popular-list__thumb" asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug" tabindex="-1" aria-hidden="true">
+                    <img src="@thumb" alt="" width="110" height="66" loading="lazy" decoding="async" />
+                </a>
+                <a class="popular-list__item" asp-controller="Article" asp-action="Detail" asp-route-slug="@item.Slug">@item.Title</a>
+            </li>
+        }
+    </ol>
+}

@@ -5,6 +5,7 @@
     var isHomepage = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Home", StringComparison.OrdinalIgnoreCase)
         && string.Equals(ViewContext.RouteData.Values["action"]?.ToString(), "Index", StringComparison.OrdinalIgnoreCase);
     var isArticle = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Article", StringComparison.OrdinalIgnoreCase);
+    var isCategory = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Category", StringComparison.OrdinalIgnoreCase);
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -36,16 +37,24 @@
     <link rel="stylesheet" href="~/css/reader-news-panel.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/top-ad-banner.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site-footer.css" asp-append-version="true" />
+    @if (isArticle || isCategory)
+    {
+        <link rel="stylesheet" href="~/css/popular-list.css" asp-append-version="true" />
+    }
     @if (isArticle)
     {
         <link rel="stylesheet" href="~/css/article-page.css" asp-append-version="true" />
+    }
+    @if (isCategory)
+    {
+        <link rel="stylesheet" href="~/css/category-page.css" asp-append-version="true" />
     }
     @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Pages")
     {
         <link rel="stylesheet" href="~/css/static-pages.css" asp-append-version="true" />
     }
 </head>
-<body class="@(isHomepage ? "page-home" : isArticle ? "page-article" : "")">
+<body class="@(isHomepage ? "page-home" : isArticle ? "page-article" : isCategory ? "page-category" : "")">
     <a class="skip-link" href="#main-content">Bỏ qua điều hướng, đến nội dung</a>
     <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 
@@ -139,6 +148,7 @@
 
     <div id="utility-drawer" class="utility-drawer">
         <div class="utility-drawer__inner">
+            @await Component.InvokeAsync("CategoryNav", new { variant = "drawer" })
             <a asp-controller="Home" asp-action="Latest">Tin mới nhất</a>
             <a asp-controller="Home" asp-action="Saved">Đã lưu</a>
             @if (User.Identity?.IsAuthenticated == true)

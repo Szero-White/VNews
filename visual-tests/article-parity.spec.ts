@@ -74,12 +74,12 @@ test('desktop: "Xem nhiều" is a thumbnail + headline list with a short rule un
   await page.goto(await articleUrl(page));
 
   const col = await box(page, '.article-layout__main');
-  const heading = await box(page, '.aside-title__text');
+  const heading = await box(page, '.popular-title__text');
   near(heading.y, col.y, 1, 'heading aligned with the top of the article column');
-  expect(await type(page, '.aside-title__text')).toMatchObject({ family: 'Merriweather', size: '18px', lh: '28.8px', weight: '700' });
+  expect(await type(page, '.popular-title__text')).toMatchObject({ family: 'Merriweather', size: '18px', lh: '28.8px', weight: '700' });
 
   // The rule: 1px, exactly as wide as the heading text, at its bottom edge (no negative margins / transforms).
-  const rule = await page.locator('.aside-title__text').evaluate((e) => {
+  const rule = await page.locator('.popular-title__text').evaluate((e) => {
     const after = getComputedStyle(e, '::after');
     return { h: after.height, w: parseFloat(after.width), bottom: after.bottom, left: after.left, textW: e.getBoundingClientRect().width };
   });
@@ -89,19 +89,19 @@ test('desktop: "Xem nhiều" is a thumbnail + headline list with a short rule un
   expect(rule.left).toBe('0px');
   expect(await page.locator('.article-layout__aside').evaluate((e) => getComputedStyle(e).borderTopWidth)).toBe('0px'); // no long bar above the heading
 
-  const rows = page.locator('.article-popular__row');
+  const rows = page.locator('.popular-list__row');
   await expect(rows).toHaveCount(5);
-  const thumbs = await page.locator('.article-popular__thumb img').evaluateAll((els) =>
+  const thumbs = await page.locator('.popular-list__thumb img').evaluateAll((els) =>
     els.map((e) => { const b = e.getBoundingClientRect(); return { w: b.width, h: b.height, y: b.y + scrollY, x: b.x }; }));
   for (const t of thumbs) { near(t.w, 110, 0, 'thumb width'); near(t.h, 66, 0, 'thumb height'); }
   near((thumbs[4].y - thumbs[0].y) / 4, 100, 1, 'row pitch');
-  const loaded = await page.locator('.article-popular__thumb img').evaluateAll((els) => els.map((e) => (e as HTMLImageElement).complete && (e as HTMLImageElement).naturalWidth > 0));
+  const loaded = await page.locator('.popular-list__thumb img').evaluateAll((els) => els.map((e) => (e as HTMLImageElement).complete && (e as HTMLImageElement).naturalWidth > 0));
   expect(loaded.every(Boolean), 'thumbnails load from real article covers').toBe(true);
 
   // Headline to the right of the thumbnail, 10px gap, serif 14px/22.4px.
-  const item = await box(page, '.article-popular__item');
+  const item = await box(page, '.popular-list__item');
   near(item.x - (thumbs[0].x + 110), 10, 1, 'thumbnail to headline gap');
-  expect(await type(page, '.article-popular__item')).toEqual({ family: 'Merriweather', size: '14px', lh: '22.4px', weight: '400' });
+  expect(await type(page, '.popular-list__item')).toEqual({ family: 'Merriweather', size: '14px', lh: '22.4px', weight: '400' });
   // Thin separators between rows only.
   expect(await rows.first().evaluate((e) => getComputedStyle(e).borderBottomWidth)).toBe('1px');
   expect(await rows.last().evaluate((e) => getComputedStyle(e).borderBottomWidth)).toBe('0px');
@@ -168,14 +168,19 @@ test('mobile 390: article starts right under the navigation, one column, readabl
   expect(side.y).toBeGreaterThan(col.y + col.h - 1);
 
   for (const t of await page.locator('.article-tool').all()) expect((await t.boundingBox())!.height).toBeGreaterThanOrEqual(36);
-  const thumb = await box(page, '.article-popular__thumb img');
+  const thumb = await box(page, '.popular-list__thumb img');
   expect([Math.round(thumb.w), Math.round(thumb.h)]).toEqual([110, 66]);
   expect(await overflow(page)).toBeLessThanOrEqual(1);
 });
 
-test('category pages keep the promo banner; the homepage is untouched', async ({ page }) => {
+test('listing pages keep the first-party promo on desktop only; the homepage keeps its own banner', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/chuyen-muc/cong-nghe');
-  await expect(page.locator('.house-promo')).toHaveCount(1);
+  await expect(page.locator('.house-promo')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/chuyen-muc/cong-nghe');
+  await expect(page.locator('.house-promo')).toBeHidden(); // never an empty white block
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await expect(page.locator('.top-ad-space')).toBeVisible();
 });

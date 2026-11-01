@@ -1,0 +1,18 @@
+/* "Xem nhiều" list: 110x66 thumbnail + serif headline, thin separators, short rule under the heading.
+   Shared by the article page and the category pages (metrics measured on vnexpress.net, 2026-11-01). */
+.popular-title { margin: 0 0 12px; font: 700 18px/28.8px Merriweather,"Times New Roman",Georgia,serif; color: #222; }
+.popular-title__text { position: relative; display: inline-block; }
+.popular-title__text::after { content: ""; position: absolute; left: 0; bottom: 0; width: 100%; height: 1px; background: var(--vn-accent); }
+.popular-list { list-style: none; margin: 0; padding: 0; }
+.popular-list__row { display: grid; grid-template-columns: 110px minmax(0,1fr); column-gap: 10px; align-items: start; box-sizing: content-box; min-height: 67px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid #ececec; }
+.popular-list__row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
+.popular-list__thumb { display: block; width: 110px; height: 66px; overflow: hidden; background: #eee; }
+.popular-list__thumb img { display: block; width: 110px; height: 66px; object-fit: cover; }
+.popular-list__item { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font: 400 14px/22.4px Merriweather,"Times New Roman",Georgia,serif; color: #222; }
+.popular-list__item:hover { color: var(--vn-accent); }
+@media (max-width: 900px) {
+  .popular-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); column-gap: 24px; }
+}
+@media (max-width: 600px) {
+  .popular-list { display: block; }
+}

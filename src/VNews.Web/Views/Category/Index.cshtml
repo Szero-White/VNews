@@ -1,93 +1,110 @@
+@using VNews.Web.Helpers
 @model CategoryPageViewModel
-@using System.Linq
 @{
     ViewData["Title"] = Model.Category.Name;
     ViewData["Description"] = Model.Category.Description ?? $"Tin tức chuyên mục {Model.Category.Name} trên VNews.";
     ViewData["PaginationAction"] = "Category";
     ViewData["PaginationSlug"] = Model.Category.Slug;
 
+    // Page 1: one feature (image + panel), up to three headline cards, then the list. Later pages: list only.
     var firstPage = Model.Articles.Page == 1;
-    var lead = firstPage ? Model.Articles.Items.FirstOrDefault() : null;
-    var briefings = firstPage ? Model.Articles.Items.Skip(1).Take(2).ToList() : Model.Articles.Items.Take(0).ToList();
-    var articles = Model.Articles.Items.Skip(firstPage ? 1 + briefings.Count : 0).ToList();
+    var items = Model.Articles.Items;
+    var lead = firstPage ? items.FirstOrDefault() : null;
+    var cards = firstPage ? items.Skip(1).Take(3).ToList() : new List<ArticleSummaryDto>();
+    var rows = items.Skip(firstPage ? 1 + cards.Count : 0).ToList();
+    var now = DateTime.UtcNow;
+    string Thumb(ArticleSummaryDto a) => string.IsNullOrWhiteSpace(a.CoverImageUrl) ? Url.Content("~/images/demo/fallback.svg") : a.CoverImageUrl;
 }
-<div class="container listing-page editorial-listing">
+<div class="container category-page">
     <nav class="breadcrumb" aria-label="Đường dẫn">
         <a asp-controller="Home" asp-action="Index">Trang chủ</a>
         <span aria-hidden="true">/</span>
         <span aria-current="page">@Model.Category.Name</span>
     </nav>
-    <div class="listing-heading">
-        <div>
-            <h1 class="listing-page__title">@Model.Category.Name</h1>
-            @if (!string.IsNullOrWhiteSpace(Model.Category.Description))
-            {
-                <p class="listing-page__description">@Model.Category.Description</p>
-            }
-        </div>
-        <a asp-controller="Home" asp-action="Latest">Tin mới nhất <span aria-hidden="true">→</span></a>
-    </div>
+    <header class="category-header">
+        <h1 class="category-header__title">@Model.Category.Name</h1>
+        @if (!string.IsNullOrWhiteSpace(Model.Category.Description))
+        {
+            <p class="category-header__desc">@Model.Category.Description</p>
+        }
+    </header>
 
-    @if (Model.Articles.Items.Count > 0)
+    @if (items.Count == 0)
     {
-        <nav class="listing-sections" aria-label="Đi đến nội dung chuyên mục">
-            @if (lead is not null)
-            {
-                <a href="#category-lead">Nổi bật</a>
-            }
-            @if (articles.Count > 0)
-            {
-                <a href="#category-feed">Tin mới trong chuyên mục</a>
-            }
-            <a asp-controller="Home" asp-action="Saved">Bài đã lưu</a>
-        </nav>
-    }
-    @if (Model.Articles.Items.Count == 0)
-    {
-        <div class="empty-state"><p>Chưa có bài viết trong chuyên mục này.</p></div>
+        <div class="empty-state category-empty">
+            <p>Chưa có bài viết trong chuyên mục này.</p>
+            <p><a asp-controller="Home" asp-action="Latest">Xem tin mới nhất →</a></p>
+        </div>
     }
     else
     {
-        @if (lead is not null)
-        {
-            <section id="category-lead" class="editorial-listing__feature" aria-label="Tin nổi bật trong chuyên mục">
-                <div class="editorial-listing__lead">
-                    @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = lead, Layout = ArticleCardLayout.HeroLead })
-                </div>
-                @if (briefings.Count > 0)
+        <div class="category-layout">
+            <div class="category-main">
+                @if (lead is not null)
                 {
-                    <div class="editorial-listing__briefings" aria-label="Tin đáng chú ý">
-                        @foreach (var briefing in briefings)
+                    <section id="category-lead" class="cat-lead" aria-label="Tin nổi bật trong chuyên mục">
+                        <a class="cat-lead__image" asp-controller="Article" asp-action="Detail" asp-route-slug="@lead.Slug" tabindex="-1" aria-hidden="true">
+                            <img src="@Thumb(lead)" alt="" width="500" height="300" fetchpriority="high" decoding="async" />
+                        </a>
+                        <div class="cat-lead__panel">
+                            <h2 class="cat-lead__title"><a asp-controller="Article" asp-action="Detail" asp-route-slug="@lead.Slug">@lead.Title</a></h2>
+                            <p class="cat-lead__summary">@lead.Summary</p>
+                            @if (lead.PublishedAt is DateTime leadTime)
+                            {
+                                <time class="cat-meta" datetime="@VietnamTime.ToIso(leadTime)" title="@VietnamTime.FormatLong(leadTime)">@VietnamTime.Ago(leadTime, now)</time>
+                            }
+                        </div>
+                    </section>
+                }
+                @if (cards.Count > 0)
+                {
+                    <section class="cat-cards" aria-label="Tin đáng chú ý">
+                        @foreach (var card in cards)
                         {
-                            <article class="listing-brief">
-                                @if (!string.IsNullOrWhiteSpace(briefing.CoverImageUrl))
+                            <article class="cat-card">
+                                <a class="cat-card__image" asp-controller="Article" asp-action="Detail" asp-route-slug="@card.Slug" tabindex="-1" aria-hidden="true">
+                                    <img src="@Thumb(card)" alt="" width="247" height="148" loading="lazy" decoding="async" />
+                                </a>
+                                <h3 class="cat-card__title"><a asp-controller="Article" asp-action="Detail" asp-route-slug="@card.Slug">@card.Title</a></h3>
+                                @if (card.PublishedAt is DateTime cardTime)
                                 {
-                                    <a class="listing-brief__image" asp-controller="Article" asp-action="Detail" asp-route-slug="@briefing.Slug" aria-label="Đọc bài: @briefing.Title">
-                                        <img src="@briefing.CoverImageUrl" alt="" loading="lazy" decoding="async" />
-                                    </a>
+                                    <time class="cat-meta" datetime="@VietnamTime.ToIso(cardTime)" title="@VietnamTime.FormatLong(cardTime)">@VietnamTime.Ago(cardTime, now)</time>
                                 }
-                                <h2 class="listing-brief__title"><a asp-controller="Article" asp-action="Detail" asp-route-slug="@briefing.Slug">@briefing.Title</a></h2>
-                                <p class="listing-brief__summary">@briefing.Summary</p>
                             </article>
                         }
-                    </div>
+                    </section>
                 }
-            </section>
-        }
-        @if (articles.Count > 0)
-        {
-            <section id="category-feed" class="editorial-listing__feed" aria-label="Danh sách bài viết">
-                <div class="editorial-heading">
-                    <h2 class="section-title">Tin trong chuyên mục</h2>
-                </div>
-                <div class="editorial-listing__articles">
-                    @foreach (var item in articles)
-                    {
-                        @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = item, Layout = ArticleCardLayout.StoryRow })
-                    }
-                </div>
-            </section>
-        }
-        @await Html.PartialAsync("_Pagination", Model.Articles)
+                @if (rows.Count > 0)
+                {
+                    <section id="category-feed" class="cat-list" aria-label="Danh sách bài viết">
+                        @foreach (var row in rows)
+                        {
+                            <article class="cat-row">
+                                <h3 class="cat-row__title"><a asp-controller="Article" asp-action="Detail" asp-route-slug="@row.Slug">@row.Title</a></h3>
+                                <div class="cat-row__body">
+                                    <a class="cat-row__image" asp-controller="Article" asp-action="Detail" asp-route-slug="@row.Slug" tabindex="-1" aria-hidden="true">
+                                        <img src="@Thumb(row)" alt="" width="145" height="87" loading="lazy" decoding="async" />
+                                    </a>
+                                    <div class="cat-row__text">
+                                        <p class="cat-row__summary">@row.Summary</p>
+                                        @if (row.PublishedAt is DateTime rowTime)
+                                        {
+                                            <time class="cat-meta" datetime="@VietnamTime.ToIso(rowTime)" title="@VietnamTime.FormatLong(rowTime)">@VietnamTime.Ago(rowTime, now)</time>
+                                        }
+                                    </div>
+                                </div>
+                            </article>
+                        }
+                    </section>
+                }
+                @await Html.PartialAsync("_Pagination", Model.Articles)
+            </div>
+            @if (Model.MostViewed.Count > 0)
+            {
+                <aside class="category-layout__aside" aria-label="Xem nhiều">
+                    <partial name="_PopularSidebar" model="Model.MostViewed" />
+                </aside>
+            }
+        </div>
     }
 </div>

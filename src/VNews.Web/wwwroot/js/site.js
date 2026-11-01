@@ -23,6 +23,19 @@
     });
     categoryList.addEventListener('scroll', updateArrow);
     window.addEventListener('resize', updateArrow);
+    window.addEventListener('load', updateArrow);
+
+    // Bring the category being read into view (matters when the strip scrolls, e.g. on phones).
+    var current = categoryList.querySelector('a[aria-current="page"]');
+    var centerCurrent = function () {
+      if (!current) return;
+      var listBox = categoryList.getBoundingClientRect();
+      var linkBox = current.getBoundingClientRect();
+      var left = linkBox.left - listBox.left + categoryList.scrollLeft;
+      categoryList.scrollLeft = Math.max(0, left - (categoryList.clientWidth - linkBox.width) / 2);
+    };
+    centerCurrent();
+    window.addEventListener('load', centerCurrent); // web fonts change link widths
     updateArrow();
   }
 

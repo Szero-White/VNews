@@ -57,7 +57,7 @@ const REF_SEL = {
 const VN_SEL = {
   nav: '#primary-nav', navItems: '#primary-nav .category-nav a', breadcrumb: '.article-topbar .breadcrumb', date: '.article-topbar__date', title: 'h1.article-detail__title',
   summary: '.article-detail__summary', body: '.article-detail__body p', articleCol: '.article-layout__main', sidebar: '.article-layout__aside',
-  xemTitle: '.aside-title__text', xemThumbs: '.article-popular__thumb', xemItemTitle: '.article-popular__item',
+  xemTitle: '.popular-title__text', xemThumbs: '.popular-list__thumb', xemItemTitle: '.popular-list__item',
 };
 
 async function run(browser, siteName, url, sel, vp) {

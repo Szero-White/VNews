@@ -23,19 +23,18 @@ test('mobile masthead exposes real reader and saved-article destinations', async
   await expect(page).toHaveURL(/da-luu/i);
 });
 
-test('category jump links remain connected to actual articles', async ({ page }) => {
+test('category page lead and list stay connected to actual articles', async ({ page }) => {
   await page.goto('/');
   const technology = page.locator('.category-nav__list a').filter({ hasText: /công nghệ/i }).first();
   await expect(technology).toBeVisible();
   await technology.click();
-  await expect(page.locator('.editorial-listing')).toBeVisible();
+  await expect(page.locator('.category-page')).toBeVisible();
 
-  const categoryJump = page.locator('.listing-sections a[href="#category-lead"]');
-  await expect(categoryJump).toBeVisible();
-  await categoryJump.click();
+  // The lead feature and the list below it are real sections; the lead headline opens its article.
   await expect(page.locator('#category-lead')).toBeVisible();
+  await expect(page.locator('#category-feed')).toBeVisible();
 
-  const headline = page.locator('#category-lead .hero-lead__title a');
+  const headline = page.locator('#category-lead .cat-lead__title a');
   await expect(headline).toBeVisible();
   await headline.click();
   await expect(page.locator('article[data-news-article]')).toBeVisible();

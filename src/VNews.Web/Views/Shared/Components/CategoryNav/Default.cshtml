@@ -1,11 +1,11 @@
-@using VNews.Application.DTOs
-@model IReadOnlyList<CategoryDto>
+@model CategoryNavViewModel
 
 <nav class="category-nav">
     <ul class="category-nav__list">
-        @foreach (var category in Model)
+        @foreach (var category in Model.Categories)
         {
-            <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@category.Slug">@category.Name</a></li>
+            var isActive = string.Equals(category.Slug, Model.ActiveSlug, StringComparison.OrdinalIgnoreCase);
+            <li><a asp-controller="Category" asp-action="Index" asp-route-slug="@category.Slug" aria-current="@(isActive ? "page" : null)">@category.Name</a></li>
         }
     </ul>
 </nav>
