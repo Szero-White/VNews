@@ -121,6 +121,9 @@ for (const vp of VIEWPORTS) {
     await page.locator('#comment-body').fill('Bình luận dài '.repeat(30) + marker + ' https://example.com/' + 'a'.repeat(80));
     await page.getByRole('button', { name: 'Gửi bình luận' }).click();
     await expect(comments(page).locator('.comment__body', { hasText: marker })).toBeVisible();
+    // Measure the settled layout: the web fonts swap in right after load and briefly change text widths.
+    await page.waitForLoadState('load');
+    await page.evaluate(() => document.fonts.ready.then(() => new Promise((r) => requestAnimationFrame(() => r(null)))));
     const m = await page.evaluate(() => {
       const col = document.querySelector('.article-layout__main')!.getBoundingClientRect();
       const c = document.querySelector('#binh-luan')!.getBoundingClientRect();
