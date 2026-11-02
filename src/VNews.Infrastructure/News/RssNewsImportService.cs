@@ -20,6 +20,8 @@ public sealed class RssNewsImportService : INewsImportService
         ("thoi-su", "thoi-su"), ("kinh-doanh", "kinh-doanh"), ("the-gioi", "the-gioi"), ("khoa-hoc-cong-nghe", "cong-nghe"),
         ("the-thao", "the-thao"), ("giai-tri", "giai-tri"), ("suc-khoe", "suc-khoe"), ("giao-duc", "giao-duc"),
         ("du-lich", "du-lich"), ("phap-luat", "phap-luat"),
+        // Sub-channels of "Thời sự": used only when the matching sub-category has been created in the CMS.
+        ("chinh-tri", "chinh-tri"), ("dan-sinh", "dan-sinh"), ("giao-thong", "giao-thong"), ("lao-dong-viec-lam", "viec-lam"),
     };
 
     private readonly HttpClient _http;
@@ -75,7 +77,13 @@ public sealed class RssNewsImportService : INewsImportService
         if (items.Count == 0) return (0, 0);
 
         var links = items.Select(i => i.Link).ToList();
-        var known = (await _db.Articles.AsNoTracking().Where(a => a.SourceUrl != null && links.Contains(a.SourceUrl)).Select(a => a.SourceUrl!).ToListAsync(cancellationToken)).ToHashSet();
+        var existing = await _db.Articles.Where(a => a.SourceUrl != null && links.Contains(a.SourceUrl)).ToListAsync(cancellationToken);
+        var known = existing.Select(a => a.SourceUrl!).ToHashSet();
+
+        // A story first imported under the parent section moves to the more specific sub-category that now carries it.
+        var parentId = await _db.Categories.Where(c => c.Id == categoryId).Select(c => c.ParentId).FirstOrDefaultAsync(cancellationToken);
+        var moved = parentId is null ? 0 : existing.Count(a => a.CategoryId == parentId);
+        foreach (var article in existing.Where(a => parentId is not null && a.CategoryId == parentId)) article.CategoryId = categoryId;
         var slugs = (await _db.Articles.AsNoTracking().Select(a => a.Slug).ToListAsync(cancellationToken)).ToHashSet();
 
         var added = 0;
@@ -101,7 +109,7 @@ public sealed class RssNewsImportService : INewsImportService
             added++;
         }
 
-        if (added > 0) await _db.SaveChangesAsync(cancellationToken);
+        if (added > 0 || moved > 0) await _db.SaveChangesAsync(cancellationToken);
         return (added, items.Count - added);
     }
 
