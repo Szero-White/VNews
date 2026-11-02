@@ -22,7 +22,7 @@
         </div>
         <div class="app-field">
             <label asp-for="Body" class="app-label">Nội dung</label>
-            <textarea asp-for="Body" class="app-textarea" rows="16" readonly="@readOnly" data-rte data-upload-url="@(readOnly ? null : Url.Action("UploadCoverImage", "CmsArticles"))" data-max-bytes="@ImageUploadLimits.MaxBytes" data-max-label="@ImageUploadLimits.Label"></textarea>
+            <textarea asp-for="Body" class="app-textarea" rows="16" readonly="@readOnly" data-rte data-import-url="@(readOnly ? null : Url.Action("Import", "CmsImages"))" data-upload-url="@(readOnly ? null : Url.Action("UploadCoverImage", "CmsArticles"))" data-max-bytes="@ImageUploadLimits.MaxBytes" data-max-label="@ImageUploadLimits.Label"></textarea>
             <span asp-validation-for="Body" class="app-field-error"></span>
         </div>
         <partial name="_GalleryField" model="Model" view-data="ViewData" />

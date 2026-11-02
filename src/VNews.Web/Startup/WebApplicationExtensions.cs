@@ -69,7 +69,7 @@ public static class WebApplicationExtensions
         app.MapControllerRoute(
             name: "cms",
             pattern: "cms/{controller=CmsArticles}/{action=Index}/{id?}",
-            constraints: new { controller = "CmsArticles|CmsCategories|CmsUsers|CmsOverview|CmsAudit|CmsMedia|CmsComments|CmsTrash|CmsImport|CmsAnalytics" })
+            constraints: new { controller = "CmsArticles|CmsCategories|CmsUsers|CmsOverview|CmsAudit|CmsMedia|CmsComments|CmsTrash|CmsImport|CmsAnalytics|CmsImages" })
             .WithStaticAssets();
 
         app.MapControllerRoute(

@@ -44,6 +44,12 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<UploadStorage>();
         services.AddScoped<IImageUploadService, ImageUploadService>();
+        services.AddHttpClient<IRemoteImageFetcher, RemoteImageFetcher>(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(10);
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; VNewsEditor/1.0)");
+            })
+            .ConfigurePrimaryHttpMessageHandler(RemoteAddressPolicy.CreateHandler);
         services.AddScoped<UploadCleanupService>();
         services.AddScoped<CmsWorkspaceBuilder>();
         return services;
