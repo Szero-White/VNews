@@ -58,8 +58,10 @@ public sealed class AuditAndCommentFilterTests : IClassFixture<IsolatedDbWebAppl
         db.Articles.Add(article);
         await db.SaveChangesAsync();
         var when = new DateTime(2026, 6, 15, 12, 0, 0, DateTimeKind.Utc);
-        var visible = new Comment { ArticleId = article.Id, UserId = "u1", AuthorName = "Bạn đọc", Body = "Bình luận hiển thị", CreatedAtUtc = when };
-        var deleted = new Comment { ArticleId = article.Id, UserId = "u2", AuthorName = "Bạn đọc 2", Body = "Bình luận người viết đã xóa", Status = CommentStatus.Deleted, CreatedAtUtc = when };
+        var reader1 = await _factory.CreateUserAsync(VNews.Domain.Identity.Roles.Reader);
+        var reader2 = await _factory.CreateUserAsync(VNews.Domain.Identity.Roles.Reader);
+        var visible = new Comment { ArticleId = article.Id, UserId = reader1.Id, AuthorName = "Bạn đọc", Body = "Bình luận hiển thị", CreatedAtUtc = when };
+        var deleted = new Comment { ArticleId = article.Id, UserId = reader2.Id, AuthorName = "Bạn đọc 2", Body = "Bình luận người viết đã xóa", Status = CommentStatus.Deleted, CreatedAtUtc = when };
         db.Comments.AddRange(visible, deleted);
         await db.SaveChangesAsync();
 

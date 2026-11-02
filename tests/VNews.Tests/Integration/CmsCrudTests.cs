@@ -110,8 +110,9 @@ public sealed class CmsCrudTests : IClassFixture<IsolatedDbWebApplicationFactory
         await Assert.ThrowsAsync<ArticleConcurrencyException>(() => trash.MoveToTrashAsync(article.Id, article.RowVersion, "editor-1", "Biên tập", canManageAll: true));
         Assert.Equal(ArticleStatus.Draft, (await ReloadAsync(article.Id)).Status);
 
-        await trash.MoveToTrashAsync(article.Id, null, "editor-1", "Biên tập", canManageAll: true);
-        var db2 = Service<VNewsDbContext>(scope);
+        using var retry = _factory.Services.CreateScope(); // a new request: a new context, so the failed attempt is not still tracked
+        await Service<IArticleTrashService>(retry).MoveToTrashAsync(article.Id, null, "editor-1", "Biên tập", canManageAll: true);
+        var db2 = Service<VNewsDbContext>(retry);
         Assert.True(await db2.AuditLogs.AnyAsync(l => l.Action == "Trash" && l.EntityId == article.Id.ToString()));
     }
 
@@ -185,8 +186,10 @@ public sealed class CmsCrudTests : IClassFixture<IsolatedDbWebApplicationFactory
         var article = await NewArticleAsync(ArticleStatus.Published);
         using var scope = _factory.Services.CreateScope();
         var db = Service<VNewsDbContext>(scope);
-        var visible = new Comment { ArticleId = article.Id, UserId = "u1", AuthorName = "Bạn đọc", Body = "Bình luận thử để kiểm duyệt" };
-        var deleted = new Comment { ArticleId = article.Id, UserId = "u2", AuthorName = "Bạn đọc 2", Body = "Bình luận tác giả đã xóa", Status = CommentStatus.Deleted };
+        var reader1 = await _factory.CreateUserAsync(VNews.Domain.Identity.Roles.Reader);
+        var reader2 = await _factory.CreateUserAsync(VNews.Domain.Identity.Roles.Reader);
+        var visible = new Comment { ArticleId = article.Id, UserId = reader1.Id, AuthorName = "Bạn đọc", Body = "Bình luận thử để kiểm duyệt" };
+        var deleted = new Comment { ArticleId = article.Id, UserId = reader2.Id, AuthorName = "Bạn đọc 2", Body = "Bình luận tác giả đã xóa", Status = CommentStatus.Deleted };
         db.Comments.AddRange(visible, deleted);
         await db.SaveChangesAsync();
 
