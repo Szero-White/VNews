@@ -24,3 +24,7 @@ _ui_backup/
 # Local research snapshots (e.g. MHTML captures of third-party sites) — never pushed/committed
 experiments/
 App_Data/
+
+# Local tool settings and third-party reference screenshots (not for the public repo)
+.claude/settings.local.json
+references/*.png
