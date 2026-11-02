@@ -6,14 +6,14 @@
 }
 @if (Model.CanRestore)
 {
-    <form asp-controller="CmsTrash" asp-action="Restore" asp-route-id="@Model.Id" method="post" class="inline-form" data-confirm="Khôi phục bài “@Model.Title”? Bài trở lại trạng thái trước khi xóa." data-confirm-title="Khôi phục bài viết" data-confirm-label="Khôi phục">
+    <form asp-controller="CmsTrash" asp-action="Restore" asp-route-id="@Model.Id" method="post" class="inline-form" data-inplace="@(Model.InPlace ? "" : null)" data-confirm="Khôi phục bài “@Model.Title”? Bài trở lại trạng thái trước khi xóa." data-confirm-title="Khôi phục bài viết" data-confirm-label="Khôi phục">
         @if (Model.RowVersion is not null) { <input type="hidden" name="rowVersionBase64" value="@Model.RowVersion" /> }
         <button type="submit" class="btn btn--secondary@(size)">Khôi phục</button>
     </form>
 }
 @if (Model.CanTrash)
 {
-    <form asp-controller="CmsTrash" asp-action="Move" asp-route-id="@Model.Id" method="post" class="inline-form" data-confirm="Chuyển bài “@Model.Title” vào thùng rác? Bài sẽ biến mất khỏi danh sách và trang công khai, nhưng có thể khôi phục." data-confirm-title="Xóa bài viết" data-confirm-label="Chuyển vào thùng rác" data-confirm-danger>
+    <form asp-controller="CmsTrash" asp-action="Move" asp-route-id="@Model.Id" method="post" class="inline-form" data-inplace="@(Model.InPlace ? "" : null)" data-confirm="Chuyển bài “@Model.Title” vào thùng rác? Bài sẽ biến mất khỏi danh sách và trang công khai, nhưng có thể khôi phục." data-confirm-title="Xóa bài viết" data-confirm-label="Chuyển vào thùng rác" data-confirm-danger>
         @if (Model.RowVersion is not null) { <input type="hidden" name="rowVersionBase64" value="@Model.RowVersion" /> }
         <button type="submit" class="btn btn--danger@(size)">Xóa</button>
     </form>

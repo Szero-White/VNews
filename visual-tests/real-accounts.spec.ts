@@ -62,10 +62,10 @@ test('real reader: registers, sees profile + saved articles, renames the account
   await page.locator('#DisplayName').fill('A');
   await page.locator('form[action$="ho-so"]').evaluate((f) => { (f as HTMLFormElement).noValidate = true; }); // test the server rule, not the browser hint
   await page.getByRole('button', { name: 'Lưu thay đổi' }).click();
-  await expect(page.locator('.app-alert--error')).toBeVisible();
+  await expect(page.locator('.app-toast--error')).toBeVisible();
   await page.locator('#DisplayName').fill('Tên mới đã đổi');
   await page.getByRole('button', { name: 'Lưu thay đổi' }).click();
-  await expect(page.locator('.app-alert--success')).toContainText('Đã cập nhật tên hiển thị');
+  await expect(page.locator('.app-toast--success')).toContainText('Đã cập nhật tên hiển thị');
   await expect(page.locator('.app-user__name')).toHaveText('Tên mới đã đổi');
 
   await page.goto('/tai-khoan/bai-da-luu');
@@ -125,7 +125,7 @@ test('admin: changes another user\'s role through the form; own row is locked', 
   await row.locator('select').selectOption('Author');
   await row.getByRole('button', { name: 'Lưu' }).click();
   await page.locator('#app-confirm [data-confirm-accept]').click();
-  await expect(page.locator('.app-alert--success')).toContainText('Tác giả');
+  await expect(page.locator('.app-toast--success')).toContainText('Tác giả');
 
   // the promoted user's already-open session is invalidated at once (security stamp), and a fresh sign-in has the new role
   await regPage.goto('/cms');

@@ -1,3 +1,4 @@
+using VNews.Application.DTOs;
 using VNews.Application.Common;
 using VNews.Application.DTOs.Cms;
 
@@ -16,13 +17,44 @@ public sealed class CmsWorkspaceViewModel
 
     public string? Status { get; init; }
     public string? Query { get; init; }
+
+    /// <summary>The other filters of the list: category, author (editors/admins only) and the range of the last-change date.</summary>
+    public int? CategoryId { get; init; }
+    public string? AuthorName { get; init; }
+    public DateTime? From { get; init; }
+    public DateTime? To { get; init; }
+    public IReadOnlyList<CategoryDto> Categories { get; init; } = Array.Empty<CategoryDto>();
+    public IReadOnlyList<string> Authors { get; init; } = Array.Empty<string>();
+
+    public bool HasFilter => Status is not null || Query is not null || CategoryId is not null || AuthorName is not null || From is not null || To is not null;
     public bool IsPrivileged { get; init; }
     public string CurrentUserId { get; init; } = string.Empty;
     public string DisplayName { get; init; } = string.Empty;
     public string RoleLabel { get; init; } = string.Empty;
 
     /// <summary>True on the plain landing view: no filter, no search, first page.</summary>
-    public bool IsDashboard => string.IsNullOrEmpty(Status) && string.IsNullOrEmpty(Query) && List.Page == 1;
+    public bool IsDashboard => !HasFilter && List.Page == 1;
+}
+
+/// <summary>The activity log page: the filtered page of entries, the values the filter boxes offer, and what is currently chosen.</summary>
+public sealed class AuditPageViewModel
+{
+    public required PagedResult<AuditEntryDto> Page { get; init; }
+    public required AuditFilterOptions Options { get; init; }
+    public string? Action { get; init; }
+    public string? Entity { get; init; }
+    public string? User { get; init; }
+    public string? Query { get; init; }
+    public DateTime? From { get; init; }
+    public DateTime? To { get; init; }
+
+    public bool HasFilter => Action is not null || Entity is not null || User is not null || Query is not null || From is not null || To is not null;
+}
+
+public sealed class AnalyticsPageViewModel
+{
+    public required AnalyticsReport Report { get; init; }
+    public IReadOnlyList<int> Ranges { get; init; } = Array.Empty<int>();
 }
 
 public sealed class CmsOverviewViewModel
@@ -61,4 +93,4 @@ public sealed class AppPagerModel
 public sealed record ReviewActionsModel(int Id, string Title, bool Small);
 
 /// <summary>Input of the shared Move-to-trash / Restore buttons. RowVersion (base64) is optional and only sent from the edit page.</summary>
-public sealed record TrashActionsModel(int Id, string Title, bool Small, bool CanTrash, bool CanRestore, string? RowVersion = null);
+public sealed record TrashActionsModel(int Id, string Title, bool Small, bool CanTrash, bool CanRestore, string? RowVersion = null, bool InPlace = false);

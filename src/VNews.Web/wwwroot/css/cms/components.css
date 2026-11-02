@@ -138,3 +138,57 @@ a.stat:focus-visible { outline: var(--auth-focus-outline); outline-offset: var(-
   .table--cards .table__title { max-width: none; }
   .table--cards .table__actions { justify-content: flex-start; margin-top: var(--auth-space-2); }
 }
+
+/* Bulk selection column of the trash list. */
+.table__check { width: 36px; padding-right: 0; }
+.app-check { width: 18px; height: 18px; accent-color: var(--app-accent, #a61b46); cursor: pointer; vertical-align: middle; }
+@media (max-width: 720px) {
+  .table--cards td.table__check { display: flex; align-items: center; gap: 8px; }
+  .table--cards td.table__check:empty { display: none; }
+}
+
+/* Floating result messages (toasts): fixed at the top centre of the window, above everything, whatever the scroll position. Each one has an
+   icon badge, a title, the message and a thin bar that runs down the time left (it pauses while the pointer is on the toast). */
+.app-toasts { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 1300; display: grid; gap: 12px; width: min(440px, calc(100vw - 24px)); pointer-events: none; }
+.app-toast { --toast-color: #16a34a; --toast-tint: #dcfce7; position: relative; overflow: hidden; pointer-events: auto; display: flex; align-items: flex-start; gap: 12px; padding: 14px 12px 16px 14px; border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; color: #111827; box-shadow: 0 18px 40px rgba(15, 23, 42, .18), 0 2px 6px rgba(15, 23, 42, .08); font: 400 14px/20px var(--auth-font, Arial, Helvetica, sans-serif); animation: app-toast-in .28s cubic-bezier(.2, .9, .3, 1.2); }
+.app-toast--error { --toast-color: #dc2626; --toast-tint: #fee2e2; }
+.app-toast__icon { flex: 0 0 auto; display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--toast-tint); color: var(--toast-color); }
+.app-toast__icon .icon { width: 18px; height: 18px; }
+.app-toast__body { flex: 1 1 auto; min-width: 0; display: grid; gap: 1px; padding-top: 1px; }
+.app-toast__title { font-weight: 700; font-size: 14px; color: #111827; }
+.app-toast__text { color: #4b5563; overflow-wrap: anywhere; }
+.app-toast__close { flex: 0 0 auto; display: inline-grid; place-items: center; width: 28px; height: 28px; margin: -2px -2px 0 0; border: 0; border-radius: 8px; background: transparent; color: #6b7280; cursor: pointer; }
+.app-toast__close:hover { background: #f3f4f6; color: #111827; }
+.app-toast__bar { position: absolute; left: 0; bottom: 0; height: 4px; width: 100%; background: var(--toast-color); transform-origin: left; animation: app-toast-run var(--toast-ms, 5000ms) linear forwards; opacity: .85; }
+.app-toast:hover .app-toast__bar, .app-toast:focus-within .app-toast__bar { animation-play-state: paused; }
+.app-toast.is-leaving { opacity: 0; transform: translateY(-10px) scale(.98); transition: opacity .25s ease, transform .25s ease; }
+@keyframes app-toast-in { from { opacity: 0; transform: translateY(-18px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes app-toast-run { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .app-toast { animation: none; } .app-toast.is-leaving { transition: none; } }
+
+/* Article list filters: search, category, author, status and a date range, wrapping on narrow screens. */
+.filters--wide { flex-wrap: wrap; row-gap: 10px; }
+.filters--wide .filters__search { flex: 1 1 280px; }
+.filters--wide .app-select { flex: 0 1 190px; min-width: 150px; }
+.filters__dates { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.filters__datelabel { font-size: 13px; color: var(--auth-muted, #6b7280); white-space: nowrap; }
+.filters__dates .app-input { width: 150px; }
+
+/* A row leaving the list after an action that works in place. */
+.table tbody tr { transition: opacity .25s ease, background-color .25s ease; }
+.table tbody tr.is-removing { opacity: 0; background: #fef2f2; pointer-events: none; }
+
+/* Moderation list: one row per comment; the row's data-status decides which badge and which button show, so a change made in place
+   (list-actions.js sets data-status) needs no re-render. */
+.cmt-state, .cmt-action { display: none; }
+[data-comment-row][data-status="Visible"] .cmt-state--Visible, [data-comment-row][data-status="Hidden"] .cmt-state--Hidden, [data-comment-row][data-status="Deleted"] .cmt-state--Deleted { display: inline-flex; }
+[data-comment-row][data-status="Visible"] .cmt-action--hide, [data-comment-row][data-status="Hidden"] .cmt-action--restore { display: inline-block; }
+[data-comment-row][data-status="Hidden"] .cmt-cell__text { color: #9ca3af; text-decoration: line-through; text-decoration-color: #d1d5db; }
+.cmt-cell { display: flex; gap: 12px; align-items: flex-start; min-width: 280px; }
+.cmt-cell__avatar { flex: 0 0 auto; display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: #fde8ee; color: var(--app-accent, #a61b46); font: 700 13px/1 var(--auth-font, Arial, sans-serif); }
+.cmt-cell__main { min-width: 0; }
+.cmt-cell__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 2px; }
+.cmt-cell__text { margin: 0; color: #111827; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.cmt-article a { color: #1f2937; font-weight: 600; text-decoration: none; } .cmt-article a:hover { color: var(--app-accent, #a61b46); text-decoration: underline; }
+.cmt-time { white-space: nowrap; } .cmt-time span { display: block; font-size: 12px; color: #9ca3af; }
+.cmt-table tbody tr.is-selected { background: #fffafc; }

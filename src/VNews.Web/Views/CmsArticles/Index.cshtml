@@ -6,7 +6,11 @@
     ViewData["AppNav"] = Model.Status == "PendingReview" && privileged ? "queue" : "articles";
     ViewData["Crumbs"] = new (string, string?)[] { ("Tòa soạn", null), (privileged ? "Không gian biên tập" : "Bài viết của tôi", null) };
     var s = Model.Stats;
-    var query = new Dictionary<string, string?> { ["status"] = Model.Status, ["q"] = Model.Query };
+    var query = new Dictionary<string, string?>
+    {
+        ["status"] = Model.Status, ["q"] = Model.Query, ["categoryId"] = Model.CategoryId?.ToString(), ["author"] = Model.AuthorName,
+        ["from"] = Model.From?.ToString("yyyy-MM-dd"), ["to"] = Model.To?.ToString("yyyy-MM-dd"),
+    };
 
     string StatusLink(string st) => Url.Action("Index", "CmsArticles", new { status = st })!;
     bool IsOwner(ArticleCmsListItemDto a) => a.AuthorUserId == Model.CurrentUserId;
@@ -18,16 +22,34 @@
         <p class="page-head__sub">Xin chào, <strong>@Model.DisplayName</strong> <span class="badge badge--@(Model.RoleLabel == "Quản trị viên" ? "admin" : privileged ? "editor" : "author")">@Model.RoleLabel</span></p>
     </div>
     <div class="page-head__actions">
-        <a asp-action="Index" asp-route-status="Trashed" class="btn btn--secondary" title="Bài đã xóa, có thể khôi phục">Thùng rác@(s.Trashed > 0 ? $" ({s.Trashed})" : "")</a>
+        @if (Model.Status == "Trashed")
+        {
+            <form id="bulk-form" asp-controller="CmsTrash" asp-action="RestoreMany" method="post" class="inline-form" hidden data-inplace data-bulk-form data-bulk-template="Khôi phục {n} bài viết đã chọn? Mỗi bài trở lại trạng thái trước khi xóa." data-confirm="Khôi phục các bài đã chọn?" data-confirm-title="Khôi phục bài viết" data-confirm-label="Khôi phục">
+                <button type="submit" class="btn btn--primary" data-bulk-submit>Khôi phục (<span data-bulk-count>0</span>)</button>
+            </form>
+        }
+        else
+        {
+            <form id="bulk-form" asp-controller="CmsTrash" asp-action="MoveMany" method="post" class="inline-form" hidden data-inplace data-bulk-form data-bulk-template="Chuyển {n} bài đã chọn vào thùng rác? Các bài sẽ biến mất khỏi danh sách và trang công khai, nhưng có thể khôi phục." data-confirm="Chuyển các bài đã chọn vào thùng rác?" data-confirm-title="Xóa bài viết" data-confirm-label="Chuyển vào thùng rác" data-confirm-danger>
+                <button type="submit" class="btn btn--danger" data-bulk-submit>Xóa (<span data-bulk-count>0</span>)</button>
+            </form>
+        }
+        @if (User.IsInRole("Admin"))
+        {
+            <form asp-controller="CmsImport" asp-action="Run" method="post" class="inline-form" data-confirm="Nạp tin mới từ các kênh RSS công khai của VnExpress? Mỗi bài chỉ gồm tiêu đề, tóm tắt, ngày đăng và liên kết về bài gốc; bài đã có sẽ được bỏ qua." data-confirm-title="Nạp tin từ VnExpress" data-confirm-label="Nạp tin">
+                <button type="submit" class="btn btn--secondary">Nạp tin từ VnExpress</button>
+            </form>
+        }
+        <a asp-action="Index" asp-route-status="Trashed" class="btn btn--secondary" title="Bài đã xóa, có thể khôi phục">Thùng rác<span data-stat-trash>@(s.Trashed > 0 ? $" ({s.Trashed})" : "")</span></a>
         <a asp-action="Create" class="btn btn--primary"><svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>Viết bài mới</a>
     </div>
 </div>
 
 <section class="stats" aria-label="Thống kê bài viết">
-    <a class="stat stat--draft @(Model.Status == "Draft" ? "is-current" : "")" href="@StatusLink("Draft")"><span class="stat__label">Bản nháp</span><span class="stat__value">@s.Draft</span><span class="stat__hint">@(privileged ? "Chưa gửi duyệt" : "Đang soạn")</span></a>
-    <a class="stat stat--pending @(Model.Status == "PendingReview" ? "is-current" : "")" href="@StatusLink("PendingReview")"><span class="stat__label">Chờ duyệt</span><span class="stat__value">@s.PendingReview</span><span class="stat__hint">@(privileged ? "Cần biên tập viên xử lý" : "Đang chờ biên tập")</span></a>
-    <a class="stat stat--rejected @(Model.Status == "Rejected" ? "is-current" : "")" href="@StatusLink("Rejected")"><span class="stat__label">Cần chỉnh sửa</span><span class="stat__value">@s.Rejected</span><span class="stat__hint">Đã trả lại kèm lý do</span></a>
-    <a class="stat stat--published @(Model.Status == "Published" ? "is-current" : "")" href="@StatusLink("Published")"><span class="stat__label">Đã xuất bản</span><span class="stat__value">@s.Published</span><span class="stat__hint">Đang hiển thị công khai</span></a>
+    <a class="stat stat--draft @(Model.Status == "Draft" ? "is-current" : "")" href="@StatusLink("Draft")"><span class="stat__label">Bản nháp</span><span class="stat__value" data-stat="Draft">@s.Draft</span><span class="stat__hint">@(privileged ? "Chưa gửi duyệt" : "Đang soạn")</span></a>
+    <a class="stat stat--pending @(Model.Status == "PendingReview" ? "is-current" : "")" href="@StatusLink("PendingReview")"><span class="stat__label">Chờ duyệt</span><span class="stat__value" data-stat="PendingReview">@s.PendingReview</span><span class="stat__hint">@(privileged ? "Cần biên tập viên xử lý" : "Đang chờ biên tập")</span></a>
+    <a class="stat stat--rejected @(Model.Status == "Rejected" ? "is-current" : "")" href="@StatusLink("Rejected")"><span class="stat__label">Cần chỉnh sửa</span><span class="stat__value" data-stat="Rejected">@s.Rejected</span><span class="stat__hint">Đã trả lại kèm lý do</span></a>
+    <a class="stat stat--published @(Model.Status == "Published" ? "is-current" : "")" href="@StatusLink("Published")"><span class="stat__label">Đã xuất bản</span><span class="stat__value" data-stat="Published">@s.Published</span><span class="stat__hint">Đang hiển thị công khai</span></a>
 </section>
 
 @if (Model.IsDashboard)
@@ -70,14 +92,33 @@
 <section class="card" aria-labelledby="list-title">
     <div class="card__head">
         <h2 class="card__title" id="list-title">@(Model.Status is null ? (privileged ? "Tất cả bài viết" : "Bài viết của bạn") : CmsStatus.Label(Model.Status))</h2>
-        <span class="card__hint">@Model.List.TotalCount bài</span>
+        <span class="card__hint"><span data-list-total>@Model.List.TotalCount</span> bài</span>
     </div>
-    <form method="get" class="filters" role="search" aria-label="Lọc bài viết">
+    <form method="get" class="filters filters--wide" role="search" aria-label="Lọc bài viết">
         <div class="filters__search">
             <svg class="icon" aria-hidden="true"><use href="#i-search" /></svg>
-            <label for="q" class="sr-only">Tìm theo tiêu đề</label>
-            <input id="q" name="q" value="@Model.Query" maxlength="100" class="app-input" placeholder="Tìm theo tiêu đề" />
+            <label for="q" class="sr-only">Tìm bài viết</label>
+            <input id="q" name="q" value="@Model.Query" maxlength="100" class="app-input" placeholder="Tìm theo tiêu đề, tóm tắt, tác giả hoặc chuyên mục" />
         </div>
+        <label for="categoryId" class="sr-only">Chuyên mục</label>
+        <select id="categoryId" name="categoryId" class="app-select" data-autosubmit>
+            <option value="">Tất cả chuyên mục</option>
+            @foreach (var c in Model.Categories)
+            {
+                <option value="@c.Id" selected="@(Model.CategoryId == c.Id)">@c.FullName</option>
+            }
+        </select>
+        @if (privileged)
+        {
+            <label for="author" class="sr-only">Tác giả</label>
+            <select id="author" name="author" class="app-select" data-autosubmit>
+                <option value="">Tất cả tác giả</option>
+                @foreach (var author in Model.Authors)
+                {
+                    <option value="@author" selected="@(Model.AuthorName == author)">@author</option>
+                }
+            </select>
+        }
         <label for="status" class="sr-only">Trạng thái</label>
         <select id="status" name="status" class="app-select" data-autosubmit>
             <option value="">Tất cả trạng thái</option>
@@ -86,8 +127,14 @@
                 <option value="@st" selected="@(Model.Status == st)">@CmsStatus.Label(st)</option>
             }
         </select>
+        <div class="filters__dates" role="group" aria-label="Khoảng ngày cập nhật">
+            <label for="from" class="filters__datelabel">Cập nhật từ</label>
+            <input id="from" name="from" type="date" class="app-input" value="@Model.From?.ToString("yyyy-MM-dd")" />
+            <label for="to" class="filters__datelabel">đến</label>
+            <input id="to" name="to" type="date" class="app-input" value="@Model.To?.ToString("yyyy-MM-dd")" />
+        </div>
         <button type="submit" class="btn btn--secondary">Lọc</button>
-        @if (Model.Status is not null || Model.Query is not null)
+        @if (Model.HasFilter)
         {
             <a asp-action="Index" class="btn btn--ghost">Xóa bộ lọc</a>
         }
@@ -97,7 +144,7 @@
     {
         <div class="empty">
             <svg class="icon" aria-hidden="true"><use href="#i-file" /></svg>
-            @if (Model.Status is not null || Model.Query is not null)
+            @if (Model.HasFilter)
             {
                 @if (Model.Query is null && Model.Status is not null)
                 {
@@ -125,6 +172,7 @@
             <table class="table table--cards">
                 <thead>
                     <tr>
+                        <th scope="col" class="table__check"><input type="checkbox" class="app-check" data-bulk-all aria-label="Chọn tất cả bài trên trang này" /></th>
                         <th scope="col">Bài viết</th>
                         <th scope="col">Chuyên mục</th>
                         @if (privileged) { <th scope="col">Tác giả</th> }
@@ -139,6 +187,9 @@
                         var act = CmsRowActions.For(a.Status, IsOwner(a), privileged);
                         var canOpen = a.Status == "PendingReview" && (IsOwner(a) || privileged);
                         <tr>
+                            <td class="table__check">
+                                @if (Model.Status == "Trashed" ? act.CanRestore : act.CanTrash) { <input type="checkbox" class="app-check" name="ids" value="@a.Id" form="bulk-form" data-bulk-item aria-label="Chọn bài “@a.Title”" /> }
+                            </td>
                             <td class="table__cell-title">
                                 <div class="article-cell">
                                     @if (!string.IsNullOrWhiteSpace(a.CoverImageUrl)) { <img class="article-cell__thumb" src="@a.CoverImageUrl" alt="" loading="lazy" /> }
@@ -168,7 +219,7 @@
                                     {
                                         <partial name="_ReviewActions" model="new ReviewActionsModel(a.Id, a.Title, Small: true)" />
                                     }
-                                    <partial name="_TrashActions" model="new TrashActionsModel(a.Id, a.Title, Small: true, act.CanTrash, act.CanRestore)" />
+                                    <partial name="_TrashActions" model="new TrashActionsModel(a.Id, a.Title, Small: true, act.CanTrash, act.CanRestore, InPlace: true)" />
                                 </div>
                             </td>
                         </tr>
@@ -179,3 +230,8 @@
         <partial name="_AppPager" model="@(new AppPagerModel { Page = Model.List.Page, PageSize = Model.List.PageSize, TotalCount = Model.List.TotalCount, Controller = "CmsArticles", Query = query, Noun = "bài" })" />
     }
 </section>
+
+@section Scripts {
+    <script src="~/js/list-actions.js" asp-append-version="true"></script>
+    <script src="~/js/bulk-select.js" asp-append-version="true"></script>
+}

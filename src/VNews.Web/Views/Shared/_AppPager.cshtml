@@ -27,7 +27,7 @@
 @if (Model.TotalCount > 0)
 {
     <div class="pager">
-        <span>Hiển thị @from–@to trong @Model.TotalCount @Model.Noun</span>
+        <span>Hiển thị @from–<span data-list-to>@to</span> trong <span data-list-total>@Model.TotalCount</span> @Model.Noun</span>
         @if (last > 1)
         {
             <nav class="pager__links" aria-label="Phân trang">

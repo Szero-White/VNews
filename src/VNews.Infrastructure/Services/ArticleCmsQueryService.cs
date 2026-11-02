@@ -42,7 +42,8 @@ public class ArticleCmsQueryService : IArticleCmsQueryService
 
     public async Task<PagedResult<ArticleCmsListItemDto>> ListForCmsAsync(
         string? statusFilter, string? authorUserId, int page, int pageSize, CancellationToken cancellationToken = default,
-        string? search = null, bool oldestFirst = false)
+        string? search = null, bool oldestFirst = false,
+        int? categoryId = null, DateTime? updatedFrom = null, DateTime? updatedTo = null, string? authorName = null)
     {
         page = page < 1 ? 1 : page;
         pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
@@ -63,12 +64,35 @@ public class ArticleCmsQueryService : IArticleCmsQueryService
             query = query.Where(a => a.Status != ArticleStatus.Trashed); // the trash is only ever shown when asked for
         }
 
+        if (!string.IsNullOrWhiteSpace(authorName))
+        {
+            query = query.Where(a => a.AuthorName == authorName);
+        }
+
+        if (categoryId is int category)
+        {
+            // a parent category also covers the stories of its sub-categories
+            query = query.Where(a => a.CategoryId == category || a.Category.ParentId == category);
+        }
+
+        if (updatedFrom is DateTime from)
+        {
+            query = query.Where(a => (a.UpdatedAt ?? a.CreatedAt) >= from.Date);
+        }
+
+        if (updatedTo is DateTime to)
+        {
+            query = query.Where(a => (a.UpdatedAt ?? a.CreatedAt) < to.Date.AddDays(1)); // the whole last day
+        }
+
         foreach (var token in SearchText.Tokenize(search))
         {
             var pattern = $"%{token}%";
             query = query.Where(a =>
                 EF.Functions.Like(EF.Functions.Collate(a.Title, SearchCollation).Replace("đ", "d"), pattern)
-                || EF.Functions.Like(EF.Functions.Collate(a.AuthorName, SearchCollation).Replace("đ", "d"), pattern));
+                || EF.Functions.Like(EF.Functions.Collate(a.AuthorName, SearchCollation).Replace("đ", "d"), pattern)
+                || EF.Functions.Like(EF.Functions.Collate(a.Category.Name, SearchCollation).Replace("đ", "d"), pattern)
+                || EF.Functions.Like(EF.Functions.Collate(a.Summary, SearchCollation).Replace("đ", "d"), pattern));
         }
 
         var ordered = oldestFirst
@@ -108,9 +132,17 @@ public class ArticleCmsQueryService : IArticleCmsQueryService
         };
     }
 
+    public async Task<IReadOnlyList<string>> GetAuthorNamesAsync(CancellationToken cancellationToken = default)
+    {
+        var names = await _context.Articles.AsNoTracking()
+            .Where(a => a.Status != ArticleStatus.Trashed && a.AuthorName != "")
+            .Select(a => a.AuthorName).Distinct().ToListAsync(cancellationToken);
+        return names.OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase).ToList();
+    }
+
     public async Task<ArticleEditDto?> GetForEditAsync(int articleId, CancellationToken cancellationToken = default)
     {
-        return await _context.Articles
+        var dto = await _context.Articles
             .AsNoTracking()
             .Where(a => a.Id == articleId)
             .Select(a => new ArticleEditDto
@@ -121,6 +153,7 @@ public class ArticleCmsQueryService : IArticleCmsQueryService
                 Summary = a.Summary,
                 Body = a.Body,
                 CoverImageUrl = a.CoverImageUrl,
+                CoverCaption = a.CoverCaption,
                 AuthorName = a.AuthorName,
                 AuthorUserId = a.AuthorUserId,
                 Status = a.Status.ToString(),
@@ -129,5 +162,13 @@ public class ArticleCmsQueryService : IArticleCmsQueryService
                 RowVersion = a.RowVersion
             })
             .FirstOrDefaultAsync(cancellationToken);
+
+        if (dto is not null)
+        {
+            dto.GalleryImages = await _context.ArticleImages.AsNoTracking()
+                .Where(i => i.ArticleId == articleId).OrderBy(i => i.SortOrder).Select(i => i.Url).ToListAsync(cancellationToken);
+        }
+
+        return dto;
     }
 }

@@ -19,7 +19,8 @@ public sealed class CommentModerationService : ICommentModerationService
         _audit = audit;
     }
 
-    public async Task<PagedResult<CommentAdminItemDto>> ListAsync(string? status, string? search, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<CommentAdminItemDto>> ListAsync(string? status, string? search, int page, int pageSize, CancellationToken cancellationToken = default,
+        DateTime? fromUtc = null, DateTime? toUtcExclusive = null)
     {
         page = page < 1 ? 1 : page;
         pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
@@ -29,6 +30,9 @@ public sealed class CommentModerationService : ICommentModerationService
         {
             query = query.Where(c => c.Status == parsed);
         }
+
+        if (fromUtc is DateTime from) query = query.Where(c => c.CreatedAtUtc >= from);
+        if (toUtcExclusive is DateTime to) query = query.Where(c => c.CreatedAtUtc < to);
 
         foreach (var token in SearchText.Tokenize(search))
         {
@@ -56,6 +60,22 @@ public sealed class CommentModerationService : ICommentModerationService
             .ToListAsync(cancellationToken);
 
         return new PagedResult<CommentAdminItemDto> { Items = items, Page = page, PageSize = pageSize, TotalCount = total };
+    }
+
+    public async Task<IReadOnlyDictionary<string, int>> CountsAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await _db.Comments.AsNoTracking().GroupBy(c => c.Status).Select(g => new { Status = g.Key, Count = g.Count() }).ToListAsync(cancellationToken);
+        int Of(CommentStatus status) => rows.FirstOrDefault(r => r.Status == status)?.Count ?? 0;
+        return new Dictionary<string, int>
+        {
+            ["Visible"] = Of(CommentStatus.Visible), ["Hidden"] = Of(CommentStatus.Hidden), ["Deleted"] = Of(CommentStatus.Deleted),
+        };
+    }
+
+    public async Task<IReadOnlyDictionary<int, string>> StatesAsync(IReadOnlyCollection<int> commentIds, CancellationToken cancellationToken = default)
+    {
+        var rows = await _db.Comments.AsNoTracking().Where(c => commentIds.Contains(c.Id)).Select(c => new { c.Id, c.Status }).ToListAsync(cancellationToken);
+        return rows.ToDictionary(r => r.Id, r => r.Status.ToString());
     }
 
     public async Task<CommentResult> RestoreAsync(int commentId, string moderatorId, string moderatorName, CancellationToken cancellationToken = default)

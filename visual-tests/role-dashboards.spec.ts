@@ -21,7 +21,7 @@ async function newDraft(page: Page, title: string) {
   await page.locator('#Summary').fill('Tóm tắt bài viết dùng để kiểm thử bảng điều khiển.');
   await page.locator('#Body').fill('<p>Nội dung kiểm thử bảng điều khiển.</p>');
   await page.getByRole('button', { name: 'Tạo bản nháp' }).click();
-  await expect(page.locator('.app-alert--success')).toContainText('Đã tạo bản nháp');
+  await expect(page.locator('.app-toast--success')).toContainText('Đã tạo bản nháp');
 }
 
 test('sidebar shows only the entries a role may use, with the right one active', async ({ page }) => {
@@ -87,7 +87,7 @@ test('reader: saving an article lists it under "Bài đã lưu" and it can be re
   await expect(item).toBeVisible();
   await expect(item.locator('.saved-item__title')).not.toBeEmpty();
   await item.getByRole('button', { name: /Bỏ lưu/ }).click();
-  await expect(page.locator('.app-alert--success')).toContainText('Đã bỏ lưu');
+  await expect(page.locator('.app-toast--success')).toContainText('Đã bỏ lưu');
 });
 
 test('author: stats, own list, search and status filter, create -> submit; no review actions', async ({ page }) => {
@@ -127,7 +127,7 @@ test('author: stats, own list, search and status filter, create -> submit; no re
   await expect(draftRow.locator('.badge')).toHaveText('Bản nháp');
   await draftRow.getByRole('button', { name: 'Gửi duyệt' }).click();
   await confirmAccept(page).click();
-  await expect(page.locator('.app-alert--success')).toContainText('Đã gửi duyệt');
+  await expect(page.locator('.app-toast--success')).toContainText('Đã gửi duyệt');
   await page.goto(`/cms?status=PendingReview&q=${encodeURIComponent(title)}`);
   const pending = page.locator('tr', { hasText: title });
   await expect(pending.locator('.badge')).toHaveText('Chờ duyệt');
@@ -145,7 +145,7 @@ test('editor: queue first, approve and reject (with a required reason) and the a
     await author.goto('/cms');
     await author.locator('tr', { hasText: t }).getByRole('button', { name: 'Gửi duyệt' }).click();
     await confirmAccept(author).click();
-    await expect(author.locator('.app-alert--success')).toContainText('Đã gửi duyệt');
+    await expect(author.locator('.app-toast--success')).toContainText('Đã gửi duyệt');
   }
 
   await demoLogin(page, 'editor');
@@ -160,7 +160,7 @@ test('editor: queue first, approve and reject (with a required reason) and the a
   await page.locator('tr', { hasText: approveTitle }).getByRole('button', { name: 'Duyệt', exact: true }).click();
   await expect(page.locator('#app-confirm')).toBeVisible();
   await confirmAccept(page).click();
-  await expect(page.locator('.app-alert--success')).toContainText('Đã xuất bản');
+  await expect(page.locator('.app-toast--success')).toContainText('Đã xuất bản');
   await page.goto(`/cms?status=PendingReview&q=${encodeURIComponent(approveTitle)}`);
   await expect(page.locator('tr', { hasText: approveTitle })).toHaveCount(0);
 
@@ -171,7 +171,7 @@ test('editor: queue first, approve and reject (with a required reason) and the a
   await expect(page.locator('#app-confirm .app-field-error')).toBeVisible();
   await page.locator('#app-confirm-reason').fill('Cần bổ sung nguồn trích dẫn.');
   await confirmAccept(page).click();
-  await expect(page.locator('.app-alert--success')).toContainText('Đã từ chối');
+  await expect(page.locator('.app-toast--success')).toContainText('Đã từ chối');
 
   await author.goto('/cms');
   const returned = author.locator('tr', { hasText: rejectTitle });

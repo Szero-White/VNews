@@ -23,11 +23,79 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sidebar && sidebar.classList.contains('is-open')) setMenu(false); });
   window.addEventListener('resize', function () { if (window.innerWidth > 900 && sidebar && sidebar.classList.contains('is-open')) { sidebar.classList.remove('is-open'); if (backdrop) backdrop.hidden = true; menuButton.setAttribute('aria-expanded', 'false'); } });
 
-  // ----- alerts -----
+  // ----- alerts and toasts -----
   document.addEventListener('click', function (e) {
     var close = e.target.closest('[data-dismiss]');
-    if (close) { var alert = close.closest('.app-alert'); if (alert) alert.remove(); }
+    if (!close) return;
+    var alert = close.closest('.app-alert');
+    if (alert) { alert.remove(); return; }
+    var toast = close.closest('[data-toast]');
+    if (toast) dismissToast(toast);
   });
+
+  function dismissToast(toast) {
+    if (toast.__leaving) return;
+    toast.__leaving = true;
+    toast.classList.add('is-leaving');
+    setTimeout(function () { toast.remove(); }, 260);
+  }
+
+  /** A toast leaves when its time bar has run out (the bar pauses while the pointer or focus is on the toast, so the toast waits too). */
+  function watchToast(toast) {
+    var bar = toast.querySelector('.app-toast__bar');
+    if (bar) bar.addEventListener('animationend', function () { dismissToast(toast); });
+  }
+  document.querySelectorAll('[data-toast]').forEach(watchToast);
+
+  var SVG = 'http://www.w3.org/2000/svg';
+  function svgIcon(id) {
+    var svg = document.createElementNS(SVG, 'svg');
+    svg.setAttribute('class', 'icon');
+    svg.setAttribute('aria-hidden', 'true');
+    var use = document.createElementNS(SVG, 'use');
+    use.setAttribute('href', '#' + id);
+    svg.appendChild(use);
+    return svg;
+  }
+  function part(tag, cls, text) {
+    var node = document.createElement(tag);
+    node.className = cls;
+    if (text) node.textContent = text; // text only: a message can never become markup
+    return node;
+  }
+
+  /** Shows a floating message from script: VNewsToast.show('Đã lưu thay đổi.', 'success' | 'error'). Same look as the ones the server renders. */
+  window.VNewsToast = {
+    show: function (message, kind) {
+      var error = kind === 'error';
+      var host = document.querySelector('.app-toasts');
+      if (!host) { host = part('div', 'app-toasts'); host.setAttribute('aria-live', 'polite'); document.body.appendChild(host); }
+
+      var toast = part('div', 'app-toast ' + (error ? 'app-toast--error' : 'app-toast--success'));
+      toast.setAttribute('role', error ? 'alert' : 'status');
+      toast.setAttribute('data-toast', '');
+      toast.style.setProperty('--toast-ms', error ? '10000ms' : '5000ms');
+
+      var badge = part('span', 'app-toast__icon');
+      badge.appendChild(svgIcon(error ? 'i-alert' : 'i-check'));
+      var body = part('div', 'app-toast__body');
+      body.appendChild(part('strong', 'app-toast__title', error ? 'Có lỗi xảy ra' : 'Thành công'));
+      body.appendChild(part('span', 'app-toast__text', message));
+      var close = part('button', 'app-toast__close');
+      close.type = 'button';
+      close.setAttribute('data-dismiss', '');
+      close.setAttribute('aria-label', 'Đóng thông báo');
+      close.appendChild(svgIcon('i-x'));
+      var bar = part('span', 'app-toast__bar');
+      bar.setAttribute('aria-hidden', 'true');
+
+      toast.appendChild(badge); toast.appendChild(body); toast.appendChild(close); toast.appendChild(bar);
+      host.appendChild(toast);
+      watchToast(toast);
+      var all = host.querySelectorAll('[data-toast]'); // never a tall pile of them
+      for (var i = 0; i < all.length - 4; i++) dismissToast(all[i]);
+    }
+  };
 
   // ----- filters that apply when changed -----
   document.querySelectorAll('select[data-autosubmit]').forEach(function (select) {
@@ -78,7 +146,8 @@
     pendingForm = null;
     form.__confirmed = true;
     dialog.close();
-    form.submit();
+    if (form.hasAttribute('data-inplace')) form.dispatchEvent(new CustomEvent('vnews:confirmed')); // list-actions.js does the work without reloading the page
+    else form.submit();
   });
   cancel.addEventListener('click', function () { pendingForm = null; dialog.close(); });
   dialog.addEventListener('close', function () { pendingForm = null; if (opener && opener.isConnected) opener.focus(); opener = null; });

@@ -72,7 +72,7 @@ test('Demo Author: lands in the newsroom, creates a draft, sends it for review; 
   await page.locator('#Summary').fill('Tóm tắt của bản nháp do tác giả demo tạo ra.');
   await page.locator('#Body').fill('<p>Nội dung bản nháp của tác giả demo.</p>');
   await page.getByRole('button', { name: 'Tạo bản nháp' }).click();
-  await expect(page.locator('.app-alert--success')).toContainText('Đã tạo bản nháp');
+  await expect(page.locator('.app-toast--success')).toContainText('Đã tạo bản nháp');
 
   await page.goto('/cms');
   const row = page.locator('tr', { hasText: title });
@@ -103,7 +103,7 @@ test('Demo Editor: lands in the review queue, sees an author\'s pending article 
   await author.goto('/cms');
   await author.locator('tr', { hasText: title }).getByRole('button', { name: 'Gửi duyệt' }).click();
   await author.locator('#app-confirm [data-confirm-accept]').click();
-  await expect(author.locator('.app-alert--success')).toContainText('Đã gửi duyệt');
+  await expect(author.locator('.app-toast--success')).toContainText('Đã gửi duyệt');
   await authorContext.close();
 
   await demoLogin(page, 'editor');

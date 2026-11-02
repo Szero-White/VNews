@@ -15,27 +15,49 @@ public sealed class CmsWorkspaceBuilder
     private const int AttentionCount = 5;
 
     private readonly IArticleCmsQueryService _articles;
+    private readonly ICategoryQueryService _categories;
 
-    public CmsWorkspaceBuilder(IArticleCmsQueryService articles) => _articles = articles;
+    public CmsWorkspaceBuilder(IArticleCmsQueryService articles, ICategoryQueryService categories)
+    {
+        _articles = articles;
+        _categories = categories;
+    }
+
+    /// <summary>What the list was asked to show. Anything the viewer may not use (an author picking another author) is ignored.</summary>
+    public sealed record Filters(string? Status, string? Query, int? CategoryId, string? Author, DateTime? From, DateTime? To);
 
     public sealed record Viewer(string UserId, string DisplayName, bool IsPrivileged, string PrimaryRole);
 
-    public async Task<CmsWorkspaceViewModel> BuildAsync(Viewer viewer, string? status, string? query, int page, CancellationToken cancellationToken)
+    public async Task<CmsWorkspaceViewModel> BuildAsync(Viewer viewer, Filters filters, int page, CancellationToken cancellationToken)
     {
-        var authorFilter = viewer.IsPrivileged ? null : viewer.UserId;
-        status = CmsStatus.All.Contains(status ?? string.Empty) ? status : null;
-        query = string.IsNullOrWhiteSpace(query) ? null : query.Trim()[..Math.Min(query.Trim().Length, 100)];
+        // Authors always see only their own articles; only editors and admins may narrow the list to one author name.
+        var attentionAuthor = viewer.IsPrivileged ? null : viewer.UserId;
+        var authorName = viewer.IsPrivileged && !string.IsNullOrWhiteSpace(filters.Author) ? filters.Author.Trim() : null;
+        var status = CmsStatus.All.Contains(filters.Status ?? string.Empty) ? filters.Status : null;
+        var query = string.IsNullOrWhiteSpace(filters.Query) ? null : filters.Query.Trim()[..Math.Min(filters.Query.Trim().Length, 100)];
+        var from = filters.From;
+        var to = filters.To;
+        if (from > to) (from, to) = (to, from); // dates entered the wrong way round still give the range the user meant
 
-        var attention = await LoadAttentionAsync(viewer, authorFilter, cancellationToken);
+        var categories = await _categories.GetAllAsync(cancellationToken);
+        var categoryId = filters.CategoryId is int picked && categories.Any(c => c.Id == picked) ? picked : (int?)null;
+        var attention = await LoadAttentionAsync(viewer, attentionAuthor, cancellationToken);
         return new CmsWorkspaceViewModel
         {
-            Stats = await _articles.GetCmsStatsAsync(authorFilter, cancellationToken),
-            List = await _articles.ListForCmsAsync(status, authorFilter, page, PageSize, cancellationToken, query, oldestFirst: status == "PendingReview"),
+            Stats = await _articles.GetCmsStatsAsync(attentionAuthor, cancellationToken),
+            List = await _articles.ListForCmsAsync(status, attentionAuthor, page, PageSize, cancellationToken, query, oldestFirst: status == "PendingReview",
+                categoryId: categoryId, updatedFrom: from, updatedTo: to, authorName: authorName),
             Attention = attention.Items,
             AttentionTitle = attention.Title,
             AttentionHint = attention.Hint,
             Status = status,
             Query = query,
+            CategoryId = categoryId,
+            AuthorName = authorName,
+            From = from,
+            To = to,
+            Categories = categories,
+            Authors = viewer.IsPrivileged ? await _articles.GetAuthorNamesAsync(cancellationToken) : Array.Empty<string>(),
             IsPrivileged = viewer.IsPrivileged,
             CurrentUserId = viewer.UserId,
             DisplayName = viewer.DisplayName,
