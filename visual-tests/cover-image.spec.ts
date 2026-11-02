@@ -13,7 +13,7 @@ async function fillArticle(page: Page, title: string) {
   await page.locator('#Title').fill(title);
   await page.locator('#CategoryId').selectOption({ index: 1 });
   await page.locator('#Summary').fill('Tóm tắt bài viết dùng để kiểm thử ảnh bìa.');
-  await page.locator('#Body').fill('<p>Nội dung bài viết kiểm thử ảnh bìa, đủ dài để qua bước kiểm tra độ dài tối thiểu.</p>');
+  await page.locator('.rte__area').fill('Nội dung bài viết kiểm thử ảnh bìa, đủ dài để qua bước kiểm tra độ dài tối thiểu.');
 }
 const cover = (page: Page) => page.locator('[data-cover]');
 const hiddenValue = (page: Page) => page.locator('input[name="CoverImageUrl"]').inputValue();
@@ -75,7 +75,7 @@ test('edit: remove marks the cover for removal, undo restores it, removing then 
 
   await cover(page).getByRole('button', { name: 'Bỏ ảnh' }).click();
   await page.getByRole('button', { name: 'Lưu thay đổi' }).click();
-  await expect(page.locator('.app-toast--success')).toContainText('Đã lưu');
+  await expect(page.locator('.app-toast--success', { hasText: 'Đã lưu' })).toBeVisible();
   await expect(cover(page).locator('[data-cover-placeholder]')).toBeVisible();
   await expect(cover(page).getByText('Chưa có ảnh bìa')).toBeVisible();
   await page.goto('/cms?q=' + encodeURIComponent(title));

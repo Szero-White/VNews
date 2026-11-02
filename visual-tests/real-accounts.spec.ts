@@ -87,7 +87,7 @@ test('real author: cannot open or review another author\'s article; real editor 
   await editor.locator('#Title').fill(title);
   await editor.locator('#CategoryId').selectOption({ index: 1 });
   await editor.locator('#Summary').fill('Tóm tắt kiểm thử quyền.');
-  await editor.locator('#Body').fill('<p>Nội dung bài viết kiểm thử quyền truy cập, đủ dài để qua bước kiểm tra độ dài tối thiểu của hệ thống.</p>');
+  await editor.locator('.rte__area').fill('Nội dung bài viết kiểm thử quyền truy cập, đủ dài để qua bước kiểm tra độ dài tối thiểu của hệ thống.');
   await editor.getByRole('button', { name: 'Tạo bản nháp' }).click();
   await editor.waitForURL(/\/CmsArticles\/Edit\/(\d+)/);
   const id = editor.url().match(/Edit\/(\d+)/)![1];

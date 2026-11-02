@@ -73,7 +73,7 @@ async function ensurePendingArticle(browser: Browser, baseURL: string) {
   await author.locator('#Title').fill(`Bai cho duyet e2e ${Date.now()}`);
   await author.locator('#CategoryId').selectOption({ index: 1 });
   await author.locator('#Summary').fill('Tom tat bai cho duyet dung de kiem thu giao dien.');
-  await author.locator('#Body').fill('<p>Noi dung kiem thu.</p>');
+  await author.locator('.rte__area').fill('Noi dung kiem thu.');
   await author.getByRole('button', { name: 'Tạo bản nháp' }).click();
   await author.waitForURL(/\/CmsArticles\/Edit\/\d+/i);
   await author.getByRole('button', { name: /Gửi duyệt/ }).click();

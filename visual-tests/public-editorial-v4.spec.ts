@@ -38,7 +38,7 @@ test('category page lead and list stay connected to actual articles', async ({ p
   await expect(headline).toBeVisible();
   await headline.click();
   await expect(page.locator('article[data-news-article]')).toBeVisible();
-  await expect(page.locator('.article-tools [data-action="save"]')).toBeVisible();
+  await expect(page.locator('.article-bottom-actions [data-action="save"]')).toBeVisible();
 });
 
 

@@ -19,7 +19,7 @@ async function newDraft(page: Page, title: string) {
   await page.locator('#Title').fill(title);
   await page.locator('#CategoryId').selectOption({ index: 1 });
   await page.locator('#Summary').fill('Tóm tắt bài viết dùng để kiểm thử bảng điều khiển.');
-  await page.locator('#Body').fill('<p>Nội dung kiểm thử bảng điều khiển.</p>');
+  await page.locator('.rte__area').fill('Nội dung kiểm thử bảng điều khiển.');
   await page.getByRole('button', { name: 'Tạo bản nháp' }).click();
   await expect(page.locator('.app-toast--success')).toContainText('Đã tạo bản nháp');
 }
@@ -31,12 +31,12 @@ test('sidebar shows only the entries a role may use, with the right one active',
 
   await page.context().clearCookies();
   await demoLogin(page, 'editor');
-  expect(await sidebarLinks(page)).toEqual(['Tất cả bài viết', 'Hàng chờ duyệt', 'Viết bài mới', 'Hồ sơ của tôi', 'Bài đã lưu', 'Xem trang tin']);
+  expect(await sidebarLinks(page)).toEqual(['Tất cả bài viết', 'Hàng chờ duyệt', 'Thống kê', 'Viết bài mới', 'Bình luận', 'Hồ sơ của tôi', 'Bài đã lưu', 'Xem trang tin']);
   await expect(page.locator('.app-nav__link.is-active')).toHaveText('Hàng chờ duyệt');
 
   await page.context().clearCookies();
   await demoLogin(page, 'admin');
-  expect(await sidebarLinks(page)).toEqual(['Tổng quan', 'Tất cả bài viết', 'Hàng chờ duyệt', 'Viết bài mới', 'Người dùng', 'Chuyên mục', 'Ảnh tải lên', 'Nhật ký hoạt động', 'Hồ sơ của tôi', 'Bài đã lưu', 'Xem trang tin']);
+  expect(await sidebarLinks(page)).toEqual(['Tổng quan', 'Tất cả bài viết', 'Hàng chờ duyệt', 'Thống kê', 'Viết bài mới', 'Bình luận', 'Người dùng', 'Chuyên mục', 'Ảnh tải lên', 'Nhật ký hoạt động', 'Hồ sơ của tôi', 'Bài đã lưu', 'Xem trang tin']);
   await expect(page.locator('.app-nav__link.is-active')).toHaveText('Tổng quan');
 
   await page.context().clearCookies();
@@ -77,7 +77,7 @@ test('reader: saving an article lists it under "Bài đã lưu" and it can be re
   await page.waitForURL((u) => !u.pathname.includes('dang-ky'));
   const slug = (await (await page.request.get('/api/v1/articles?pageSize=1')).json()).items[0].slug;
   await page.goto(`/tin/${slug}`);
-  const save = page.locator('[data-save-button], .save-article, button[aria-pressed]').first();
+  const save = page.locator('[data-action="save"]').first();
   if ((await save.getAttribute('aria-pressed')) === 'true') await save.click();
   await save.click();
   await expect(save).toHaveAttribute('aria-pressed', 'true');
@@ -256,6 +256,6 @@ test('keyboard: skip link, visible focus ring on controls and a working confirm 
   await page.waitForURL(/\/cms/);
   await page.keyboard.press('Tab');
   await expect(page.locator('.app-skip')).toBeFocused();
-  const ring = await page.locator('.page-head__actions .btn').evaluate((e) => { (e as HTMLElement).focus(); return getComputedStyle(e).outlineStyle; });
+  const ring = await page.locator('.page-head__actions .btn--primary').evaluate((e) => { (e as HTMLElement).focus(); return getComputedStyle(e).outlineStyle; });
   expect(ring).not.toBe('none');
 });

@@ -40,7 +40,7 @@ test('Demo Reader: lands on the public site, shows the demo badge, saves an arti
   await page.goto(`/tin/${slug}`);
   await bookmarksLoaded; // the button reflects the account's saved list only after this request
   await page.waitForTimeout(200);
-  const save = page.locator('.article-tools [data-action="save"]');
+  const save = page.locator('.article-bottom-actions [data-action="save"]');
   // The demo reader's account persists between runs: start from "not saved" so the assertion is about this click.
   if ((await save.getAttribute('aria-pressed')) === 'true') {
     await save.click();
@@ -70,7 +70,7 @@ test('Demo Author: lands in the newsroom, creates a draft, sends it for review; 
   await page.locator('#Title').fill(title);
   await page.locator('#CategoryId').selectOption({ index: 1 });
   await page.locator('#Summary').fill('Tóm tắt của bản nháp do tác giả demo tạo ra.');
-  await page.locator('#Body').fill('<p>Nội dung bản nháp của tác giả demo.</p>');
+  await page.locator('.rte__area').fill('Nội dung bản nháp của tác giả demo.');
   await page.getByRole('button', { name: 'Tạo bản nháp' }).click();
   await expect(page.locator('.app-toast--success')).toContainText('Đã tạo bản nháp');
 
@@ -98,7 +98,7 @@ test('Demo Editor: lands in the review queue, sees an author\'s pending article 
   await author.locator('#Title').fill(title);
   await author.locator('#CategoryId').selectOption({ index: 1 });
   await author.locator('#Summary').fill('Bài chờ duyệt dùng để kiểm thử vai trò biên tập viên.');
-  await author.locator('#Body').fill('<p>Nội dung chờ duyệt của tác giả demo.</p>');
+  await author.locator('.rte__area').fill('Nội dung chờ duyệt của tác giả demo.');
   await author.getByRole('button', { name: 'Tạo bản nháp' }).click();
   await author.goto('/cms');
   await author.locator('tr', { hasText: title }).getByRole('button', { name: 'Gửi duyệt' }).click();
