@@ -205,3 +205,30 @@
 .article-detail__body figure img { margin: 0 auto; }
 .article-detail__body figcaption { margin-top: 8px; font: 400 14px/1.55 Arial, Helvetica, sans-serif; color: #333; }
 .article-detail__body figcaption:empty { display: none; }
+
+/* Bottom row: "back to section" and "save" as matching outlined buttons on the left, share on the right. */
+.article-bottom-actions { justify-content: flex-start; gap: 10px; }
+.article-bottom-actions .article-back-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #ddd; border-radius: 4px; padding: 8px 16px; background: #fff; color: #444; font: 600 14px Arial,sans-serif; text-decoration: none; cursor: pointer; }
+.article-bottom-actions .article-back-btn:hover { background: #f8f8f8; color: var(--vn-accent); border-color: #c9c9c9; }
+.article-bottom-actions .article-bottom-actions__share { margin-left: auto; }
+
+/* Trail: "Parent › Category" in the accent colour, no home link (the logo is the way home). */
+.article-topbar .breadcrumb a { color: #2f6fa7; }
+.article-topbar .breadcrumb a:last-of-type { color: #666; }
+
+/* "Bài liên quan" box inside the article: thumbnail left, headline and two lines of summary right. */
+.article-also { margin: 22px 0 6px; border: 1px solid #e5e5e5; border-radius: 4px; background: #fff; }
+.article-also__link { display: flex; gap: 14px; padding: 10px; color: inherit; text-decoration: none; }
+.article-also__image { flex: 0 0 160px; width: 160px; height: 100px; object-fit: cover; background: #f1f1f1; }
+.article-also__text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.article-also__title { font: 700 15px/1.4 Merriweather, "Times New Roman", Georgia, serif; color: #222; }
+.article-also__link:hover .article-also__title { color: var(--vn-accent); }
+.article-also__summary { font: 13px/1.5 Arial, Helvetica, sans-serif; color: #555; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+@media (max-width: 600px) { .article-also__image { flex-basis: 110px; width: 110px; height: 74px; } .article-also__summary { display: none; } }
+
+/* Tags under the comments: "Tags:" then topics separated by slashes. */
+.article-tags { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 0; margin: 18px 0 6px; padding-top: 14px; border-top: 1px solid #eee; font: 14px/1.6 Arial, Helvetica, sans-serif; }
+.article-tags__label { margin-right: 12px; color: #9a9a9a; }
+.article-tags__item { color: #222; text-decoration: none; }
+.article-tags__item:hover { color: var(--vn-accent); }
+.article-tags__item + .article-tags__item::before { content: "/"; margin: 0 10px; color: #bbb; }

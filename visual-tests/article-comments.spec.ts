@@ -18,7 +18,7 @@ test('anonymous reader sees the byline, the comment list and a login prompt; no 
   await page.goto(`/tin/${await middleArticle(page)}`);
   await expect(page.locator('.article-byline')).toContainText('phút đọc');
   await expect(page.locator('.article-byline')).toContainText('bình luận');
-  await expect(comments(page).getByRole('heading', { name: /Bình luận/ })).toBeVisible();
+  await expect(comments(page).getByRole('heading', { name: /Ý kiến/ })).toBeVisible();
   await expect(comments(page).getByText('Đăng nhập để tham gia bình luận')).toBeVisible();
   await expect(page.locator('#comment-form')).toHaveCount(0);
   expect(problems).toEqual([]);

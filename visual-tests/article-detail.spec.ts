@@ -24,7 +24,7 @@ test('desktop article: dateline row, serif title, sign-off, back link, side colu
   await expect(page.locator('.article-signoff__name')).toHaveText(apiArticle.authorName);
 
   const back = page.locator('.article-back-link');
-  await expect(back).toContainText(`Trở lại chuyên mục ${apiArticle.categoryName}`);
+  await expect(back).toContainText(`Trở lại ${apiArticle.categoryName}`);
   expect(await back.getAttribute('href')).toBe(`/chuyen-muc/${apiArticle.categorySlug}`);
 
   // Two columns: article ~760px wide, side column to its right.
@@ -92,7 +92,7 @@ test('reading tools still work: font size, save, share', async ({ page, context 
   await page.locator('[data-action="font-down"]').click();
   expect(parseFloat(await body.evaluate(e => getComputedStyle(e).fontSize))).toBe(before - 1);
 
-  const save = page.locator('.article-tools [data-action="save"]');
+  const save = page.locator('.article-bottom-actions [data-action="save"]');
   await expect(save).toHaveAttribute('aria-pressed', 'false');
   await save.click();
   await expect(save).toHaveAttribute('aria-pressed', 'true');

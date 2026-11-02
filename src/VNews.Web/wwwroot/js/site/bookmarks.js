@@ -63,7 +63,7 @@
     var id = Number(article.dataset.newsId);
     var saved = rows().some(function (x) { return accountMode ? x.id === id : x.slug === article.dataset.newsSlug; });
     button.setAttribute('aria-pressed', String(saved));
-    button.textContent = saved ? '★ Đã lưu' : '☆ Lưu bài';
+    button.textContent = saved ? (button.getAttribute('data-label-on') || '★ Đã lưu') : (button.getAttribute('data-label-off') || '☆ Lưu bài');
   }
 
   function toggleAccount(info) {

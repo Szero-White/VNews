@@ -12,7 +12,10 @@
     <div class="article-layout__main article-page">
         <div class="article-topbar">
             <nav class="breadcrumb" aria-label="Đường dẫn">
-                <a asp-controller="Home" asp-action="Index">Trang chủ</a> <span aria-hidden="true">/</span>
+                @if (article.CategoryParentSlug is not null)
+                {
+                    <a asp-controller="Category" asp-action="Index" asp-route-slug="@article.CategoryParentSlug">@article.CategoryParentName</a> <span aria-hidden="true">›</span>
+                }
                 <a asp-controller="Category" asp-action="Index" asp-route-slug="@article.CategorySlug">@article.CategoryName</a>
             </nav>
             @if (article.PublishedAt is DateTime publishedAt)
@@ -30,7 +33,6 @@
             <p class="article-detail__summary" id="article-summary">@article.Summary</p>
             <div class="article-tools" role="group" aria-label="Công cụ đọc bài">
                 <button type="button" class="article-tool" data-action="share" aria-label="Chia sẻ bài viết">Chia sẻ</button>
-                <button type="button" class="article-tool" data-action="save" aria-pressed="false">☆ Lưu bài</button>
                 <button type="button" class="article-tool" data-action="speak" aria-pressed="false">▶ Nghe tóm tắt</button>
                 <button type="button" class="article-tool" data-action="font-down" aria-label="Giảm cỡ chữ">A−</button>
                 <button type="button" class="article-tool" data-action="font-up" aria-label="Tăng cỡ chữ">A+</button>
@@ -62,19 +64,22 @@
             {
                 <p class="article-signoff"><span class="article-signoff__name">@article.AuthorName</span></p>
             }
-            @if (article.Tags.Count > 0)
+            @if (related.FirstOrDefault(r => r.Id != article.Id) is { } alsoRead)
             {
-                <nav class="article-tags" aria-label="Chủ đề của bài viết">
-                    <span class="article-tags__label">Tag</span>
-                    @foreach (var tag in article.Tags)
-                    {
-                        <a class="article-tags__item" asp-controller="Tag" asp-action="Index" asp-route-slug="@tag.Slug">@tag.Name</a>
-                    }
-                </nav>
+                <aside class="article-also" aria-label="Bài liên quan">
+                    <a class="article-also__link" asp-controller="Article" asp-action="Detail" asp-route-slug="@alsoRead.Slug">
+                        <img class="article-also__image" src="@Url.CoverOrFallback(alsoRead.CoverImageUrl)" alt="" width="160" height="100" loading="lazy" decoding="async" />
+                        <span class="article-also__text">
+                            <strong class="article-also__title">@alsoRead.Title</strong>
+                            <span class="article-also__summary">@alsoRead.Summary</span>
+                        </span>
+                    </a>
+                </aside>
             }
             <div class="article-bottom-actions">
-                <a class="article-back-link" asp-controller="Category" asp-action="Index" asp-route-slug="@article.CategorySlug"><span aria-hidden="true">←</span> Trở lại chuyên mục @article.CategoryName</a>
-                <button type="button" data-action="share">Chia sẻ bài viết</button>
+                <a class="article-back-link article-back-btn" asp-controller="Category" asp-action="Index" asp-route-slug="@article.CategorySlug"><span aria-hidden="true">←</span> Trở lại @article.CategoryName</a>
+                <button type="button" class="article-back-btn" data-action="save" data-label-off="☆ Lưu" data-label-on="★ Đã lưu" aria-pressed="false">☆ Lưu</button>
+                <button type="button" class="article-bottom-actions__share" data-action="share">Chia sẻ bài viết</button>
             </div>
         </article>
 
@@ -94,18 +99,27 @@
 
         <partial name="_Comments" model="Model" />
 
-        @if (related.Count > 0)
+        @if (article.Tags.Count > 0)
+        {
+            <nav class="article-tags" aria-label="Chủ đề của bài viết">
+                <span class="article-tags__label">Tags:</span>
+                @foreach (var tag in article.Tags)
+                {
+                    <a class="article-tags__item" asp-controller="Tag" asp-action="Index" asp-route-slug="@tag.Slug">@tag.Name</a>
+                }
+            </nav>
+        }
+
+        @* The first related story already sits inside the article; the grid lists the next ones so nothing repeats. *@
+        @if (related.Skip(1).Any())
         {
             <section class="article-related" aria-labelledby="article-related-title">
                 <h2 id="article-related-title">Tin cùng chuyên mục</h2>
                 <div class="article-related__grid">
-                    @foreach (var relatedArticle in related)
+                    @foreach (var relatedArticle in related.Skip(1))
                     {
                         <a class="article-related__card" asp-controller="Article" asp-action="Detail" asp-route-slug="@relatedArticle.Slug">
-                            @if (!string.IsNullOrWhiteSpace(relatedArticle.CoverImageUrl))
-                            {
-                                <img src="@relatedArticle.CoverImageUrl" alt="" loading="lazy" decoding="async" />
-                            }
+                            <img src="@Url.CoverOrFallback(relatedArticle.CoverImageUrl)" alt="" width="300" height="200" loading="lazy" decoding="async" />
                             <span>@relatedArticle.Title</span>
                         </a>
                     }

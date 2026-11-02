@@ -62,3 +62,9 @@
   .comment-form__row { align-items: stretch; }
   .comment-form__submit { width: 100%; justify-content: center; }
 }
+
+/* Heading row: "Ý kiến" with the house rules on the right, the way the reference sets its opinion block. */
+.comments__head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.comments__head .comments__title { margin: 0; }
+.comments__rule { font: 13px/20px Arial, Helvetica, sans-serif; color: #888; text-align: right; }
+@media (max-width: 600px) { .comments__head { flex-direction: column; gap: 4px; } .comments__rule { text-align: left; } }

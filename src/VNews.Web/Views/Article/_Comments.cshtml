@@ -10,7 +10,10 @@
     string PageUrl(int p) => Url.Action("Detail", "Article", new { slug = article.Slug, cpage = p > 1 ? p : (int?)null }) + "#binh-luan";
 }
 <section class="comments" id="binh-luan" aria-labelledby="comments-title">
-    <h2 class="comments__title" id="comments-title">Bình luận <span class="comments__count">@thread.TotalVisible</span></h2>
+    <div class="comments__head">
+        <h2 class="comments__title" id="comments-title">Ý kiến <span class="comments__count">@thread.TotalVisible</span></h2>
+        <span class="comments__rule">Vui lòng tuân thủ quy định khi chia sẻ quan điểm</span>
+    </div>
 
     @if (Model.CommentMessage is not null)
     {

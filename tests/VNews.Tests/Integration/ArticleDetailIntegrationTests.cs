@@ -54,7 +54,8 @@ public class ArticleDetailIntegrationTests : IClassFixture<IsolatedDbWebApplicat
         Assert.Contains("Chủ nhật, 1/11/2026, 01:05 (GMT+7)", html); // 18:05 UTC Saturday = 01:05 Sunday in Vietnam
         Assert.Contains("datetime=\"2026-11-01T01:05:00+07:00\"", html);
         Assert.Contains("<span class=\"article-signoff__name\">Tác giả Chitiet</span>", html);
-        Assert.Contains("Trở lại chuyên mục", html);
+        Assert.Contains("article-back-link", html);
+        Assert.Contains("Trở lại ", html); // "Trở lại {category}" next to the "Lưu" button
         Assert.Contains($"href=\"/chu-de/{tagSlug}\"", html);
         Assert.Contains("Chuyển đổi số", html);
 
