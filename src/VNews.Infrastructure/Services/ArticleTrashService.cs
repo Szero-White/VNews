@@ -55,6 +55,29 @@ public class ArticleTrashService : IArticleTrashService
             article.DeletedByUserId = null;
         }, actingUserId, actingUserName);
 
+    public async Task PurgeAsync(int articleId, string actingUserId, string actingUserName, bool isAdmin, CancellationToken cancellationToken = default)
+    {
+        Require(isAdmin, "Chỉ quản trị viên mới được xóa vĩnh viễn bài viết.");
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        var article = await _context.Articles.AsNoTracking().Where(a => a.Id == articleId).Select(a => new { a.Id, a.Title, a.Status }).FirstOrDefaultAsync(cancellationToken)
+            ?? throw new ArticleNotFoundException(articleId);
+        if (article.Status != ArticleStatus.Trashed)
+        {
+            throw new ArticleWorkflowException("Chỉ bài viết trong thùng rác mới được xóa vĩnh viễn.");
+        }
+
+        // Replies first: a comment's parent link is restrictive, so the rows that point at others must go before the ones they point at.
+        await _context.Comments.Where(c => c.ArticleId == articleId && c.ParentId != null).ExecuteDeleteAsync(cancellationToken);
+        await _context.Comments.Where(c => c.ArticleId == articleId).ExecuteDeleteAsync(cancellationToken);
+        // Tags links, gallery, saved marks and view records follow by cascade.
+        await _context.Articles.Where(a => a.Id == articleId).ExecuteDeleteAsync(cancellationToken);
+        await _auditLog.LogAsync(actingUserId, actingUserName, "Purge", "Article", articleId.ToString(), article.Title, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        _logger.LogInformation("Article {ArticleId}: Purge by user {UserId}.", articleId, actingUserId);
+    }
+
     private static void Require(bool allowed, string message)
     {
         if (!allowed)

@@ -7,7 +7,7 @@ using VNews.Domain.Identity;
 
 namespace VNews.Web.Controllers;
 
-/// <summary>Soft delete of articles: move to the trash and restore. Nothing is ever removed permanently.</summary>
+/// <summary>Soft delete of articles: move to the trash and restore. Only an admin can empty items from the trash for good (PurgeMany).</summary>
 [Authorize(Roles = Roles.Admin + "," + Roles.Editor + "," + Roles.Author)]
 public class CmsTrashController : Controller
 {
@@ -59,6 +59,14 @@ public class CmsTrashController : Controller
     public Task<IActionResult> MoveMany(int[] ids, CancellationToken cancellationToken)
         => BulkAsync(ids, null, "chuyển vào thùng rác", "Bạn chưa chọn bài nào để xóa.", cancellationToken,
             (id, user, name, all) => _trash.MoveToTrashAsync(id, null, user, name, all, cancellationToken));
+
+    /// <summary>Permanently deletes the ticked articles from the database. Admin only, and only articles already in the trash.</summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = Roles.Admin)]
+    public Task<IActionResult> PurgeMany(int[] ids, CancellationToken cancellationToken)
+        => BulkAsync(ids, "Trashed", "xóa vĩnh viễn", "Bạn chưa chọn bài nào để xóa vĩnh viễn.", cancellationToken,
+            (id, user, name, all) => _trash.PurgeAsync(id, user, name, User.IsInRole(Roles.Admin), cancellationToken));
 
     private async Task<IActionResult> BulkAsync(int[]? ids, string? returnStatus, string verb, string nothingTicked, CancellationToken cancellationToken,
         Func<int, string, string, bool, Task> action)

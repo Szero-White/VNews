@@ -14,4 +14,10 @@ public interface IArticleTrashService
 
     /// <summary>Returns the article to the status it had before deletion. Editors/admins restore anything; an author only their own.</summary>
     Task RestoreAsync(int articleId, byte[]? rowVersion, string actingUserId, string actingUserName, bool canManageAll, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The one irreversible step: removes an article that is already in the trash from the database together with its comments, tags links,
+    /// gallery rows, saved marks and view records. Only an admin may do it; uploaded picture files are left on disk. The audit entry keeps the title.
+    /// </summary>
+    Task PurgeAsync(int articleId, string actingUserId, string actingUserName, bool isAdmin, CancellationToken cancellationToken = default);
 }

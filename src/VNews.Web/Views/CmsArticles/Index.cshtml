@@ -27,6 +27,12 @@
             <form id="bulk-form" asp-controller="CmsTrash" asp-action="RestoreMany" method="post" class="inline-form" hidden data-inplace data-bulk-form data-bulk-template="Khôi phục {n} bài viết đã chọn? Mỗi bài trở lại trạng thái trước khi xóa." data-confirm="Khôi phục các bài đã chọn?" data-confirm-title="Khôi phục bài viết" data-confirm-label="Khôi phục">
                 <button type="submit" class="btn btn--primary" data-bulk-submit>Khôi phục (<span data-bulk-count>0</span>)</button>
             </form>
+            @if (User.IsInRole("Admin"))
+            {
+                <form asp-controller="CmsTrash" asp-action="PurgeMany" method="post" class="inline-form" hidden data-inplace data-bulk-form data-bulk-collect data-bulk-template="Xóa vĩnh viễn {n} bài viết đã chọn khỏi cơ sở dữ liệu? Bình luận, thẻ và dữ liệu lượt xem của các bài này cũng bị xóa. KHÔNG THỂ khôi phục." data-confirm="Xóa vĩnh viễn các bài đã chọn?" data-confirm-title="Xóa vĩnh viễn" data-confirm-label="Xóa vĩnh viễn" data-confirm-ack="Tôi hiểu các bài này sẽ bị xóa vĩnh viễn khỏi cơ sở dữ liệu và không thể khôi phục." data-confirm-danger>
+                    <button type="submit" class="btn btn--danger" data-bulk-submit>Xóa vĩnh viễn (<span data-bulk-count>0</span>)</button>
+                </form>
+            }
         }
         else
         {

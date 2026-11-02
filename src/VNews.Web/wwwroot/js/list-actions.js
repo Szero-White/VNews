@@ -97,6 +97,8 @@
             var row = box.closest('tr');
             if (box.checked && row && row.getAttribute('data-status') === wantedStatus) data.append('ids', box.value);
           });
+        } else if (form.hasAttribute('data-bulk-collect')) { // a second bulk form beside #bulk-form (the boxes belong to that one): take every ticked row
+          document.querySelectorAll('[data-bulk-item]').forEach(function (box) { if (box.checked) data.append('ids', box.value); });
         }
         var response = await fetch(form.action, {
           method: 'POST',

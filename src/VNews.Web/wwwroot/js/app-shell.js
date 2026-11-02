@@ -112,6 +112,9 @@
   var reasonError = dialog.querySelector('.app-field-error');
   var accept = dialog.querySelector('[data-confirm-accept]');
   var cancel = dialog.querySelector('[data-confirm-cancel]');
+  var ackBox = dialog.querySelector('.app-dialog__ack');
+  var ack = document.getElementById('app-confirm-ack');
+  var ackText = '';
   var pendingForm = null;
   var opener = null;
 
@@ -129,12 +132,20 @@
     reasonBox.hidden = !needsReason;
     reasonError.hidden = true;
     reason.value = '';
+    // data-confirm-ack="sentence": an irreversible action also needs this box ticked before the button works, so one stray click cannot do it.
+    ackText = form.getAttribute('data-confirm-ack') || '';
+    ackBox.hidden = !ackText;
+    ack.checked = false;
+    document.getElementById('app-confirm-ack-text').textContent = ackText;
+    accept.disabled = !!ackText;
     dialog.showModal();
-    (needsReason ? reason : accept).focus();
+    (ackText ? ack : needsReason ? reason : accept).focus();
   });
 
+  ack.addEventListener('change', function () { accept.disabled = !!ackText && !ack.checked; });
+
   accept.addEventListener('click', function () {
-    if (!pendingForm) return;
+    if (!pendingForm || accept.disabled) return;
     var needsReason = pendingForm.hasAttribute('data-reason');
     if (needsReason) {
       var value = reason.value.trim();
@@ -144,8 +155,7 @@
     }
     var form = pendingForm;
     pendingForm = null;
-    form.__confirmed = true;
-    dialog.close();
+    dialog.close(); // neither path below fires a submit event, so nothing needs to remember that this form was confirmed: the next click asks again
     if (form.hasAttribute('data-inplace')) form.dispatchEvent(new CustomEvent('vnews:confirmed')); // list-actions.js does the work without reloading the page
     else form.submit();
   });

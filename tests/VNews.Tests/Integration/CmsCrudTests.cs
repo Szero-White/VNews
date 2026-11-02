@@ -95,6 +95,56 @@ public sealed class CmsCrudTests : IClassFixture<IsolatedDbWebApplicationFactory
     }
 
     [Fact]
+    public async Task Purge_RemovesATrashedArticleWithItsCommentsAndReplies_ButOnlyForAdminsAndOnlyFromTheTrash()
+    {
+        var article = await NewArticleAsync(ArticleStatus.Draft);
+        var untouched = await NewArticleAsync(ArticleStatus.Published);
+        using (var seed = _factory.Services.CreateScope())
+        {
+            var db = Service<VNewsDbContext>(seed);
+            var userId = await db.Users.Select(u => u.Id).FirstAsync();
+            var parent = new Comment { ArticleId = article.Id, UserId = userId, AuthorName = "Bạn đọc", Body = "Bình luận gốc" };
+            db.Comments.Add(parent);
+            await db.SaveChangesAsync();
+            db.Comments.Add(new Comment { ArticleId = article.Id, UserId = userId, ParentId = parent.Id, AuthorName = "Bạn đọc", Body = "Trả lời" });
+            await db.SaveChangesAsync();
+        }
+
+        using var scope = _factory.Services.CreateScope();
+        var trash = Service<IArticleTrashService>(scope);
+
+        await Assert.ThrowsAsync<ArticleWorkflowException>(() => trash.PurgeAsync(article.Id, "admin-1", "Admin", isAdmin: true)); // not in the trash yet
+        await trash.MoveToTrashAsync(article.Id, null, "admin-1", "Admin", canManageAll: true);
+        await Assert.ThrowsAsync<ArticleForbiddenException>(() => trash.PurgeAsync(article.Id, "editor-1", "Biên tập", isAdmin: false));
+        Assert.Equal(ArticleStatus.Trashed, (await ReloadAsync(article.Id)).Status);
+
+        await trash.PurgeAsync(article.Id, "admin-1", "Admin", isAdmin: true);
+
+        using var check = _factory.Services.CreateScope();
+        var verify = Service<VNewsDbContext>(check);
+        Assert.False(await verify.Articles.AnyAsync(a => a.Id == article.Id));
+        Assert.False(await verify.Comments.AnyAsync(c => c.ArticleId == article.Id));
+        Assert.True(await verify.Articles.AnyAsync(a => a.Id == untouched.Id));
+        await Assert.ThrowsAsync<ArticleNotFoundException>(() => trash.PurgeAsync(article.Id, "admin-1", "Admin", isAdmin: true));
+    }
+
+    [Fact]
+    public async Task Purge_SeveralArticlesThroughOneScope_RemovesEveryOneOfThem()
+    {
+        // The bulk action purges the ticked articles one after another with the same service instance (one request scope).
+        var ids = new List<int>();
+        for (var i = 0; i < 4; i++) ids.Add((await NewArticleAsync(ArticleStatus.Published)).Id);
+        using var scope = _factory.Services.CreateScope();
+        var trash = Service<IArticleTrashService>(scope);
+        foreach (var id in ids) await trash.MoveToTrashAsync(id, null, "admin-1", "Admin", canManageAll: true);
+
+        foreach (var id in ids) await trash.PurgeAsync(id, "admin-1", "Admin", isAdmin: true);
+
+        using var check = _factory.Services.CreateScope();
+        Assert.Empty(await Service<VNewsDbContext>(check).Articles.Where(a => ids.Contains(a.Id)).ToListAsync());
+    }
+
+    [Fact]
     public async Task Trash_StaleRowVersion_IsAConflict_AndAnAuditEntryIsWritten()
     {
         var article = await NewArticleAsync(ArticleStatus.Draft, "author-A");

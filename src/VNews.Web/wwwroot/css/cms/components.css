@@ -112,6 +112,9 @@ a.stat:focus-visible { outline: var(--auth-focus-outline); outline-offset: var(-
 .app-dialog__title { margin: 0 0 var(--auth-space-2); font: 600 18px/24px var(--auth-font); }
 .app-dialog__text { margin: 0 0 var(--auth-space-4); color: #5b6472; }
 .app-dialog__reason { margin-bottom: var(--auth-space-4); }
+.app-dialog__ack { margin-bottom: var(--auth-space-4); }
+.app-dialog__ack-label { display: flex; align-items: flex-start; gap: var(--auth-space-3); cursor: pointer; font: 14px/20px var(--auth-font); color: var(--auth-ink); }
+.app-dialog__ack-label .app-check { flex: none; margin-top: 2px; }
 .app-dialog__actions { display: flex; justify-content: flex-end; gap: var(--auth-space-3); }
 
 /* ---------- responsive ---------- */
