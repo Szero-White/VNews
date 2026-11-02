@@ -26,8 +26,11 @@
     <link rel="stylesheet" href="~/css/cms/base.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/cms/shell.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/cms/components.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/cms/analytics.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/cms/account.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/cms/cover-field.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/cms/gallery-field.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/cms/body-editor.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/demo-login.css" asp-append-version="true" />
     @await RenderSectionAsync("Head", required: false)
     <script src="~/js/font-swap.js" asp-append-version="true" defer></script>
@@ -35,6 +38,20 @@
 <body class="vn-app">
     <a class="app-skip" href="#app-main">Bỏ qua điều hướng, đến nội dung</a>
     <partial name="_AppIcons" />
+    @* Result messages (saved, deleted, refused...) float at the top centre of the window, wherever the page is scrolled, and fade out on their own. *@
+    @if (TempData["Message"] != null || TempData["Error"] != null)
+    {
+        <div class="app-toasts" aria-live="polite">
+            @if (TempData["Message"] is string ok)
+            {
+                <div class="app-toast app-toast--success" role="status" data-toast style="--toast-ms:5000ms"><span class="app-toast__icon"><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg></span><div class="app-toast__body"><strong class="app-toast__title">Thành công</strong><span class="app-toast__text">@ok</span></div><button type="button" class="app-toast__close" data-dismiss aria-label="Đóng thông báo"><svg class="icon" aria-hidden="true"><use href="#i-x" /></svg></button><span class="app-toast__bar" aria-hidden="true"></span></div>
+            }
+            @if (TempData["Error"] is string problem)
+            {
+                <div class="app-toast app-toast--error" role="alert" data-toast style="--toast-ms:10000ms"><span class="app-toast__icon"><svg class="icon" aria-hidden="true"><use href="#i-alert" /></svg></span><div class="app-toast__body"><strong class="app-toast__title">Có lỗi xảy ra</strong><span class="app-toast__text">@problem</span></div><button type="button" class="app-toast__close" data-dismiss aria-label="Đóng thông báo"><svg class="icon" aria-hidden="true"><use href="#i-x" /></svg></button><span class="app-toast__bar" aria-hidden="true"></span></div>
+            }
+        </div>
+    }
     <div class="app-shell">
         <aside id="app-sidebar" class="app-sidebar" aria-label="Menu">
             <div class="app-sidebar__brand">
@@ -72,14 +89,6 @@
             </header>
 
             <main id="app-main" class="app-main" tabindex="-1">
-                @if (TempData["Message"] is string message)
-                {
-                    <div class="app-alert app-alert--success" role="status"><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg><span>@message</span><button type="button" class="app-alert__close" data-dismiss aria-label="Đóng thông báo"><svg class="icon" aria-hidden="true"><use href="#i-x" /></svg></button></div>
-                }
-                @if (TempData["Error"] is string error)
-                {
-                    <div class="app-alert app-alert--error" role="alert"><svg class="icon" aria-hidden="true"><use href="#i-alert" /></svg><span>@error</span><button type="button" class="app-alert__close" data-dismiss aria-label="Đóng thông báo"><svg class="icon" aria-hidden="true"><use href="#i-x" /></svg></button></div>
-                }
                 @RenderBody()
             </main>
         </div>

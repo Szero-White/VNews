@@ -77,8 +77,15 @@ public static class DependencyInjection
         services.AddScoped<ICategoryCommandService, CategoryCommandService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<ICommentService, CommentService>();
+        services.AddScoped<IAnalyticsService, AnalyticsService>();
 
         services.AddMemoryCache();
+        services.AddHttpClient<INewsImportService, VNews.Infrastructure.News.RssNewsImportService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(15);
+            client.MaxResponseContentBufferSize = 2 * 1024 * 1024; // a feed is a few hundred KB; refuse anything absurd
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("VNewsPortfolio/1.0 (news reader demo; links back to the source)");
+        });
         services.AddHttpClient<IWeatherService, WeatherService>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(5);

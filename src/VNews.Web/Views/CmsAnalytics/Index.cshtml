@@ -1,0 +1,154 @@
+@using System.Globalization
+@using VNews.Application.DTOs.Cms
+@model AnalyticsPageViewModel
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Thống kê";
+    ViewData["AppNav"] = "analytics";
+    ViewData["Crumbs"] = new (string, string?)[] { ("Tòa soạn", null), ("Thống kê", null) };
+    var r = Model.Report;
+    var vi = CultureInfo.GetCultureInfo("vi-VN");
+    var maxDay = Math.Max(1, r.Daily.Max(d => d.Views));
+    var maxHour = Math.Max(1, r.ViewsByHour.Max());
+    var peakHour = r.ViewsByHour.Max() > 0 ? r.ViewsByHour.ToList().IndexOf(r.ViewsByHour.Max()) : -1;
+    var maxCategory = Math.Max(1, r.TopCategories.Select(c => c.Views).DefaultIfEmpty(0).Max());
+    var maxTop = Math.Max(1, r.TopArticles.Select(a => a.Views).DefaultIfEmpty(0).Max());
+    var deviceTotal = r.MobileViews + r.DesktopViews;
+    var mobilePct = deviceTotal == 0 ? 0 : (int)Math.Round(100.0 * r.MobileViews / deviceTotal);
+    var avgPerDay = r.Days == 0 ? 0 : r.Current.Views / (double)r.Days;
+    var hasData = r.Current.Views > 0;
+    var labelEvery = r.Days <= 7 ? 1 : r.Days <= 30 ? 5 : 15;
+
+    Microsoft.AspNetCore.Html.IHtmlContent Delta(int now, int before)
+    {
+        if (before == 0 && now == 0) return new Microsoft.AspNetCore.Html.HtmlString("<span class=\"an-delta\">— so với kỳ trước</span>");
+        if (before == 0) return new Microsoft.AspNetCore.Html.HtmlString("<span class=\"an-delta an-delta--up\">Mới, kỳ trước chưa có</span>");
+        var pct = (now - before) * 100.0 / before;
+        var cls = pct > 0.5 ? "an-delta--up" : pct < -0.5 ? "an-delta--down" : string.Empty;
+        var arrow = pct > 0.5 ? "▲" : pct < -0.5 ? "▼" : "●";
+        return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"an-delta {cls}\">{arrow} {Math.Abs(pct).ToString("0.#", vi)}% so với {r.Days} ngày trước</span>");
+    }
+}
+
+<div class="page-head">
+    <div class="page-head__text">
+        <h1 class="app-page-title">Thống kê</h1>
+        <p class="page-head__sub">
+            Lượt đọc thật ghi nhận từ độc giả, không tính trình thu thập tự động. Giờ Việt Nam.
+            @if (r.TrackingSinceUtc is DateTime since) { <text>Bắt đầu ghi từ @((since + TimeSpan.FromHours(7)).ToString("dd/MM/yyyy HH:mm")).</text> }
+        </p>
+    </div>
+    <div class="page-head__actions">
+        <nav class="an-range" aria-label="Khoảng thời gian">
+            @foreach (var d in Model.Ranges)
+            {
+                <a class="an-range__item @(d == r.Days ? "is-active" : "")" asp-action="Index" asp-route-days="@d" aria-current="@(d == r.Days ? "true" : null)">@d ngày</a>
+            }
+        </nav>
+    </div>
+</div>
+
+<section class="stats" aria-label="Số liệu chính">
+    <div class="stat stat--published"><span class="stat__label">Lượt xem</span><span class="stat__value">@r.Current.Views.ToString("N0", vi)</span><span class="stat__hint">@Delta(r.Current.Views, r.Previous.Views)</span></div>
+    <div class="stat stat--neutral"><span class="stat__label">Người đọc (theo ngày)</span><span class="stat__value">@r.Current.Visitors.ToString("N0", vi)</span><span class="stat__hint">@Delta(r.Current.Visitors, r.Previous.Visitors)</span></div>
+    <div class="stat stat--pending"><span class="stat__label">Bình luận mới</span><span class="stat__value">@r.Current.Comments.ToString("N0", vi)</span><span class="stat__hint">@Delta(r.Current.Comments, r.Previous.Comments)</span></div>
+    <div class="stat stat--draft"><span class="stat__label">Bài xuất bản</span><span class="stat__value">@r.Current.Published.ToString("N0", vi)</span><span class="stat__hint">@Delta(r.Current.Published, r.Previous.Published)</span></div>
+</section>
+
+@if (!hasData)
+{
+    <section class="card">
+        <div class="empty">
+            <svg class="icon" aria-hidden="true"><use href="#i-dashboard" /></svg>
+            <p class="empty__title">Chưa có lượt đọc nào trong @r.Days ngày qua</p>
+            <p class="empty__text">Số liệu xuất hiện khi độc giả mở các bài viết trên trang tin. Mỗi người đọc một bài chỉ tính một lần trong 30 phút.</p>
+        </div>
+    </section>
+}
+else
+{
+    <section class="card an-card" aria-labelledby="an-daily">
+        <div class="card__head">
+            <h2 class="card__title" id="an-daily">Lượt xem theo ngày</h2>
+            <span class="an-note">Trung bình @avgPerDay.ToString("0.#", vi) lượt/ngày</span>
+        </div>
+        <div class="an-chart" role="img" aria-label="Biểu đồ lượt xem @r.Days ngày gần nhất, cao nhất @maxDay lượt trong một ngày">
+            @for (var i = 0; i < r.Daily.Count; i++)
+            {
+                var d = r.Daily[i];
+                var h = d.Views == 0 ? 2 : Math.Max(4, (int)Math.Round(100.0 * d.Views / maxDay));
+                <div class="an-chart__col" title="@d.Day.ToString("dd/MM/yyyy"): @d.Views lượt xem, @d.Visitors người đọc, @d.Comments bình luận, @d.Published bài xuất bản">
+                    <span class="an-chart__bar @(d.Views == 0 ? "is-zero" : "")" style="height:@h%"></span>
+                    <span class="an-chart__label">@(i % labelEvery == 0 || i == r.Daily.Count - 1 ? d.Day.ToString("dd/MM") : "")</span>
+                </div>
+            }
+        </div>
+    </section>
+
+    <div class="two-col an-grid">
+        <section class="card an-card" aria-labelledby="an-top">
+            <div class="card__head"><h2 class="card__title" id="an-top">Bài được xem nhiều nhất</h2></div>
+            <ol class="an-rank">
+                @foreach (var a in r.TopArticles)
+                {
+                    <li>
+                        <div class="an-rank__main">
+                            <a class="table__title" asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
+                            <span class="table__sub">@a.Category</span>
+                            <span class="an-meter"><span style="width:@(Math.Max(3, (int)Math.Round(100.0 * a.Views / maxTop)))%"></span></span>
+                        </div>
+                        <strong class="an-rank__value">@a.Views.ToString("N0", vi)</strong>
+                    </li>
+                }
+            </ol>
+        </section>
+
+        <section class="card an-card" aria-labelledby="an-cat">
+            <div class="card__head"><h2 class="card__title" id="an-cat">Chuyên mục được đọc</h2></div>
+            <ul class="an-rank">
+                @foreach (var c in r.TopCategories)
+                {
+                    <li>
+                        <div class="an-rank__main">
+                            <span class="table__title">@c.Name</span>
+                            <span class="an-meter"><span style="width:@(Math.Max(3, (int)Math.Round(100.0 * c.Views / maxCategory)))%"></span></span>
+                        </div>
+                        <strong class="an-rank__value">@c.Views.ToString("N0", vi)</strong>
+                    </li>
+                }
+            </ul>
+        </section>
+    </div>
+
+    <div class="two-col an-grid">
+        <section class="card an-card" aria-labelledby="an-device">
+            <div class="card__head"><h2 class="card__title" id="an-device">Thiết bị</h2></div>
+            <div class="an-split" role="img" aria-label="Điện thoại @mobilePct%, máy tính @(100 - mobilePct)%">
+                <span class="an-split__mobile" style="width:@mobilePct%"></span>
+            </div>
+            <ul class="an-legend">
+                <li><span class="an-dot an-dot--mobile"></span>Điện thoại và máy tính bảng <strong>@r.MobileViews.ToString("N0", vi) (@mobilePct%)</strong></li>
+                <li><span class="an-dot"></span>Máy tính <strong>@r.DesktopViews.ToString("N0", vi) (@(100 - mobilePct)%)</strong></li>
+            </ul>
+        </section>
+
+        <section class="card an-card" aria-labelledby="an-hour">
+            <div class="card__head">
+                <h2 class="card__title" id="an-hour">Giờ đọc cao điểm</h2>
+                @if (peakHour >= 0) { <span class="an-note">Cao nhất lúc @peakHour:00 – @((peakHour + 1) % 24):00</span> }
+            </div>
+            <div class="an-hours" role="img" aria-label="Lượt xem theo giờ trong ngày">
+                @for (var h = 0; h < 24; h++)
+                {
+                    var v = r.ViewsByHour[h];
+                    <div class="an-hours__col" title="@h:00 – @((h + 1) % 24):00: @v lượt xem">
+                        <span class="an-hours__bar @(h == peakHour ? "is-peak" : "")" style="height:@(v == 0 ? 2 : Math.Max(4, (int)Math.Round(100.0 * v / maxHour)))%"></span>
+                        <span class="an-hours__label">@(h % 6 == 0 ? h.ToString() : "")</span>
+                    </div>
+                }
+            </div>
+        </section>
+    </div>
+}
+
+<p class="an-foot">Ghi chú: người đọc được đếm bằng mã ẩn danh đổi mỗi ngày (không lưu địa chỉ IP hay thông tin trình duyệt), nên một người quay lại ở ngày khác được tính lại. Lượt tải lại trong 30 phút không được tính thêm.</p>
