@@ -29,7 +29,7 @@ public sealed class HomePageQueryService : IHomePageQueryService
     public async Task<HomePageData> GetHomePageDataAsync(CancellationToken cancellationToken = default)
     {
         var newest = PublishedArticles().OrderByDescending(a => a.PublishedAt);
-        var byViews = PublishedArticles().OrderByDescending(a => a.ViewCount);
+        var byViews = PublishedArticles().OrderByDescending(a => a.ViewCount + _context.ArticleViews.Count(v => v.ArticleId == a.Id)); // stored figure plus real readings
 
         var top = await SliceAsync(newest, 0, 6, cancellationToken);
 

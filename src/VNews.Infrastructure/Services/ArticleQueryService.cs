@@ -58,9 +58,9 @@ public class ArticleQueryService : IArticleQueryService
         {
             article.GalleryImages = await _context.ArticleImages.AsNoTracking()
                 .Where(i => i.ArticleId == article.Id).OrderBy(i => i.SortOrder).Select(i => i.Url).ToListAsync(cancellationToken);
-            await _context.Articles
-                .Where(a => a.Id == article.Id)
-                .ExecuteUpdateAsync(setters => setters.SetProperty(a => a.ViewCount, a => a.ViewCount + 1), cancellationToken);
+            // Reading never writes to the article row: its RowVersion is what an open edit form is checked against, so a reader opening the
+            // page would make the editor's next save look like a conflict. Readings are recorded in ArticleViews (see IAnalyticsService).
+            article.ViewCount += await _context.ArticleViews.CountAsync(v => v.ArticleId == article.Id, cancellationToken);
         }
 
         return article;
@@ -93,7 +93,7 @@ public class ArticleQueryService : IArticleQueryService
         }
 
         return await query
-            .OrderByDescending(a => a.ViewCount)
+            .OrderByDescending(a => a.ViewCount + _context.ArticleViews.Count(v => v.ArticleId == a.Id)) // the stored figure plus real readings
             .ThenByDescending(a => a.PublishedAt)
             .Take(count)
             .Select(ToSummary)

@@ -22,7 +22,7 @@ public interface IArticleQueryService
     Task<PagedResult<ArticleSummaryDto>> GetByTagAsync(
         string tagSlug, int page, int pageSize, CancellationToken cancellationToken = default);
 
-    /// <summary>Published articles ordered by the persisted ViewCount (incremented on each article read).</summary>
+    /// <summary>Published articles ordered by the stored ViewCount plus the readings recorded in ArticleViews.</summary>
     Task<IReadOnlyList<ArticleSummaryDto>> GetMostViewedAsync(
         int count, int? excludeArticleId = null, CancellationToken cancellationToken = default);
 

@@ -1,4 +1,5 @@
 using System.Net;
+using VNews.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using VNews.Domain.Entities;
@@ -93,15 +94,38 @@ public class ArticleDetailIntegrationTests : IClassFixture<IsolatedDbWebApplicat
     }
 
     [Fact]
-    public async Task Detail_ReadingAnArticle_IncrementsItsStoredViewCount()
+    public async Task Detail_ReadingAnArticle_NeverChangesTheArticleRow_SoAnOpenEditFormIsNotMadeStale()
     {
+        // The edit form carries the article's RowVersion. A reader opening the public page must not change it, or the editor's next save is
+        // refused as "changed by someone else" without anyone having edited anything.
         var article = await AddPublishedAsync("Dem", 5, DateTime.UtcNow.AddHours(-1));
+        var client = _factory.NewClient();
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120 Safari/537.36");
 
-        await _factory.NewClient().GetAsync($"/tin/{article.Slug}");
+        await client.GetAsync($"/tin/{article.Slug}");
+        await client.GetAsync($"/tin/{article.Slug}");
 
         using var scope = _factory.Services.CreateScope();
-        var views = await scope.ServiceProvider.GetRequiredService<VNewsDbContext>().Articles
-            .AsNoTracking().Where(a => a.Id == article.Id).Select(a => a.ViewCount).SingleAsync();
-        Assert.Equal(6, views);
+        var row = await scope.ServiceProvider.GetRequiredService<VNewsDbContext>().Articles
+            .AsNoTracking().Where(a => a.Id == article.Id).Select(a => new { a.RowVersion, a.ViewCount }).SingleAsync();
+        Assert.Equal(article.RowVersion, row.RowVersion);
+        Assert.Equal(5, row.ViewCount);
+    }
+
+    [Fact]
+    public async Task MostViewed_CountsRealReadingsOnTopOfTheStoredFigure()
+    {
+        var older = await AddPublishedAsync("Cu", 5, DateTime.UtcNow.AddHours(-2));
+        var rising = await AddPublishedAsync("Len", 3, DateTime.UtcNow.AddHours(-1));
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var analytics = scope.ServiceProvider.GetRequiredService<IAnalyticsService>();
+            for (var i = 0; i < 4; i++) await analytics.RecordViewAsync(rising.Id, Guid.NewGuid().ToString("N"), isMobile: false); // 3 + 4 = 7 > 5
+        }
+
+        using var read = _factory.Services.CreateScope();
+        var top = await read.ServiceProvider.GetRequiredService<IArticleQueryService>().GetMostViewedAsync(200);
+
+        Assert.True(top.ToList().FindIndex(a => a.Id == rising.Id) < top.ToList().FindIndex(a => a.Id == older.Id));
     }
 }
