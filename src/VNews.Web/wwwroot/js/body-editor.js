@@ -125,6 +125,7 @@
 
   // ---- state ----
   var lastRange = null;
+  var busy = 0;
   var inSource = false;
 
   function note(text) { statusNote.textContent = text || ''; }
@@ -208,11 +209,12 @@
     statusCount.textContent = words + ' từ · ' + text.replace(/\s/g, '').length + ' ký tự · khoảng ' + minutes + ' phút đọc';
   }
 
-  // ---- paste: text keeps its paragraphs; a picture is offered to the figures module first ----
+  // ---- paste: a picture is offered to the figures module first, then formatted content to the paste module; plain text keeps its paragraphs ----
   editor.addEventListener('paste', function (e) {
     var data = e.clipboardData;
     if (!data) return;
     if (ctx.pasteImage && ctx.pasteImage(e)) return;
+    if (ctx.pasteHtml && ctx.pasteHtml(e)) return;
     var text = data.getData('text/plain');
     if (!text) return;
     e.preventDefault();
@@ -262,7 +264,12 @@
     el: el, escapeHtml: escapeHtml, toHtml: toHtml, addButton: addButton, group: group,
     exec: exec, sync: sync, note: note, isSource: isSource, saveRange: saveRange, restoreRange: restoreRange, updateState: updateState, setContent: setContent,
     // hooks the modules fill in
-    beforeSync: [], afterSync: [], cleaners: [], onState: [], onSource: [], onReady: [], pasteImage: null
+    beforeSync: [], afterSync: [], cleaners: [], onState: [], onSource: [], onReady: [], pasteImage: null, pasteHtml: null,
+    /** +1 when an upload or import starts, -1 when it ends: the form's save buttons stay off while any is running. */
+    work: function (delta) {
+      busy = Math.max(0, busy + delta);
+      if (form) form.querySelectorAll('button[type="submit"]').forEach(function (b) { b.disabled = busy > 0; });
+    }
   };
 
   // Once every module has been loaded (scripts at the end of the page run before DOMContentLoaded), do the first update.

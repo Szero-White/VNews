@@ -16,7 +16,6 @@
   var LIMIT_LABEL = area.getAttribute('data-max-label') || '3 MB';
   var UPLOAD_URL = area.getAttribute('data-upload-url');
   var selectedImage = null;
-  var pending = 0;
 
   // ---- keeping the figures tidy (also in the read-only view) ----
   /** Hint on empty captions; a figure whose picture was deleted goes away with it. */
@@ -129,18 +128,13 @@
   });
 
   // ---- uploading ----
-  function lockSave(locked) {
-    if (!form) return;
-    form.querySelectorAll('button[type="submit"]').forEach(function (b) { b.disabled = locked; });
-  }
-
   async function insertImage(file) {
     if (IMAGE_TYPES.indexOf(file.type) === -1) { ctx.note('Lỗi: chỉ dùng ảnh JPG, PNG hoặc WebP.'); return; }
     if (file.size > MAX_BYTES) { ctx.note('Lỗi: ảnh lớn hơn ' + LIMIT_LABEL + '.'); return; }
     var token = form && form.querySelector('input[name="__RequestVerificationToken"]');
     var data = new FormData(); data.append('file', file);
     ctx.note('Đang tải ảnh lên…');
-    pending++; lockSave(true);
+    ctx.work(1);
     try {
       var response = await fetch(UPLOAD_URL, { method: 'POST', headers: { 'RequestVerificationToken': token ? token.value : '' }, body: data });
       var body = await response.json();
@@ -152,8 +146,7 @@
     } catch (err) {
       ctx.note('Lỗi tải ảnh lên.');
     } finally {
-      pending = Math.max(0, pending - 1);
-      if (pending === 0) lockSave(false);
+      ctx.work(-1);
     }
   }
 
