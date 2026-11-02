@@ -179,6 +179,10 @@ namespace VNews.Infrastructure.Persistence.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
+                    b.Property<string>("CoverCaption")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<string>("CoverImageUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -215,6 +219,14 @@ namespace VNews.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
+                    b.Property<string>("SourceName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -249,9 +261,39 @@ namespace VNews.Infrastructure.Persistence.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
+                    b.HasIndex("SourceUrl")
+                        .IsUnique()
+                        .HasFilter("[SourceUrl] IS NOT NULL");
+
                     b.HasIndex("Status", "PublishedAt");
 
                     b.ToTable("Articles", (string)null);
+                });
+
+            modelBuilder.Entity("VNews.Domain.Entities.ArticleImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ArticleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArticleId", "SortOrder");
+
+                    b.ToTable("ArticleImages", (string)null);
                 });
 
             modelBuilder.Entity("VNews.Domain.Entities.ArticleTag", b =>
@@ -267,6 +309,37 @@ namespace VNews.Infrastructure.Persistence.Migrations
                     b.HasIndex("TagId");
 
                     b.ToTable("ArticleTags", (string)null);
+                });
+
+            modelBuilder.Entity("VNews.Domain.Entities.ArticleView", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("ArticleId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsMobile")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("ViewedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("VisitorHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ViewedAtUtc");
+
+                    b.HasIndex("ArticleId", "VisitorHash", "ViewedAtUtc");
+
+                    b.ToTable("ArticleViews", (string)null);
                 });
 
             modelBuilder.Entity("VNews.Domain.Entities.AuditLog", b =>
@@ -632,6 +705,17 @@ namespace VNews.Infrastructure.Persistence.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("VNews.Domain.Entities.ArticleImage", b =>
+                {
+                    b.HasOne("VNews.Domain.Entities.Article", "Article")
+                        .WithMany("Images")
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Article");
+                });
+
             modelBuilder.Entity("VNews.Domain.Entities.ArticleTag", b =>
                 {
                     b.HasOne("VNews.Domain.Entities.Article", "Article")
@@ -649,6 +733,17 @@ namespace VNews.Infrastructure.Persistence.Migrations
                     b.Navigation("Article");
 
                     b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("VNews.Domain.Entities.ArticleView", b =>
+                {
+                    b.HasOne("VNews.Domain.Entities.Article", "Article")
+                        .WithMany()
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Article");
                 });
 
             modelBuilder.Entity("VNews.Domain.Entities.Category", b =>
@@ -705,6 +800,8 @@ namespace VNews.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("VNews.Domain.Entities.Article", b =>
                 {
                     b.Navigation("ArticleTags");
+
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("VNews.Domain.Entities.Category", b =>

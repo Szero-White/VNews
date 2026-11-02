@@ -8,6 +8,9 @@ public class Article
     public string Summary { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
     public string? CoverImageUrl { get; set; }
+
+    /// <summary>The small line under the cover picture on the article page. Null = the default "Ảnh minh họa".</summary>
+    public string? CoverCaption { get; set; }
     public string AuthorName { get; set; } = string.Empty;
     public ArticleStatus Status { get; set; } = ArticleStatus.Draft;
     public DateTime? PublishedAt { get; set; }
@@ -18,6 +21,10 @@ public class Article
     public string? AuthorUserId { get; set; }
     public string? ReviewNote { get; set; }
     public string? ReviewedByUserId { get; set; }
+
+    /// <summary>For articles imported from a news feed: the publisher and the link to the original. Null for articles written in the CMS.</summary>
+    public string? SourceName { get; set; }
+    public string? SourceUrl { get; set; }
 
     /// <summary>Set while <see cref="ArticleStatus.Trashed"/>: when, by whom, and the status to return to on restore.</summary>
     public DateTime? DeletedAt { get; set; }
@@ -31,4 +38,6 @@ public class Article
     public Category Category { get; set; } = null!;
 
     public ICollection<ArticleTag> ArticleTags { get; set; } = new List<ArticleTag>();
+
+    public ICollection<ArticleImage> Images { get; set; } = new List<ArticleImage>();
 }

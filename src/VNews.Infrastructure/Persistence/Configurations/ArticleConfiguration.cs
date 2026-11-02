@@ -16,11 +16,17 @@ public class ArticleConfiguration : IEntityTypeConfiguration<Article>
         builder.Property(a => a.Summary).HasMaxLength(500).IsRequired();
         builder.Property(a => a.Body).IsRequired();
         builder.Property(a => a.CoverImageUrl).HasMaxLength(500);
+        builder.Property(a => a.CoverCaption).HasMaxLength(200);
         builder.Property(a => a.AuthorName).HasMaxLength(150).IsRequired();
         builder.Property(a => a.Status).HasConversion<string>().HasMaxLength(20);
 
         builder.Property(a => a.StatusBeforeDeletion).HasConversion<string>().HasMaxLength(20);
         builder.Property(a => a.DeletedByUserId).HasMaxLength(450);
+
+        builder.Property(a => a.SourceName).HasMaxLength(100);
+        builder.Property(a => a.SourceUrl).HasMaxLength(500);
+        // One row per original link: the importer can run again without creating duplicates.
+        builder.HasIndex(a => a.SourceUrl).IsUnique().HasFilter("[SourceUrl] IS NOT NULL");
 
         builder.Property(a => a.AuthorUserId).HasMaxLength(450);
         builder.Property(a => a.ReviewedByUserId).HasMaxLength(450);
