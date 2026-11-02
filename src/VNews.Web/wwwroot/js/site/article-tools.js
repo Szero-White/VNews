@@ -1,4 +1,4 @@
-/* VNews public site scripts, module 6 of 6: the reading tools row of an article: share, listen to the summary, font size.
+/* VNews public site scripts, module 6 of 6: the reading tools row of an article: share, listen to the article, font size.
    (Saving is bookmarks.js.) */
 (function () {
   'use strict';
@@ -20,27 +20,83 @@
     }
   }
 
-  // ---- listen to the summary ----
+  // ---- listen to the article ----
+  // The whole text is read: title, summary, every paragraph / heading / list item / quote and the picture captions. Browsers cut a single long
+  // utterance after ~15 seconds, so the text is queued as short pieces (a sentence or two each) and read one after another.
+  var MAX_PIECE = 180;
+  var session = 0; // each start gets a number; events of a cancelled run must not touch the next one
   var speaking = false;
+
   function setSpeaking(button, on) {
     speaking = on;
     button.setAttribute('aria-pressed', String(on));
-    button.textContent = on ? '■ Dừng đọc' : '▶ Nghe tóm tắt';
+    button.textContent = on ? '■ Dừng đọc' : '▶ Nghe bài viết';
   }
+
+  function clean(text) { return (text || '').replace(/\s+/g, ' ').trim(); }
+
+  /** Splits one block of text into pieces of at most MAX_PIECE characters, at sentence ends where possible. */
+  function pieces(text) {
+    var out = [];
+    var sentences = text.match(/[^.!?…]+[.!?…]*\s*/g) || [text];
+    var current = '';
+    sentences.forEach(function (sentence) {
+      if (current && (current + sentence).length > MAX_PIECE) { out.push(current.trim()); current = ''; }
+      current += sentence;
+      while (current.length > MAX_PIECE * 1.5) { // a very long sentence: cut at a space
+        var cut = current.lastIndexOf(' ', MAX_PIECE);
+        if (cut < 40) cut = MAX_PIECE;
+        out.push(current.slice(0, cut).trim());
+        current = current.slice(cut);
+      }
+    });
+    if (current.trim()) out.push(current.trim());
+    return out;
+  }
+
+  /** What is read, in page order: title, summary, then the body's blocks and captions. */
+  function textToRead() {
+    var blocks = [clean(article.dataset.newsTitle)];
+    var summary = document.getElementById('article-summary');
+    if (summary) blocks.push(clean(summary.textContent));
+    var body = document.getElementById('article-body');
+    if (body) {
+      body.querySelectorAll('p, h2, h3, h4, li, blockquote, figcaption').forEach(function (node) {
+        if (node.closest('blockquote') && node.tagName !== 'BLOCKQUOTE') return; // the quote itself is read once
+        blocks.push(clean(node.textContent));
+      });
+    }
+    var queue = [];
+    blocks.filter(Boolean).forEach(function (block) { pieces(block).forEach(function (piece) { queue.push(piece); }); });
+    return queue;
+  }
+
+  function stopSpeech(button) {
+    session++;
+    speechSynthesis.cancel();
+    setSpeaking(button, false);
+  }
+
   function toggleSpeech(button) {
     if (!('speechSynthesis' in window)) { toast('Trình duyệt này không hỗ trợ đọc bằng giọng máy.'); return; }
-    if (speaking) { speechSynthesis.cancel(); setSpeaking(button, false); return; }
-    var summary = document.getElementById('article-summary');
-    if (!summary) return;
+    if (speaking) { stopSpeech(button); return; }
+
+    var queue = textToRead();
+    if (!queue.length) return;
     speechSynthesis.cancel();
-    var utterance = new SpeechSynthesisUtterance((article.dataset.newsTitle || '') + '. ' + summary.textContent);
-    utterance.lang = 'vi-VN';
-    utterance.rate = 0.95;
-    utterance.onend = utterance.onerror = function () { setSpeaking(button, false); };
+    var mine = ++session;
     setSpeaking(button, true);
-    speechSynthesis.speak(utterance);
+    queue.forEach(function (piece, index) {
+      var utterance = new SpeechSynthesisUtterance(piece);
+      utterance.lang = 'vi-VN';
+      utterance.rate = 0.95;
+      var finished = function () { if (mine === session && index === queue.length - 1) setSpeaking(button, false); };
+      utterance.onend = finished;
+      utterance.onerror = function () { if (mine === session) { session++; setSpeaking(button, false); } }; // a real failure stops the run
+      speechSynthesis.speak(utterance);
+    });
   }
-  window.addEventListener('pagehide', function () { if (speaking && 'speechSynthesis' in window) speechSynthesis.cancel(); });
+  window.addEventListener('pagehide', function () { if (speaking && 'speechSynthesis' in window) { session++; speechSynthesis.cancel(); } });
 
   // ---- font size ----
   function resizeText(delta) {

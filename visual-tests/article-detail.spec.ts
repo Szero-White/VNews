@@ -104,3 +104,43 @@ test('reading tools still work: font size, save, share', async ({ page, context 
 
   await expect(page.locator('.article-tools [data-action="speak"]')).toBeVisible();
 });
+
+test('listen button reads the whole article (title, summary, every body paragraph, captions) in short pieces, and stops on a second click', async ({ page }) => {
+  await page.addInitScript(() => {
+    const spoken: string[] = [];
+    let cancelled = 0;
+    (window as any).__spoken = spoken;
+    (window as any).__cancelled = () => cancelled;
+    (window as any).SpeechSynthesisUtterance = function (this: any, text: string) { this.text = text; };
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        speak(u: any) { spoken.push(u.text); },
+        cancel() { cancelled++; },
+      },
+    });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`/tin/${await firstArticleSlug(page)}`);
+
+  const button = page.locator('.article-tools [data-action="speak"]');
+  await expect(button).toHaveText(/Nghe bài viết/);
+  await button.click();
+  await expect(button).toHaveText(/Dừng đọc/);
+
+  const spoken: string[] = await page.evaluate(() => (window as any).__spoken);
+  const expected = await page.evaluate(() => {
+    const clean = (t: string | null) => (t || '').replace(/\s+/g, ' ').trim();
+    const parts = [document.querySelector('[data-news-article]')!.getAttribute('data-news-title'), document.getElementById('article-summary')?.textContent];
+    document.querySelectorAll('#article-body p, #article-body h2, #article-body h3, #article-body li, #article-body figcaption').forEach((n) => parts.push(n.textContent));
+    return parts.map(clean).filter(Boolean);
+  });
+  const read = spoken.join(' ').replace(/\s+/g, ' ');
+  for (const block of expected) expect(read, `"${block.slice(0, 40)}…" must be read`).toContain(block.replace(/\s+/g, ' ').slice(0, 40));
+  expect(spoken.length).toBeGreaterThanOrEqual(expected.length);
+  for (const piece of spoken) expect(piece.length).toBeLessThanOrEqual(300); // short pieces: browsers cut one long utterance
+
+  await button.click();
+  await expect(button).toHaveText(/Nghe bài viết/);
+  expect(await page.evaluate(() => (window as any).__cancelled())).toBeGreaterThanOrEqual(2); // once before starting, once on stop
+});
