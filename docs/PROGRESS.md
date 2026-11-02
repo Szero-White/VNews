@@ -130,3 +130,10 @@ VERIFICATION (đã chạy thật, không bịa kết quả):
   - VERIFICATION: dotnet test 340/340; Playwright 193 (+15 trong `playwright.subcategories.config.ts`, DB rieng VNewsE2ESub). Anh: `artifacts/phase-cat`.
 
 - **CMS CRUD (2026-11-01, chưa commit, chưa kiểm thử chạy):** xóa mềm bài viết (`ArticleStatus.Trashed`, `IArticleTrashService`, `CmsTrashController`, thùng rác + khôi phục), quản lý bình luận (`CmsCommentsController`: gỡ/khôi phục), khóa/mở khóa tài khoản (`SetLockedAsync`), xóa chuyên mục có điều kiện (`DeleteAsync`). Migration nguồn `AddArticleSoftDelete` (3 cột nullable) — **chưa áp vào bất kỳ DB nào, cần duyệt**. Mới chỉ `dotnet build` (web + tests) sạch; test mới `CmsCrudTests` chưa chạy.
+
+- **Tin thật qua RSS (2026-11-02, chưa commit, chưa chạy):** `RssFeedParser` + `RssNewsImportService` (tiêu đề, tóm tắt, link gốc, ngày đăng từ RSS công khai của VnExpress; ghi nguồn; không chép thân bài; ảnh nguồn tắt mặc định, bật bằng `NewsImport:ShowSourceThumbnails`). Nút "Nạp tin từ VnExpress" (Admin, `CmsImportController`). Migration nguồn `AddArticleSource` (2 cột nullable + chỉ mục unique có điều kiện) — **chưa áp**. Test mới `RssFeedParserTests`, `NewsImportTests` chưa chạy. Chưa nạp vào VNewsDemo, chưa chuyển 52 bài demo vào thùng rác (cần duyệt riêng).
+
+## Thống kê truy cập CMS (2026-11-02)
+- Bảng `ArticleViews` (migration `AddArticleViews`, chỉ áp vào VNewsDemo): mỗi lượt đọc thật, ẩn danh (mã băm đổi mỗi ngày, không lưu IP/UA), bỏ qua crawler và lượt tải lại trong 30 phút. Ghi từ `ArticleController.Detail` qua `IAnalyticsService`.
+- Trang `/cms/CmsAnalytics` (Admin, Editor): lượt xem, người đọc, bình luận, bài xuất bản (so với kỳ trước), biểu đồ theo ngày 7/30/90 ngày, top bài, top chuyên mục, thiết bị, giờ cao điểm.
+- Kiểm chứng: build solution + tests sạch; trên 5300 (v22) HTTP 200 cho 4 khoảng, 2 lần tải + 1 bot = 1 lượt (đã xóa dòng thử). Chưa kiểm tra trên trình duyệt, `AnalyticsTests` chưa chạy. VNewsDb và 5299 không đụng tới. Chưa commit.
