@@ -16,7 +16,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddVNewsWeb(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         services.AddControllersWithViews();
-        services.AddVNewsDataProtection();
+        services.AddVNewsDataProtection(configuration);
         services.AddInfrastructure(configuration);
         services.AddExceptionHandler<ApiExceptionHandler>();
 
@@ -33,9 +33,15 @@ public static class ServiceCollectionExtensions
     /// every form that is being edited (the next Save is bounced to the sign-in page). A fixed name keeps them valid across restarts and
     /// deployments on the same machine.
     /// </summary>
-    private static IServiceCollection AddVNewsDataProtection(this IServiceCollection services)
+    /// <summary>
+    /// Cookie and antiforgery keys. DataProtection:KeysPath (a folder that survives restarts and redeployments) keeps readers and staff signed in; without
+    /// it the framework's default location is used, which on some shared hosts is lost on every restart.
+    /// </summary>
+    private static IServiceCollection AddVNewsDataProtection(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDataProtection().SetApplicationName("VNews");
+        var builder = services.AddDataProtection().SetApplicationName("VNews");
+        var keysPath = configuration["DataProtection:KeysPath"];
+        if (!string.IsNullOrWhiteSpace(keysPath)) builder.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
         return services;
     }
 

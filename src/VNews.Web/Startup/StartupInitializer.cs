@@ -8,14 +8,16 @@ namespace VNews.Web.Startup;
 public static class StartupInitializer
 {
     /// <summary>
-    /// Applies the database schema, seeds demo content and roles, and (only for a real deployment) creates the first administrator.
+    /// Applies the database schema, seeds roles, seeds sample content ONLY in Development (or when Seed:SampleContent=true) and, for a real
+    /// deployment, creates the first administrator when none exists.
     /// NOTE: DbInitializer migrates the database it is pointed at; never run a new build against a database you have not approved a migration for.
     /// </summary>
     public static async Task InitializeAsync(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<VNewsDbContext>();
-        await DbInitializer.SeedAsync(context);
+        var seedSampleContent = app.Configuration.GetValue("Seed:SampleContent", app.Environment.IsDevelopment());
+        await DbInitializer.SeedAsync(context, seedSampleContent);
 
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
