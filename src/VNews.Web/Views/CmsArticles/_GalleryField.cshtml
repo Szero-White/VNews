@@ -1,0 +1,34 @@
+@using VNews.Application.Interfaces
+@model ArticleSaveRequest
+@* Pictures inside the article, below the text: any number (none, one, five...). Every picture is one box with the same three buttons as the
+   cover (change, paste, remove); "Thêm ảnh" adds a box. gallery-field.js drives it; each box posts its address as GalleryImages. *@
+@{
+    var readOnly = ViewData["ReadOnly"] is true;
+    var images = Model.GalleryImages ?? new List<string>();
+}
+<div class="app-field gallery-field" data-gallery data-upload-url="@Url.Action("UploadCoverImage", "CmsArticles")" data-max-bytes="@ImageUploadLimits.MaxBytes" data-max-label="@ImageUploadLimits.Label" data-max-images="@ArticleSaveRequest.MaxGalleryImages">
+    <span class="app-label" id="gallery-label">Ảnh trong bài</span>
+    <div class="gallery-field__list" data-gallery-list role="group" aria-labelledby="gallery-label">
+        @for (var i = 0; i < images.Count; i++)
+        {
+            <partial name="_GallerySlot" model="@images[i]" view-data="@(new ViewDataDictionary(ViewData) { ["ReadOnly"] = readOnly })" />
+        }
+    </div>
+    <p class="app-hint gallery-field__empty" data-gallery-empty hidden="@(images.Count > 0)">Bài chưa có ảnh nào trong nội dung. Bài không có ảnh vẫn đăng bình thường.</p>
+    @if (!readOnly)
+    {
+        <div class="gallery-field__actions">
+            <button type="button" class="btn btn--secondary btn--sm" data-gallery-add>
+                <svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>
+                Thêm ảnh
+            </button>
+            <span class="app-hint" data-gallery-count></span>
+        </div>
+        <p class="app-hint">Thêm bao nhiêu ảnh tùy bài (tối đa @ArticleSaveRequest.MaxGalleryImages). Với mỗi ô: bấm “Dán ảnh” hoặc nhấn Ctrl+V khi ô đang chọn.</p>
+        <div class="app-hint cover__status" data-gallery-status role="status"></div>
+        <template data-gallery-template>
+            <partial name="_GallerySlot" model="@string.Empty" view-data="@(new ViewDataDictionary(ViewData) { ["ReadOnly"] = false })" />
+        </template>
+    }
+    <span asp-validation-for="GalleryImages" class="app-field-error"></span>
+</div>

@@ -156,6 +156,31 @@ public sealed class ServiceLayerTests : IClassFixture<IsolatedDbWebApplicationFa
         Assert.DoesNotContain(forbidden, ArticleHtmlSanitizer.Sanitize(input), StringComparison.OrdinalIgnoreCase);
 
     [Fact]
+    public void ArticleHtml_KeepsOnlyTheEditorsFontClasses_OnSpans()
+    {
+        var clean = ArticleHtmlSanitizer.Sanitize("<p><span class=\"fs-24 ff-georgia\">to</span> <span class=\"evil fs-99\" style=\"position:fixed\" onclick=\"x()\">xấu</span></p>");
+        Assert.Contains("fs-24", clean);
+        Assert.Contains("ff-georgia", clean);
+        Assert.DoesNotContain("evil", clean);
+        Assert.DoesNotContain("fs-99", clean);
+        Assert.DoesNotContain("style=", clean);
+        Assert.DoesNotContain("onclick", clean);
+        Assert.DoesNotContain("class=\"x\"", ArticleHtmlSanitizer.Sanitize("<p class=\"x\">a</p>")); // unknown classes are dropped from every tag
+    }
+
+    [Fact]
+    public void ArticleHtml_KeepsAPictureWithItsCaption_ButNotScriptsInIt()
+    {
+        var clean = ArticleHtmlSanitizer.Sanitize("<figure><img src=\"/uploads/articles/" + new string('a', 32) + ".png\" alt=\"\" onerror=\"x()\"><figcaption>Đi bộ buổi sáng. Ảnh: <em>Ngọc Thành</em><script>alert(1)</script></figcaption></figure>");
+        Assert.Contains("<figure>", clean);
+        Assert.Contains("<figcaption>", clean);
+        Assert.Contains("<em>Ngọc Thành</em>", clean);
+        Assert.Contains("/uploads/articles/", clean);
+        Assert.DoesNotContain("onerror", clean);
+        Assert.DoesNotContain("<script", clean);
+    }
+
+    [Fact]
     public void ArticleHtml_KeepsTheEditorialTags()
     {
         var clean = ArticleHtmlSanitizer.Sanitize("<h2>Tiêu đề</h2><p><strong>đậm</strong> <em>nghiêng</em> <a href=\"https://example.com\">liên kết</a></p><ul><li>một</li></ul><blockquote>trích</blockquote>");

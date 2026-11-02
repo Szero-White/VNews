@@ -22,9 +22,10 @@
         </div>
         <div class="app-field">
             <label asp-for="Body" class="app-label">Nội dung</label>
-            <textarea asp-for="Body" class="app-textarea" rows="16" readonly="@readOnly"></textarea>
+            <textarea asp-for="Body" class="app-textarea" rows="16" readonly="@readOnly" data-rte data-upload-url="@(readOnly ? null : Url.Action("UploadCoverImage", "CmsArticles"))" data-max-bytes="@ImageUploadLimits.MaxBytes" data-max-label="@ImageUploadLimits.Label"></textarea>
             <span asp-validation-for="Body" class="app-field-error"></span>
         </div>
+        <partial name="_GalleryField" model="Model" view-data="ViewData" />
     </div>
     <div>
         <div class="app-field">
@@ -59,11 +60,22 @@
                         <span data-cover-pick-label>@(hasCover ? "Thay ảnh" : "Chọn ảnh")</span>
                         <input type="file" id="coverFile" class="cover__file" accept="image/jpeg,image/png,image/webp" />
                     </label>
+                    <button type="button" class="btn btn--secondary btn--sm" data-cover-paste title="Dán ảnh đã sao chép (hoặc nhấn Ctrl+V)">
+                        <svg class="icon" aria-hidden="true"><use href="#i-clipboard" /></svg>
+                        Dán ảnh
+                    </button>
                     <button type="button" class="btn btn--ghost btn--sm" data-cover-remove hidden="@(!hasCover)">Bỏ ảnh</button>
                     <button type="button" class="btn btn--ghost btn--sm" data-cover-undo hidden>Hoàn tác</button>
                 </div>
-                <p class="app-hint" data-cover-file-name>JPG, PNG hoặc WebP, tối đa @ImageUploadLimits.Label.</p>
+                <p class="app-hint" data-cover-file-name>JPG, PNG hoặc WebP, tối đa @ImageUploadLimits.Label. Có thể sao chép ảnh rồi bấm “Dán ảnh” hoặc nhấn Ctrl+V.</p>
             }
+            @* Caption under the picture on the article page. Empty = the default "Ảnh minh họa" (shown in the preview line). *@
+            <div class="cover__caption" data-cover-caption hidden="@(!hasCover)">
+                <label asp-for="CoverCaption" class="app-label">Chú thích ảnh bìa</label>
+                <input asp-for="CoverCaption" type="text" class="app-input" maxlength="200" readonly="@readOnly" data-cover-caption-input placeholder="Để trống sẽ hiện “Ảnh minh họa”" autocomplete="off" />
+                <p class="cover__caption-preview" aria-live="polite"><span class="cover__caption-label">Hiển thị dưới ảnh:</span> <em data-cover-caption-preview>@(string.IsNullOrWhiteSpace(Model.CoverCaption) ? "Ảnh minh họa" : Model.CoverCaption)</em></p>
+                <span asp-validation-for="CoverCaption" class="app-field-error"></span>
+            </div>
             <div id="uploadStatus" class="app-hint cover__status" role="status"></div>
             <input asp-for="CoverImageUrl" type="hidden" />
             <span asp-validation-for="CoverImageUrl" class="app-field-error"></span>

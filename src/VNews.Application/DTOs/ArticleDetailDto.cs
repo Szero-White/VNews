@@ -8,9 +8,14 @@ public class ArticleDetailDto
     public string Summary { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
     public string? CoverImageUrl { get; set; }
+    public string? CoverCaption { get; set; }
     public string AuthorName { get; set; } = string.Empty;
     public DateTime? PublishedAt { get; set; }
     public int ViewCount { get; set; }
+    /// <summary>Pictures shown below the text, in order.</summary>
+    public IReadOnlyList<string> GalleryImages { get; set; } = Array.Empty<string>();
+    public string? SourceName { get; set; }
+    public string? SourceUrl { get; set; }
     public string CategoryName { get; set; } = string.Empty;
     public string CategorySlug { get; set; } = string.Empty;
     public IReadOnlyList<TagDto> Tags { get; set; } = Array.Empty<TagDto>();

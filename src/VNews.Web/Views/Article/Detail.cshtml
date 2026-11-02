@@ -39,13 +39,25 @@
             {
                 <figure class="article-cover-wrap">
                     <img class="article-detail__cover" src="@article.CoverImageUrl" alt="Ảnh minh họa: @article.Title" fetchpriority="high" />
-                    <figcaption>Ảnh minh họa</figcaption>
+                    <figcaption>@(string.IsNullOrWhiteSpace(article.CoverCaption) ? "Ảnh minh họa" : article.CoverCaption)</figcaption>
                 </figure>
             }
             <div class="article-detail__body" id="article-body">
                 @* CMS sanitizes HTML on save. Existing seeded body is generated within the application. *@
-                @Html.Raw(article.Body)
+                @Html.Raw(ArticleBodyFormatter.ToHtml(article.Body))
             </div>
+            @if (article.GalleryImages.Count > 0)
+            {
+                @* The editor's pictures, below the text. The grid adapts to how many there are (1, 2, 3, 4, or more). *@
+                <section class="article-gallery article-gallery--@(Math.Min(article.GalleryImages.Count, 5))" aria-label="Ảnh trong bài">
+                    @for (var i = 0; i < article.GalleryImages.Count; i++)
+                    {
+                        <a class="article-gallery__item" href="@article.GalleryImages[i]" target="_blank" rel="noopener">
+                            <img src="@article.GalleryImages[i]" alt="Ảnh @(i + 1): @article.Title" loading="lazy" />
+                        </a>
+                    }
+                </section>
+            }
             @if (!string.IsNullOrWhiteSpace(article.AuthorName))
             {
                 <p class="article-signoff"><span class="article-signoff__name">@article.AuthorName</span></p>

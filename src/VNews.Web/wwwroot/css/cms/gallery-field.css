@@ -1,0 +1,14 @@
+/* CMS: the "Ảnh trong bài" boxes. Same look as the cover (cover-field.css): a stage with the picture and a row of actions. */
+.gallery-field__list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.gallery-slot { border: 1px solid var(--app-border, #e5e7eb); border-radius: 10px; padding: 10px; background: #fff; outline: none; }
+.gallery-slot.is-active { border-color: var(--app-accent, #a61b46); box-shadow: 0 0 0 2px rgba(166, 27, 70, .15); }
+.gallery-slot__stage { position: relative; aspect-ratio: 16 / 10; border-radius: 8px; overflow: hidden; background: #f3f4f6; }
+.gallery-slot__img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gallery-slot__img[hidden], .gallery-slot__placeholder[hidden] { display: none; }
+.gallery-slot__placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #6b7280; font-size: 13px; text-align: center; }
+.gallery-slot__placeholder .icon { width: 28px; height: 28px; }
+.gallery-slot__label { position: absolute; left: 8px; top: 8px; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, .92); font-size: 12px; font-weight: 600; }
+.gallery-slot__state { position: absolute; left: 8px; bottom: 8px; }
+.gallery-slot__actions { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.gallery-field__actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.gallery-field__empty { margin: 0 0 8px; }

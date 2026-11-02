@@ -17,7 +17,8 @@ public sealed class ImageUploadServiceTests : IDisposable
     public ImageUploadServiceTests()
     {
         Directory.CreateDirectory(_webRoot);
-        _service = new ImageUploadService(new TestEnvironment(_webRoot), _log);
+        var environment = new TestEnvironment(_webRoot);
+        _service = new ImageUploadService(new UploadStorage(environment, new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build()), _log);
     }
 
     public void Dispose() => Directory.Delete(_webRoot, recursive: true);

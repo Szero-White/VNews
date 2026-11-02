@@ -1,0 +1,33 @@
+@model string
+@* One picture box of the gallery. Used for the saved pictures and, through <template>, for new boxes. *@
+@{
+    var readOnly = ViewData["ReadOnly"] is true;
+    var has = !string.IsNullOrWhiteSpace(Model);
+}
+<div class="gallery-slot@(has ? "" : " is-empty")" data-gallery-slot tabindex="-1">
+    <input type="hidden" name="GalleryImages" value="@Model" data-slot-value />
+    <div class="gallery-slot__stage">
+        <img class="gallery-slot__img" data-slot-img src="@(has ? Model : "")" alt="" hidden="@(!has)" />
+        <div class="gallery-slot__placeholder" data-slot-placeholder hidden="@has">
+            <svg class="icon" aria-hidden="true"><use href="#i-image" /></svg>
+            <span data-slot-placeholder-text>Chưa có ảnh</span>
+        </div>
+        <span class="gallery-slot__label" data-slot-label></span>
+        <span class="cover__state gallery-slot__state" data-slot-state role="status" hidden></span>
+    </div>
+    @if (!readOnly)
+    {
+        <div class="cover__actions gallery-slot__actions">
+            <label class="btn btn--secondary btn--sm cover__pick">
+                <svg class="icon" aria-hidden="true"><use href="#i-upload" /></svg>
+                <span data-slot-pick-label>@(has ? "Thay ảnh" : "Chọn ảnh")</span>
+                <input type="file" class="cover__file" accept="image/jpeg,image/png,image/webp" data-slot-file />
+            </label>
+            <button type="button" class="btn btn--secondary btn--sm" data-slot-paste title="Dán ảnh đã sao chép (hoặc nhấn Ctrl+V khi ô này đang chọn)">
+                <svg class="icon" aria-hidden="true"><use href="#i-clipboard" /></svg>
+                Dán ảnh
+            </button>
+            <button type="button" class="btn btn--ghost btn--sm" data-slot-remove>Bỏ ảnh</button>
+        </div>
+    }
+</div>

@@ -1,4 +1,5 @@
 using VNews.Web.Middleware;
+using VNews.Web.Services;
 
 namespace VNews.Web.Startup;
 
@@ -27,6 +28,16 @@ public static class WebApplicationExtensions
         }
 
         app.UseStatusCodePagesWithReExecute("/Home/PageNotFound", "?statusCode={0}");
+
+        // Pictures uploaded while the site runs are read from disk on each request; MapStaticAssets only serves what existed at build time,
+        // so without this a freshly uploaded cover would be a broken image until the next publish (and then be lost).
+        var storage = app.Services.GetRequiredService<UploadStorage>();
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            RequestPath = UploadStorage.RequestPath,
+            FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(storage.Root),
+            ServeUnknownFileTypes = false,
+        });
         app.UseHttpsRedirection();
         app.UseRouting();
         app.UseRateLimiter();
@@ -58,7 +69,7 @@ public static class WebApplicationExtensions
         app.MapControllerRoute(
             name: "cms",
             pattern: "cms/{controller=CmsArticles}/{action=Index}/{id?}",
-            constraints: new { controller = "CmsArticles|CmsCategories|CmsUsers|CmsOverview|CmsAudit|CmsMedia|CmsComments|CmsTrash" })
+            constraints: new { controller = "CmsArticles|CmsCategories|CmsUsers|CmsOverview|CmsAudit|CmsMedia|CmsComments|CmsTrash|CmsImport|CmsAnalytics" })
             .WithStaticAssets();
 
         app.MapControllerRoute(

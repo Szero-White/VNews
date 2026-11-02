@@ -8,6 +8,16 @@ namespace VNews.Infrastructure.Common;
 /// </summary>
 public static class ArticleHtmlSanitizer
 {
+    public const int MinFontSize = 8;
+    public const int MaxFontSize = 96;
+
+    /// <summary>
+    /// Text sizes (any whole px from MinFontSize to MaxFontSize, as fs-N) and the font families the editor offers (ff-...). The same names are
+    /// styled in article-page.css and body-editor.css.
+    /// </summary>
+    public static readonly IReadOnlyList<string> AllowedClassNames = Enumerable.Range(MinFontSize, MaxFontSize - MinFontSize + 1).Select(n => $"fs-{n}")
+        .Concat(new[] { "ff-arial", "ff-times", "ff-georgia", "ff-tahoma", "ff-verdana", "ff-courier" }).ToArray();
+
     private static readonly HtmlSanitizer Sanitizer = Build();
 
     public static string Sanitize(string html) => Sanitizer.Sanitize(html);
@@ -16,7 +26,7 @@ public static class ArticleHtmlSanitizer
     {
         var sanitizer = new HtmlSanitizer();
         sanitizer.AllowedTags.Clear();
-        foreach (var tag in new[] { "p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li", "h2", "h3", "h4", "blockquote", "a", "img" })
+        foreach (var tag in new[] { "p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li", "h2", "h3", "h4", "blockquote", "a", "img", "span", "figure", "figcaption" })
         {
             sanitizer.AllowedTags.Add(tag);
         }
@@ -25,6 +35,11 @@ public static class ArticleHtmlSanitizer
         sanitizer.AllowedAttributes.Add("href");
         sanitizer.AllowedAttributes.Add("src");
         sanitizer.AllowedAttributes.Add("alt");
+
+        // Font size and family come from the editor as classes on <span>. Only these exact class names survive; there is no style
+        // attribute, so nothing else about appearance can be injected.
+        sanitizer.AllowedAttributes.Add("class");
+        foreach (var name in AllowedClassNames) sanitizer.AllowedClasses.Add(name);
 
         sanitizer.AllowedSchemes.Clear();
         sanitizer.AllowedSchemes.Add("http");

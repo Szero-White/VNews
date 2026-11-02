@@ -82,3 +82,126 @@
   .article-related__grid { gap: 16px 12px; }
   .article-related__card { font-size: 14px; }
 }
+
+/* Pictures inside the article (below the text). The layout follows the count: 1 full width, 2 side by side, 3 = one wide + two,
+   4 = 2x2, 5 or more = one wide + a grid of the rest. Ratios are kept by cropping to a common shape, never by stretching. */
+.article-gallery { display: grid; gap: 8px; margin: 24px 0; }
+.article-gallery__item { display: block; overflow: hidden; border-radius: 6px; background: #f1f1f1; }
+.article-gallery__item img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.article-gallery--1 { grid-template-columns: 1fr; }
+.article-gallery--1 .article-gallery__item img { height: auto; max-height: 560px; }
+.article-gallery--2 { grid-template-columns: repeat(2, 1fr); }
+.article-gallery--2 .article-gallery__item { aspect-ratio: 4 / 3; }
+.article-gallery--3 { grid-template-columns: repeat(2, 1fr); }
+.article-gallery--3 .article-gallery__item { aspect-ratio: 4 / 3; }
+.article-gallery--3 .article-gallery__item:first-child { grid-column: 1 / -1; aspect-ratio: 16 / 9; }
+.article-gallery--4 { grid-template-columns: repeat(2, 1fr); }
+.article-gallery--4 .article-gallery__item { aspect-ratio: 4 / 3; }
+.article-gallery--5 { grid-template-columns: repeat(3, 1fr); }
+.article-gallery--5 .article-gallery__item { aspect-ratio: 4 / 3; }
+.article-gallery--5 .article-gallery__item:first-child { grid-column: 1 / -1; aspect-ratio: 16 / 9; }
+@media (max-width: 600px) {
+  .article-gallery--5 { grid-template-columns: repeat(2, 1fr); }
+  .article-gallery--2 { grid-template-columns: 1fr; }
+}
+
+/* Text size and font family chosen in the CMS editor (a fixed list; see ArticleHtmlSanitizer.AllowedClassNames). */
+.article-detail__body .ff-arial { font-family: Arial, Helvetica, sans-serif; } .article-detail__body .ff-times { font-family: "Times New Roman", Times, serif; }
+.article-detail__body .ff-georgia { font-family: Georgia, "Times New Roman", serif; } .article-detail__body .ff-tahoma { font-family: Tahoma, Geneva, sans-serif; }
+.article-detail__body .ff-verdana { font-family: Verdana, Geneva, sans-serif; } .article-detail__body .ff-courier { font-family: "Courier New", Courier, monospace; }
+/* Every whole size 8-96 px (see ArticleHtmlSanitizer.MinFontSize/MaxFontSize). */
+.article-detail__body .fs-8 { font-size: 8px; line-height: 1.6; }
+.article-detail__body .fs-9 { font-size: 9px; line-height: 1.6; }
+.article-detail__body .fs-10 { font-size: 10px; line-height: 1.6; }
+.article-detail__body .fs-11 { font-size: 11px; line-height: 1.6; }
+.article-detail__body .fs-12 { font-size: 12px; line-height: 1.6; }
+.article-detail__body .fs-13 { font-size: 13px; line-height: 1.6; }
+.article-detail__body .fs-14 { font-size: 14px; line-height: 1.6; }
+.article-detail__body .fs-15 { font-size: 15px; line-height: 1.6; }
+.article-detail__body .fs-16 { font-size: 16px; line-height: 1.6; }
+.article-detail__body .fs-17 { font-size: 17px; line-height: 1.6; }
+.article-detail__body .fs-18 { font-size: 18px; line-height: 1.6; }
+.article-detail__body .fs-19 { font-size: 19px; line-height: 1.6; }
+.article-detail__body .fs-20 { font-size: 20px; line-height: 1.6; }
+.article-detail__body .fs-21 { font-size: 21px; line-height: 1.6; }
+.article-detail__body .fs-22 { font-size: 22px; line-height: 1.6; }
+.article-detail__body .fs-23 { font-size: 23px; line-height: 1.6; }
+.article-detail__body .fs-24 { font-size: 24px; line-height: 1.6; }
+.article-detail__body .fs-25 { font-size: 25px; line-height: 1.6; }
+.article-detail__body .fs-26 { font-size: 26px; line-height: 1.6; }
+.article-detail__body .fs-27 { font-size: 27px; line-height: 1.6; }
+.article-detail__body .fs-28 { font-size: 28px; line-height: 1.6; }
+.article-detail__body .fs-29 { font-size: 29px; line-height: 1.6; }
+.article-detail__body .fs-30 { font-size: 30px; line-height: 1.6; }
+.article-detail__body .fs-31 { font-size: 31px; line-height: 1.6; }
+.article-detail__body .fs-32 { font-size: 32px; line-height: 1.6; }
+.article-detail__body .fs-33 { font-size: 33px; line-height: 1.6; }
+.article-detail__body .fs-34 { font-size: 34px; line-height: 1.6; }
+.article-detail__body .fs-35 { font-size: 35px; line-height: 1.6; }
+.article-detail__body .fs-36 { font-size: 36px; line-height: 1.6; }
+.article-detail__body .fs-37 { font-size: 37px; line-height: 1.6; }
+.article-detail__body .fs-38 { font-size: 38px; line-height: 1.6; }
+.article-detail__body .fs-39 { font-size: 39px; line-height: 1.6; }
+.article-detail__body .fs-40 { font-size: 40px; line-height: 1.6; }
+.article-detail__body .fs-41 { font-size: 41px; line-height: 1.6; }
+.article-detail__body .fs-42 { font-size: 42px; line-height: 1.6; }
+.article-detail__body .fs-43 { font-size: 43px; line-height: 1.6; }
+.article-detail__body .fs-44 { font-size: 44px; line-height: 1.6; }
+.article-detail__body .fs-45 { font-size: 45px; line-height: 1.6; }
+.article-detail__body .fs-46 { font-size: 46px; line-height: 1.6; }
+.article-detail__body .fs-47 { font-size: 47px; line-height: 1.6; }
+.article-detail__body .fs-48 { font-size: 48px; line-height: 1.6; }
+.article-detail__body .fs-49 { font-size: 49px; line-height: 1.6; }
+.article-detail__body .fs-50 { font-size: 50px; line-height: 1.6; }
+.article-detail__body .fs-51 { font-size: 51px; line-height: 1.6; }
+.article-detail__body .fs-52 { font-size: 52px; line-height: 1.6; }
+.article-detail__body .fs-53 { font-size: 53px; line-height: 1.6; }
+.article-detail__body .fs-54 { font-size: 54px; line-height: 1.6; }
+.article-detail__body .fs-55 { font-size: 55px; line-height: 1.6; }
+.article-detail__body .fs-56 { font-size: 56px; line-height: 1.6; }
+.article-detail__body .fs-57 { font-size: 57px; line-height: 1.6; }
+.article-detail__body .fs-58 { font-size: 58px; line-height: 1.6; }
+.article-detail__body .fs-59 { font-size: 59px; line-height: 1.6; }
+.article-detail__body .fs-60 { font-size: 60px; line-height: 1.6; }
+.article-detail__body .fs-61 { font-size: 61px; line-height: 1.6; }
+.article-detail__body .fs-62 { font-size: 62px; line-height: 1.6; }
+.article-detail__body .fs-63 { font-size: 63px; line-height: 1.6; }
+.article-detail__body .fs-64 { font-size: 64px; line-height: 1.6; }
+.article-detail__body .fs-65 { font-size: 65px; line-height: 1.6; }
+.article-detail__body .fs-66 { font-size: 66px; line-height: 1.6; }
+.article-detail__body .fs-67 { font-size: 67px; line-height: 1.6; }
+.article-detail__body .fs-68 { font-size: 68px; line-height: 1.6; }
+.article-detail__body .fs-69 { font-size: 69px; line-height: 1.6; }
+.article-detail__body .fs-70 { font-size: 70px; line-height: 1.6; }
+.article-detail__body .fs-71 { font-size: 71px; line-height: 1.6; }
+.article-detail__body .fs-72 { font-size: 72px; line-height: 1.6; }
+.article-detail__body .fs-73 { font-size: 73px; line-height: 1.6; }
+.article-detail__body .fs-74 { font-size: 74px; line-height: 1.6; }
+.article-detail__body .fs-75 { font-size: 75px; line-height: 1.6; }
+.article-detail__body .fs-76 { font-size: 76px; line-height: 1.6; }
+.article-detail__body .fs-77 { font-size: 77px; line-height: 1.6; }
+.article-detail__body .fs-78 { font-size: 78px; line-height: 1.6; }
+.article-detail__body .fs-79 { font-size: 79px; line-height: 1.6; }
+.article-detail__body .fs-80 { font-size: 80px; line-height: 1.6; }
+.article-detail__body .fs-81 { font-size: 81px; line-height: 1.6; }
+.article-detail__body .fs-82 { font-size: 82px; line-height: 1.6; }
+.article-detail__body .fs-83 { font-size: 83px; line-height: 1.6; }
+.article-detail__body .fs-84 { font-size: 84px; line-height: 1.6; }
+.article-detail__body .fs-85 { font-size: 85px; line-height: 1.6; }
+.article-detail__body .fs-86 { font-size: 86px; line-height: 1.6; }
+.article-detail__body .fs-87 { font-size: 87px; line-height: 1.6; }
+.article-detail__body .fs-88 { font-size: 88px; line-height: 1.6; }
+.article-detail__body .fs-89 { font-size: 89px; line-height: 1.6; }
+.article-detail__body .fs-90 { font-size: 90px; line-height: 1.6; }
+.article-detail__body .fs-91 { font-size: 91px; line-height: 1.6; }
+.article-detail__body .fs-92 { font-size: 92px; line-height: 1.6; }
+.article-detail__body .fs-93 { font-size: 93px; line-height: 1.6; }
+.article-detail__body .fs-94 { font-size: 94px; line-height: 1.6; }
+.article-detail__body .fs-95 { font-size: 95px; line-height: 1.6; }
+.article-detail__body .fs-96 { font-size: 96px; line-height: 1.6; }
+
+/* A picture inside the text with its caption and source (figure > img + figcaption). An empty caption shows nothing. */
+.article-detail__body figure { margin: 22px 0; }
+.article-detail__body figure img { margin: 0 auto; }
+.article-detail__body figcaption { margin-top: 8px; font: 400 14px/1.55 Arial, Helvetica, sans-serif; color: #333; }
+.article-detail__body figcaption:empty { display: none; }

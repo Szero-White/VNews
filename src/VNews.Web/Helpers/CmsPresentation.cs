@@ -113,6 +113,7 @@ public static class AuditLabels
         "HideComment" => "Gỡ bình luận",
         "RestoreComment" => "Khôi phục bình luận",
         "DeleteCategory" => "Xóa chuyên mục",
+        "ImportNews" => "Nạp tin từ nguồn",
         "ChangeLockout" => "Khóa / mở khóa tài khoản",
         "Trash" => "Xóa bài (thùng rác)",
         "Restore" => "Khôi phục bài",

@@ -43,7 +43,7 @@
     <div class="app-alert app-alert--error" role="alert"><svg class="icon" aria-hidden="true"><use href="#i-alert" /></svg><span>Lý do biên tập viên trả lại: @article.ReviewNote</span></div>
 }
 
-<form asp-action="Edit" asp-route-id="@article.Id" method="post" class="card">
+<form asp-action="Edit" asp-route-id="@article.Id" method="post" class="card" data-save-in-place>
     <input type="hidden" name="rowVersionBase64" value="@Convert.ToBase64String(article.RowVersion)" />
     <div class="card__body">
         <partial name="_ArticleFields" model="Model" view-data="ViewData" />

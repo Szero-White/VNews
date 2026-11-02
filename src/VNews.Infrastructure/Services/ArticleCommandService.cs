@@ -94,6 +94,27 @@ public class ArticleCommandService : IArticleCommandService
         }
     }
 
+    /// <summary>A caption only makes sense under a picture; empty text means "use the default".</summary>
+    private static string? CleanCaption(ArticleSaveRequest request) =>
+        string.IsNullOrWhiteSpace(request.CoverImageUrl) || string.IsNullOrWhiteSpace(request.CoverCaption) ? null : request.CoverCaption.Trim();
+
+    private static List<ArticleImage> ToImages(IEnumerable<string> urls) =>
+        urls.Select((url, index) => new ArticleImage { Url = url, SortOrder = index }).ToList();
+
+    /// <summary>The submitted list replaces the stored one (same order, same pictures = nothing to write).</summary>
+    private async Task ReplaceImagesAsync(Article article, IReadOnlyList<string> urls, CancellationToken cancellationToken)
+    {
+        var current = await _context.ArticleImages.Where(i => i.ArticleId == article.Id).OrderBy(i => i.SortOrder).ToListAsync(cancellationToken);
+        if (current.Select(i => i.Url).SequenceEqual(urls)) return;
+
+        _context.ArticleImages.RemoveRange(current);
+        foreach (var image in ToImages(urls))
+        {
+            image.ArticleId = article.Id;
+            _context.ArticleImages.Add(image);
+        }
+    }
+
     public async Task<int> CreateDraftAsync(ArticleSaveRequest request, string authorUserId, string authorDisplayName, CancellationToken cancellationToken = default)
     {
         await EnsureCategoryExistsAsync(request.CategoryId, cancellationToken);
@@ -107,8 +128,10 @@ public class ArticleCommandService : IArticleCommandService
                 Title = request.Title.Trim(),
                 Slug = slug,
                 Summary = request.Summary.Trim(),
-                Body = ArticleHtmlSanitizer.Sanitize(request.Body),
+                Body = ArticleHtmlSanitizer.Sanitize(ArticleBodyFormatter.ToHtml(request.Body)),
                 CoverImageUrl = request.CoverImageUrl,
+                CoverCaption = CleanCaption(request),
+                Images = ToImages(request.GalleryImages),
                 CategoryId = request.CategoryId,
                 AuthorName = authorDisplayName,
                 AuthorUserId = authorUserId,
@@ -145,8 +168,10 @@ public class ArticleCommandService : IArticleCommandService
 
             article.Title = request.Title.Trim();
             article.Summary = request.Summary.Trim();
-            article.Body = ArticleHtmlSanitizer.Sanitize(request.Body);
+            article.Body = ArticleHtmlSanitizer.Sanitize(ArticleBodyFormatter.ToHtml(request.Body));
             article.CoverImageUrl = request.CoverImageUrl;
+            article.CoverCaption = CleanCaption(request);
+            await ReplaceImagesAsync(article, request.GalleryImages, cancellationToken);
             article.CategoryId = request.CategoryId;
             article.UpdatedAt = DateTime.UtcNow;
 

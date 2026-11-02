@@ -26,12 +26,12 @@ public class ImageUploadService : IImageUploadService
 
     private static readonly byte[] PngSignature = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
-    private readonly IWebHostEnvironment _environment;
+    private readonly UploadStorage _storage;
     private readonly ILogger<ImageUploadService> _logger;
 
-    public ImageUploadService(IWebHostEnvironment environment, ILogger<ImageUploadService> logger)
+    public ImageUploadService(UploadStorage storage, ILogger<ImageUploadService> logger)
     {
-        _environment = environment;
+        _storage = storage;
         _logger = logger;
     }
 
@@ -75,7 +75,7 @@ public class ImageUploadService : IImageUploadService
             return Reject("signature", "Nội dung tệp không khớp với định dạng ảnh khai báo.", length);
         }
 
-        var uploadsRoot = Path.Combine(_environment.WebRootPath, "uploads", "articles");
+        var uploadsRoot = _storage.ArticlesPath;
         Directory.CreateDirectory(uploadsRoot);
 
         var storedExtension = expected.Format switch

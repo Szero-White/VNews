@@ -75,7 +75,7 @@ test('edit: remove marks the cover for removal, undo restores it, removing then 
 
   await cover(page).getByRole('button', { name: 'Bỏ ảnh' }).click();
   await page.getByRole('button', { name: 'Lưu thay đổi' }).click();
-  await expect(page.locator('.app-alert--success')).toContainText('Đã lưu');
+  await expect(page.locator('.app-toast--success')).toContainText('Đã lưu');
   await expect(cover(page).locator('[data-cover-placeholder]')).toBeVisible();
   await expect(cover(page).getByText('Chưa có ảnh bìa')).toBeVisible();
   await page.goto('/cms?q=' + encodeURIComponent(title));
@@ -113,7 +113,7 @@ test('an admin can edit a published article from the list: the form is unlocked 
   const newTitle = `${target.title.replace(/ \(đã chỉnh sửa \d+\)$/, '')} (đã chỉnh sửa ${Date.now()})`; // the suffix is replaced, not stacked, so the title never grows across runs
   await page.locator('#Title').fill(newTitle);
   await page.getByRole('button', { name: 'Lưu thay đổi' }).click();
-  await expect(page.locator('.app-alert--success')).toContainText('Đã lưu thay đổi');
+  await expect(page.locator('.app-toast--success')).toContainText('Đã lưu thay đổi');
   await expect(page.locator('#Title')).toHaveValue(newTitle);                          // the form shows what is stored
 
   // the public page at the SAME address shows the new title

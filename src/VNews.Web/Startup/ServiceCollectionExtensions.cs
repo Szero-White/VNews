@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using VNews.Application.Interfaces;
 using VNews.Domain.Identity;
@@ -15,6 +16,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddVNewsWeb(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         services.AddControllersWithViews();
+        services.AddVNewsDataProtection();
         services.AddInfrastructure(configuration);
         services.AddExceptionHandler<ApiExceptionHandler>();
 
@@ -25,9 +27,22 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Sign-in cookies and antiforgery tokens are encrypted with data-protection keys. By default the "application name" that scopes those
+    /// keys is the folder the app runs from, so publishing or moving the app to another folder silently invalidates every open session and
+    /// every form that is being edited (the next Save is bounced to the sign-in page). A fixed name keeps them valid across restarts and
+    /// deployments on the same machine.
+    /// </summary>
+    private static IServiceCollection AddVNewsDataProtection(this IServiceCollection services)
+    {
+        services.AddDataProtection().SetApplicationName("VNews");
+        return services;
+    }
+
     /// <summary>Web-side services of the newsroom: uploads and their cleanup, the workspace arrangement.</summary>
     private static IServiceCollection AddNewsroomServices(this IServiceCollection services)
     {
+        services.AddSingleton<UploadStorage>();
         services.AddScoped<IImageUploadService, ImageUploadService>();
         services.AddScoped<UploadCleanupService>();
         services.AddScoped<CmsWorkspaceBuilder>();

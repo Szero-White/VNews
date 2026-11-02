@@ -29,19 +29,21 @@ public sealed class UploadCleanupService
     private static readonly Regex UrlInText = new("/uploads/articles/([0-9a-f]{32}\\.(?:jpg|png|webp))", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     private readonly IWebHostEnvironment _environment;
+    private readonly UploadStorage _storage;
     private readonly VNewsDbContext _db;
     private readonly IAuditLogService _audit;
     private readonly ILogger<UploadCleanupService> _logger;
 
-    public UploadCleanupService(IWebHostEnvironment environment, VNewsDbContext db, IAuditLogService audit, ILogger<UploadCleanupService> logger)
+    public UploadCleanupService(IWebHostEnvironment environment, UploadStorage storage, VNewsDbContext db, IAuditLogService audit, ILogger<UploadCleanupService> logger)
     {
         _environment = environment;
+        _storage = storage;
         _db = db;
         _audit = audit;
         _logger = logger;
     }
 
-    private string UploadsRoot => Path.Combine(_environment.WebRootPath, "uploads", "articles");
+    private string UploadsRoot => _storage.ArticlesPath;
     private string QuarantineRoot => Path.Combine(_environment.ContentRootPath, "App_Data", "unused-uploads");
 
     public async Task<UploadScan> ScanAsync(DateTime? nowUtc = null, CancellationToken cancellationToken = default)
@@ -102,6 +104,11 @@ public sealed class UploadCleanupService
         var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         // Cover URLs of every article, any status.
         foreach (var url in await _db.Articles.AsNoTracking().Where(a => a.CoverImageUrl != null).Select(a => a.CoverImageUrl!).ToListAsync(cancellationToken))
+        {
+            foreach (Match match in UrlInText.Matches(url)) names.Add(match.Groups[1].Value);
+        }
+        // The pictures of every article's gallery (below the text), any status.
+        foreach (var url in await _db.ArticleImages.AsNoTracking().Select(i => i.Url).ToListAsync(cancellationToken))
         {
             foreach (Match match in UrlInText.Matches(url)) names.Add(match.Groups[1].Value);
         }

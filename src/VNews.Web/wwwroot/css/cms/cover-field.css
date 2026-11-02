@@ -19,3 +19,9 @@
 .article-cell__thumb--none { display: inline-grid; place-items: center; color: #b0b5be; }
 .article-cell__thumb--none .icon { width: 18px; height: 18px; }
 .article-cell__text { min-width: 0; }
+
+/* Caption of the cover picture (shown under the picture on the article page; empty = "Ảnh minh họa"). */
+.cover__caption { margin-top: 14px; }
+.cover__caption[hidden] { display: none; }
+.cover__caption-preview { margin: 6px 0 0; font-size: 13px; color: #6b7280; }
+.cover__caption-preview em { font-style: normal; color: #374151; }

@@ -18,10 +18,14 @@
     state: root.querySelector('[data-cover-state]'),
     pickLabel: root.querySelector('[data-cover-pick-label]'),
     fileInput: document.getElementById('coverFile'),
+    paste: root.querySelector('[data-cover-paste]'),
     remove: root.querySelector('[data-cover-remove]'),
     undo: root.querySelector('[data-cover-undo]'),
     fileName: root.querySelector('[data-cover-file-name]'),
     status: document.getElementById('uploadStatus'),
+    caption: root.querySelector('[data-cover-caption]'),
+    captionInput: root.querySelector('[data-cover-caption-input]'),
+    captionPreview: root.querySelector('[data-cover-caption-preview]'),
     value: root.querySelector('input[name="CoverImageUrl"]'),
     form: root.closest('form')
   };
@@ -30,6 +34,7 @@
   var MAX_BYTES = parseInt(root.getAttribute('data-max-bytes'), 10) || 3 * 1024 * 1024;
   var LIMIT_LABEL = root.getAttribute('data-max-label') || '3 MB';
   var HINT = 'JPG, PNG hoặc WebP, tối đa ' + LIMIT_LABEL + '.';
+  var IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
   var storedUrl = els.value.value; // what the server stores now
   var generation = 0;
@@ -51,7 +56,16 @@
     els.state.hidden = !label;
     if (els.pickLabel) els.pickLabel.textContent = imageUrl ? 'Thay ảnh' : 'Chọn ảnh';
     if (els.remove) els.remove.hidden = !imageUrl;
+    if (els.caption) els.caption.hidden = !imageUrl; // a caption belongs to a picture
   }
+
+  // The caption box: empty means the default text, which the preview line shows as readers will see it.
+  var DEFAULT_CAPTION = 'Ảnh minh họa';
+  function updateCaptionPreview() {
+    if (!els.captionPreview || !els.captionInput) return;
+    els.captionPreview.textContent = els.captionInput.value.trim() || DEFAULT_CAPTION;
+  }
+  if (els.captionInput) els.captionInput.addEventListener('input', updateCaptionPreview);
 
   function setSaveLocked(locked) {
     if (!els.form) return;
@@ -138,12 +152,65 @@
     }
   }
 
+  if (els.form) {
+    // a save made in place (save-in-place.js): the picture shown now is the stored one, so "Hoàn tác" must not go back past it
+    els.form.addEventListener('vnews:saved', function () { storedUrl = els.value.value; showStored(); });
+  }
+
   if (!els.fileInput) return; // read-only view: the preview is all there is
 
   els.fileInput.addEventListener('change', function (e) {
     var file = e.target.files[0];
     if (file) onFileChosen(file);
   });
+
+  // ---- paste from the clipboard ----
+  // A pasted image goes through exactly the same path as a chosen file (size check, preview, upload, server validation).
+  function fileFromBlob(blob) {
+    var extension = blob.type === 'image/jpeg' ? 'jpg' : blob.type.replace('image/', '');
+    return new File([blob], 'anh-dan.' + extension, { type: blob.type });
+  }
+
+  function acceptPasted(blob) {
+    if (IMAGE_TYPES.indexOf(blob.type) === -1) {
+      els.status.textContent = 'Lỗi: chỉ dán được ảnh JPG, PNG hoặc WebP.';
+      return;
+    }
+    onFileChosen(fileFromBlob(blob));
+  }
+
+  /** Ctrl+V anywhere on the page: only an image on the clipboard is taken, so pasting text into the form keeps working as usual. */
+  document.addEventListener('paste', function (e) {
+    if (document.querySelector('[data-gallery-slot].is-active')) return; // a gallery box is selected: gallery-field.js takes it
+    var items = e.clipboardData ? Array.prototype.slice.call(e.clipboardData.items || []) : [];
+    var imageItem = items.filter(function (item) { return item.kind === 'file' && item.type.indexOf('image/') === 0; })[0];
+    if (!imageItem) return;
+    var blob = imageItem.getAsFile();
+    if (!blob) return;
+    e.preventDefault();
+    acceptPasted(blob);
+  });
+
+  /** The "Dán ảnh" button reads the clipboard directly (needs the browser's permission); otherwise it explains Ctrl+V. */
+  if (els.paste) {
+    els.paste.addEventListener('click', async function () {
+      els.status.textContent = '';
+      if (!navigator.clipboard || !navigator.clipboard.read) {
+        els.status.textContent = 'Trình duyệt không cho đọc clipboard. Hãy nhấn Ctrl+V để dán ảnh.';
+        return;
+      }
+      try {
+        var clipboardItems = await navigator.clipboard.read();
+        for (var i = 0; i < clipboardItems.length; i++) {
+          var type = clipboardItems[i].types.filter(function (t) { return t.indexOf('image/') === 0; })[0];
+          if (type) { acceptPasted(await clipboardItems[i].getType(type)); return; }
+        }
+        els.status.textContent = 'Clipboard chưa có ảnh. Hãy sao chép một ảnh rồi thử lại.';
+      } catch (err) {
+        els.status.textContent = 'Không đọc được clipboard (có thể bạn đã từ chối quyền). Hãy nhấn Ctrl+V để dán ảnh.';
+      }
+    });
+  }
 
   els.remove.addEventListener('click', function () {
     beginGeneration();

@@ -67,7 +67,7 @@ public sealed class UploadCleanupTests : IClassFixture<IsolatedDbWebApplicationF
         await db.SaveChangesAsync();
 
         var audit = scope.ServiceProvider.GetRequiredService<IAuditLogService>();
-        var service = new UploadCleanupService(env, db, audit, NullLogger<UploadCleanupService>.Instance);
+        var service = new UploadCleanupService(env, new UploadStorage(env, new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build()), db, audit, NullLogger<UploadCleanupService>.Instance);
 
         var scan = await service.ScanAsync();
         Assert.Equal(new[] { unusedOld }, scan.Unused.Select(u => u.FileName).ToArray());

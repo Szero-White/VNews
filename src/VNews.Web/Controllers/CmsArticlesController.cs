@@ -42,14 +42,14 @@ public class CmsArticlesController : Controller
     private string CurrentUserId => _userManager.GetUserId(User)!;
     private bool IsPrivileged => User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Editor);
 
-    public async Task<IActionResult> Index(string? status, string? q, int page = 1, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Index(string? status, string? q, int? categoryId, string? author, [FromQuery(Name = "from")] DateTime? updatedFrom, [FromQuery(Name = "to")] DateTime? updatedTo, int page = 1, CancellationToken cancellationToken = default)
     {
         var viewer = new CmsWorkspaceBuilder.Viewer(
             CurrentUserId,
             await CurrentDisplayNameAsync(),
             IsPrivileged,
             AppFormat.PrimaryRole(User.FindAll(ClaimTypes.Role).Select(c => c.Value)));
-        return View(await _workspace.BuildAsync(viewer, status, q, page, cancellationToken));
+        return View(await _workspace.BuildAsync(viewer, new CmsWorkspaceBuilder.Filters(status, q, categoryId, author, updatedFrom, updatedTo), page, cancellationToken));
     }
 
     [HttpGet]
@@ -105,6 +105,8 @@ public class CmsArticlesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, ArticleSaveRequest request, string rowVersionBase64, CancellationToken cancellationToken)
     {
+        // save-in-place.js posts the form with fetch and asks for JSON, so the page (and the scroll position) stays where it is.
+        var wantsJson = Request.Headers["X-Requested-With"] == "fetch";
         var existing = await _cmsQuery.GetForEditAsync(id, cancellationToken);
         if (existing is null)
         {
@@ -118,18 +120,26 @@ public class CmsArticlesController : Controller
 
         if (!ModelState.IsValid)
         {
-            return await FormViewAsync(request, existing, cancellationToken);
+            return wantsJson ? SaveFailed(FirstModelError()) : await FormViewAsync(request, existing, cancellationToken);
         }
 
         if (!TryReadRowVersion(rowVersionBase64, out var rowVersion))
         {
-            ModelState.AddModelError(string.Empty, "Phiên bản bài viết không hợp lệ. Vui lòng tải lại trang và thử lại.");
+            const string invalidVersion = "Phiên bản bài viết không hợp lệ. Vui lòng tải lại trang và thử lại.";
+            if (wantsJson) return SaveFailed(invalidVersion);
+            ModelState.AddModelError(string.Empty, invalidVersion);
             return await FormViewAsync(request, existing, cancellationToken);
         }
 
         try
         {
             await _articleCommandService.UpdateAsync(id, request, rowVersion, CurrentUserId, IsPrivileged, cancellationToken, await CurrentDisplayNameAsync());
+            if (wantsJson)
+            {
+                var saved = await _cmsQuery.GetForEditAsync(id, cancellationToken);
+                return Json(new { ok = true, message = "Đã lưu thay đổi.", rowVersion = saved is null ? null : Convert.ToBase64String(saved.RowVersion) });
+            }
+
             TempData["Message"] = "Đã lưu thay đổi.";
         }
         catch (EntityNotFoundException)
@@ -142,17 +152,24 @@ public class CmsArticlesController : Controller
         }
         catch (ArticleWorkflowException ex)
         {
+            if (wantsJson) return SaveFailed(ex.Message);
             ModelState.AddModelError(string.Empty, ex.Message);
             return await FormViewAsync(request, existing, cancellationToken);
         }
         catch (ArticleConcurrencyException ex)
         {
+            if (wantsJson) return SaveFailed(ex.Message);
             ModelState.AddModelError(string.Empty, ex.Message);
             return await FormViewAsync(request, await _cmsQuery.GetForEditAsync(id, cancellationToken), cancellationToken);
         }
 
         return RedirectToAction(nameof(Edit), new { id });
     }
+
+    private IActionResult SaveFailed(string message) => BadRequest(new { ok = false, message });
+
+    private string FirstModelError() =>
+        ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).FirstOrDefault(m => !string.IsNullOrWhiteSpace(m)) ?? "Dữ liệu chưa hợp lệ.";
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -289,6 +306,8 @@ public class CmsArticlesController : Controller
         Summary = dto.Summary,
         Body = dto.Body,
         CoverImageUrl = dto.CoverImageUrl,
-        CategoryId = dto.CategoryId
+        CoverCaption = dto.CoverCaption,
+        CategoryId = dto.CategoryId,
+        GalleryImages = dto.GalleryImages.ToList()
     };
 }

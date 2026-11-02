@@ -37,9 +37,12 @@ public class ArticleQueryService : IArticleQueryService
                 Summary = a.Summary,
                 Body = a.Body,
                 CoverImageUrl = a.CoverImageUrl,
+                CoverCaption = a.CoverCaption,
                 AuthorName = a.AuthorName,
                 PublishedAt = a.PublishedAt,
                 ViewCount = a.ViewCount,
+                SourceName = a.SourceName,
+                SourceUrl = a.SourceUrl,
                 CategoryName = a.Category.Name,
                 CategorySlug = a.Category.Slug,
                 Tags = a.ArticleTags
@@ -51,6 +54,8 @@ public class ArticleQueryService : IArticleQueryService
 
         if (article is not null)
         {
+            article.GalleryImages = await _context.ArticleImages.AsNoTracking()
+                .Where(i => i.ArticleId == article.Id).OrderBy(i => i.SortOrder).Select(i => i.Url).ToListAsync(cancellationToken);
             await _context.Articles
                 .Where(a => a.Id == article.Id)
                 .ExecuteUpdateAsync(setters => setters.SetProperty(a => a.ViewCount, a => a.ViewCount + 1), cancellationToken);
