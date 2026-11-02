@@ -10,6 +10,9 @@ namespace VNews.Infrastructure.Services;
 
 public sealed class CommentModerationService : ICommentModerationService
 {
+    // Accent- and case-insensitive: the keyword is folded the same way (SearchText), and đ is folded by hand because the collation does not.
+    private const string SearchCollation = "Latin1_General_100_CI_AI";
+
     private readonly VNewsDbContext _db;
     private readonly IAuditLogService _audit;
 
@@ -37,7 +40,9 @@ public sealed class CommentModerationService : ICommentModerationService
         foreach (var token in SearchText.Tokenize(search))
         {
             var pattern = $"%{token}%";
-            query = query.Where(c => EF.Functions.Like(c.Body, pattern) || EF.Functions.Like(c.AuthorName, pattern) || EF.Functions.Like(c.Article.Title, pattern));
+            query = query.Where(c => EF.Functions.Like(EF.Functions.Collate(c.Body, SearchCollation).Replace("đ", "d"), pattern)
+                || EF.Functions.Like(EF.Functions.Collate(c.AuthorName, SearchCollation).Replace("đ", "d"), pattern)
+                || EF.Functions.Like(EF.Functions.Collate(c.Article.Title, SearchCollation).Replace("đ", "d"), pattern));
         }
 
         var total = await query.CountAsync(cancellationToken);
