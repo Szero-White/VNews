@@ -124,3 +124,13 @@ html { scroll-behavior: smooth; }
   .search-page .editorial-listing__articles .story-row__title { font-size: 16px; margin-bottom: 4px; }
   .search-page .editorial-listing__articles .story-row__summary { display: none; }
 }
+
+/* Search filters and sort tabs: labelled selects under the box (time, category, kind) and "Mới nhất / Liên quan" tabs above the results. */
+.search-page .search-filters { display: flex; flex-wrap: wrap; gap: 16px 22px; margin-top: 18px; padding-bottom: 20px; border-bottom: 1px solid var(--vn-border); }
+.search-page .search-page-form label.search-filters__field { display: flex; flex-direction: column; gap: 6px; margin: 0; font-weight: 400; font-size: 14px; color: #666; }
+.search-filters__field select { min-width: 190px; max-width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 4px; background: #fff; font: 15px/1.3 inherit; color: #222; }
+.search-tabs { display: inline-flex; margin: 22px 0 6px; border: 1px solid var(--vn-border); border-radius: 4px; overflow: hidden; }
+.search-tabs__tab { padding: 9px 20px; font-size: 15px; color: #333; background: #fff; text-decoration: none; }
+.search-tabs__tab + .search-tabs__tab { border-left: 1px solid var(--vn-border); }
+.search-tabs__tab.is-active { background: #ececec; font-weight: 700; color: #111; }
+@media (max-width: 600px) { .search-filters__field { flex: 1 1 100%; } .search-filters__field select { width: 100%; } }

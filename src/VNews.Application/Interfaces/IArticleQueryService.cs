@@ -15,8 +15,9 @@ public interface IArticleQueryService
     Task<IReadOnlyList<CategoryGroupDto>> GetSubCategoryGroupsAsync(
         string parentSlug, int perGroup, IReadOnlyCollection<int> excludeIds, CancellationToken cancellationToken = default);
 
+    /// <summary>Keyword search over title and summary, optionally narrowed by category (a parent includes its sub-categories), period and kind.</summary>
     Task<PagedResult<ArticleSummaryDto>> SearchAsync(
-        string query, int page, int pageSize, CancellationToken cancellationToken = default);
+        string query, int page, int pageSize, CancellationToken cancellationToken = default, SearchFilter? filter = null);
 
     Task<PagedResult<ArticleSummaryDto>> GetByTagAsync(
         string tagSlug, int page, int pageSize, CancellationToken cancellationToken = default);

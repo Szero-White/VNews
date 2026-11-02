@@ -71,7 +71,7 @@ public class ApiExceptionHandlingIntegrationTests : IClassFixture<IsolatedDbWebA
         }
 
         public Task<PagedResult<ArticleSummaryDto>> GetByCategoryAsync(string categorySlug, int page, int pageSize, CancellationToken cancellationToken = default, IReadOnlyCollection<int>? excludeIds = null) => _inner.GetByCategoryAsync(categorySlug, page, pageSize, cancellationToken, excludeIds);
-        public Task<PagedResult<ArticleSummaryDto>> SearchAsync(string query, int page, int pageSize, CancellationToken cancellationToken = default) => _inner.SearchAsync(query, page, pageSize, cancellationToken);
+        public Task<PagedResult<ArticleSummaryDto>> SearchAsync(string query, int page, int pageSize, CancellationToken cancellationToken = default, VNews.Application.Common.SearchFilter? filter = null) => _inner.SearchAsync(query, page, pageSize, cancellationToken, filter);
         public Task<PagedResult<ArticleSummaryDto>> GetByTagAsync(string tagSlug, int page, int pageSize, CancellationToken cancellationToken = default) => _inner.GetByTagAsync(tagSlug, page, pageSize, cancellationToken);
         public Task<PagedResult<ArticleSummaryDto>> GetLatestAsync(int page, int pageSize, CancellationToken cancellationToken = default) => _inner.GetLatestAsync(page, pageSize, cancellationToken);
         public Task<IReadOnlyList<ArticleSummaryDto>> GetMostViewedAsync(int count, int? excludeArticleId = null, CancellationToken cancellationToken = default) => _inner.GetMostViewedAsync(count, excludeArticleId, cancellationToken);

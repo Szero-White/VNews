@@ -45,6 +45,8 @@ public class ArticleQueryService : IArticleQueryService
                 SourceUrl = a.SourceUrl,
                 CategoryName = a.Category.Name,
                 CategorySlug = a.Category.Slug,
+                CategoryParentName = a.Category.Parent != null ? a.Category.Parent.Name : null,
+                CategoryParentSlug = a.Category.Parent != null ? a.Category.Parent.Slug : null,
                 Tags = a.ArticleTags
                     .OrderBy(at => at.Tag.Name)
                     .Select(at => new TagDto { Name = at.Tag.Name, Slug = at.Tag.Slug })
@@ -155,8 +157,9 @@ public class ArticleQueryService : IArticleQueryService
     private const string SearchCollation = "Latin1_General_100_CI_AI";
 
     public async Task<PagedResult<ArticleSummaryDto>> SearchAsync(
-        string query, int page, int pageSize, CancellationToken cancellationToken = default)
+        string query, int page, int pageSize, CancellationToken cancellationToken = default, SearchFilter? filter = null)
     {
+        filter ??= new SearchFilter();
         var tokens = SearchText.Tokenize(query);
         if (tokens.Count == 0)
         {
@@ -181,12 +184,39 @@ public class ArticleQueryService : IArticleQueryService
                 || EF.Functions.Like(EF.Functions.Collate(a.Summary, SearchCollation).Replace("đ", "d"), pattern));
         }
 
-        // Title hits on the whole phrase first, then newest; Id makes the order total so pages never repeat an article.
+        if (!string.IsNullOrWhiteSpace(filter.CategorySlug))
+        {
+            var slug = filter.CategorySlug;
+            filtered = filtered.Where(a => a.Category.Slug == slug || (a.Category.Parent != null && a.Category.Parent.Slug == slug));
+        }
+
+        if (filter.Period != SearchPeriod.All)
+        {
+            var since = DateTime.UtcNow - filter.Period switch
+            {
+                SearchPeriod.Day => TimeSpan.FromDays(1),
+                SearchPeriod.Week => TimeSpan.FromDays(7),
+                SearchPeriod.Month => TimeSpan.FromDays(30),
+                _ => TimeSpan.FromDays(365),
+            };
+            filtered = filtered.Where(a => a.PublishedAt >= since);
+        }
+
+        filtered = filter.Kind switch
+        {
+            SearchKind.Original => filtered.Where(a => a.SourceUrl == null),
+            SearchKind.External => filtered.Where(a => a.SourceUrl != null),
+            _ => filtered,
+        };
+
+        // Relevance: title hits on the whole phrase first, then newest. Latest: newest only. Id makes the order total so pages never repeat an article.
         var phrase = $"%{string.Join(' ', tokens)}%";
-        var ordered = filtered
-            .OrderByDescending(a => EF.Functions.Like(EF.Functions.Collate(a.Title, SearchCollation).Replace("đ", "d"), phrase))
-            .ThenByDescending(a => a.PublishedAt)
-            .ThenByDescending(a => a.Id);
+        var ordered = filter.Sort == SearchSort.Latest
+            ? filtered.OrderByDescending(a => a.PublishedAt).ThenByDescending(a => a.Id)
+            : filtered
+                .OrderByDescending(a => EF.Functions.Like(EF.Functions.Collate(a.Title, SearchCollation).Replace("đ", "d"), phrase))
+                .ThenByDescending(a => a.PublishedAt)
+                .ThenByDescending(a => a.Id);
 
         return await ToPagedResultAsync(ordered, page, pageSize, cancellationToken);
     }

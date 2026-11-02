@@ -1,9 +1,13 @@
+@using VNews.Application.Common
 @model SearchPageViewModel
 @{
     ViewData["Title"] = string.IsNullOrWhiteSpace(Model.Query) ? "Tìm kiếm" : $"Tìm kiếm: {Model.Query}";
     ViewData["Description"] = "Tìm kiếm các bài viết trên VNews.";
     ViewData["PaginationAction"] = "Search";
     ViewData["PaginationQuery"] = Model.Query;
+    ViewData["PaginationRoute"] = Model.RouteValues();
+    var f = Model.Filter;
+    var hasQuery = !string.IsNullOrWhiteSpace(Model.Query);
 }
 <div class="container listing-page editorial-listing search-page">
     <nav class="breadcrumb"><a asp-controller="Home" asp-action="Index">Trang chủ</a> &rsaquo; Tìm kiếm</nav>
@@ -11,24 +15,66 @@
     <form class="search-page-form" asp-controller="Search" asp-action="Index" method="get" role="search">
         <label for="page-search" class="search-page-form__label">Từ khóa</label>
         <div><input id="page-search" name="q" value="@Model.Query" type="search" maxlength="120" placeholder="Tên bài viết, chủ đề..." required /><button type="submit">Tìm kiếm</button></div>
+        <div class="search-filters">
+            <label class="search-filters__field">Thời gian
+                <select name="time" data-auto-submit>
+                    <option value="" selected="@(f.Period == SearchPeriod.All)">Tất cả</option>
+                    <option value="day" selected="@(f.Period == SearchPeriod.Day)">24 giờ qua</option>
+                    <option value="week" selected="@(f.Period == SearchPeriod.Week)">1 tuần qua</option>
+                    <option value="month" selected="@(f.Period == SearchPeriod.Month)">1 tháng qua</option>
+                    <option value="year" selected="@(f.Period == SearchPeriod.Year)">1 năm qua</option>
+                </select>
+            </label>
+            <label class="search-filters__field">Chuyên mục
+                <select name="cat" data-auto-submit>
+                    <option value="" selected="@(f.CategorySlug is null)">Tất cả</option>
+                    @foreach (var c in Model.Categories)
+                    {
+                        <option value="@c.Slug" selected="@(f.CategorySlug == c.Slug)">@c.Name</option>
+                        @foreach (var child in c.Children)
+                        {
+                            <option value="@child.Slug" selected="@(f.CategorySlug == child.Slug)">&nbsp;&nbsp;&nbsp;@child.Name</option>
+                        }
+                    }
+                </select>
+            </label>
+            <label class="search-filters__field">Dạng bài
+                <select name="kind" data-auto-submit>
+                    <option value="" selected="@(f.Kind == SearchKind.All)">Tất cả</option>
+                    <option value="original" selected="@(f.Kind == SearchKind.Original)">Bài của VNews</option>
+                    <option value="external" selected="@(f.Kind == SearchKind.External)">Tin từ nguồn ngoài</option>
+                </select>
+            </label>
+            @if (f.Sort == SearchSort.Relevance) { <input type="hidden" name="sort" value="relevance" /> }
+        </div>
     </form>
-    @if (string.IsNullOrWhiteSpace(Model.Query))
+    @if (!hasQuery)
     {
         <div class="empty-state"><p>Nhập từ khóa để tìm bài viết đã xuất bản.</p></div>
     }
-    else if (Model.Articles.Items.Count == 0)
-    {
-        <div class="empty-state"><p>Không tìm thấy bài viết phù hợp với “@Model.Query”. Thử từ khóa khác nhé.</p></div>
-    }
     else
     {
-        <p class="search-count">Tìm thấy <strong>@Model.Articles.TotalCount</strong> kết quả cho “@Model.Query”.</p>
-        <div class="editorial-listing__articles">
-            @foreach (var article in Model.Articles.Items)
-            {
-                @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.StoryRow })
-            }
+        <div class="search-tabs" role="tablist" aria-label="Sắp xếp kết quả">
+            <a class="search-tabs__tab @(f.Sort == SearchSort.Latest ? "is-active" : "")" role="tab" aria-selected="@(f.Sort == SearchSort.Latest ? "true" : "false")" href="@Url.Action("Index", "Search", Model.RouteValues(sort: SearchSort.Latest))">Mới nhất</a>
+            <a class="search-tabs__tab @(f.Sort == SearchSort.Relevance ? "is-active" : "")" role="tab" aria-selected="@(f.Sort == SearchSort.Relevance ? "true" : "false")" href="@Url.Action("Index", "Search", Model.RouteValues(sort: SearchSort.Relevance))">Liên quan</a>
         </div>
-        @await Html.PartialAsync("_Pagination", Model.Articles)
+        @if (Model.Articles.Items.Count == 0)
+        {
+            <div class="empty-state"><p>Không tìm thấy bài viết phù hợp với “@Model.Query”. Thử từ khóa khác hoặc bỏ bớt bộ lọc nhé.</p></div>
+        }
+        else
+        {
+            <p class="search-count">Tìm thấy <strong>@Model.Articles.TotalCount</strong> kết quả cho “@Model.Query”.</p>
+            <div class="editorial-listing__articles">
+                @foreach (var article in Model.Articles.Items)
+                {
+                    @await Html.PartialAsync("_ArticleCard", new ArticleCardViewModel { Article = article, Layout = ArticleCardLayout.StoryRow })
+                }
+            </div>
+            @await Html.PartialAsync("_Pagination", Model.Articles)
+        }
     }
 </div>
+@section Scripts {
+    <script src="~/js/search-filters.js" asp-append-version="true"></script>
+}

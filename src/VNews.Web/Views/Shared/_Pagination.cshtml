@@ -6,8 +6,12 @@
     var current = Model.Page;
     var last = Model.TotalPages;
 
+    // A page that keeps more than a keyword (the search filters) passes its own query values; the page number is added here.
+    var extra = ViewData["PaginationRoute"] as IDictionary<string, object?>;
+
     string PageUrl(int p) =>
-        slug is not null ? Url.Action("Index", action, new { slug, page = p })!
+        extra is not null ? Url.Action("Index", action, new RouteValueDictionary(extra) { ["page"] = p > 1 ? p : null })!
+        : slug is not null ? Url.Action("Index", action, new { slug, page = p })!
         : action == "Home" ? Url.Action("Latest", "Home", new { page = p })!
         : Url.Action("Index", action, new { q = query, page = p })!;
 
