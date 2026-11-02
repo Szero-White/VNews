@@ -137,3 +137,8 @@ VERIFICATION (đã chạy thật, không bịa kết quả):
 - Bảng `ArticleViews` (migration `AddArticleViews`, chỉ áp vào VNewsDemo): mỗi lượt đọc thật, ẩn danh (mã băm đổi mỗi ngày, không lưu IP/UA), bỏ qua crawler và lượt tải lại trong 30 phút. Ghi từ `ArticleController.Detail` qua `IAnalyticsService`.
 - Trang `/cms/CmsAnalytics` (Admin, Editor): lượt xem, người đọc, bình luận, bài xuất bản (so với kỳ trước), biểu đồ theo ngày 7/30/90 ngày, top bài, top chuyên mục, thiết bị, giờ cao điểm.
 - Kiểm chứng: build solution + tests sạch; trên 5300 (v22) HTTP 200 cho 4 khoảng, 2 lần tải + 1 bot = 1 lượt (đã xóa dòng thử). Chưa kiểm tra trên trình duyệt, `AnalyticsTests` chưa chạy. VNewsDb và 5299 không đụng tới. Chưa commit.
+
+## Đồng bộ bố cục theo ảnh tham chiếu (2026-11-02)
+- Tìm kiếm: lọc thời gian / chuyên mục / dạng bài, tab Mới nhất – Liên quan (`SearchFilter`, `SearchFilterTests`). Bài viết: lối đi "Cha › Con", hộp bài liên quan trong bài, "Ý kiến", Tags dưới ý kiến, nút Trở lại + Lưu. Chuyên mục: tiêu đề và chuyên mục con cùng một hàng.
+- Kiểm chứng: dotnet test (Search*, ArticleDetail*, CategoryPage*, Comment*) 47+ đạt; Playwright 1 worker article-comments/article-detail/article-parity/search/category-page đạt (article-comments @768/@390 từng lỗi tràn ngang chập chờn, chạy lại đạt). Chưa chạy toàn bộ bộ test. 5300 chạy v26.
+- Chuyên mục con (VNewsDemo): thêm Chính trị, Dân sinh, Việc làm, Giao thông dưới Thời sự; nạp RSS kênh con (chinh-tri, dan-sinh, giao-thong, lao-dong-viec-lam) và chuyển bài đã nạp ở mục cha sang mục con. Mỗi mục con 12 bài. 5300 chạy v27. Test import/category/home (37) đạt; chưa có test riêng cho việc chuyển bài về mục con.
