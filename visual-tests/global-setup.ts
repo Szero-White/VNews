@@ -1,8 +1,14 @@
+import { mkdirSync } from 'node:fs';
+import path from 'node:path';
+
 // The isolated server starts cold: the first request to each route pays JIT + Razor view compilation, which with ten
 // parallel workers has pushed a navigation past the 5 s expect timeout (mega-menu keyboard, sidebar and sign-in specs).
 // Request the public routes and, signed in as the seeded admin, the newsroom/account pages once before the specs run, so
 // they measure behaviour rather than start-up cost. No timeout is raised and no assertion changes.
 export default async function globalSetup(config: { projects: { use: { baseURL?: string } }[] }) {
+  // Some specs write measurements and screenshots to artifacts/visual, which is git-ignored and so missing on a fresh clone.
+  mkdirSync(path.resolve(__dirname, '..', 'artifacts', 'visual'), { recursive: true });
+
   const base = process.env.E2E_BASE_URL ?? config.projects[0]?.use.baseURL ?? 'http://localhost:5399';
   const publicPaths = ['/', '/tin-moi-nhat', '/chuyen-muc/cong-nghe', '/chuyen-muc/kinh-doanh', '/tim-kiem?q=a', '/tai-khoan/dang-nhap', '/tai-khoan/dang-ky'];
   await Promise.all(publicPaths.map((p) => fetch(base + p).then((r) => r.arrayBuffer()).catch(() => undefined)));
