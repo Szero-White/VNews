@@ -5,9 +5,9 @@ A full-stack news website and editorial CMS built with **ASP.NET Core MVC (.NET 
 
 Readers browse, search, comment and save articles; journalists write and submit stories; editors review and publish; admins manage categories, users and moderation, all backed by a real SQL Server database and role-based security.
 
-### 🌐 Live Demo
+### Live Demo
 
-**[🚀 Visit VNews — Live Website](https://vnews-szero.somee.com/)**
+**[ Visit VNews — Live Website](https://vnews-szero.somee.com/)**
 
 Explore the Vietnamese news platform and its editorial CMS.
 
