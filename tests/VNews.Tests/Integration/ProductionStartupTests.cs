@@ -52,6 +52,27 @@ public class DataProtectionKeysPathTests
     }
 
     [Fact]
+    public void ARelativeKeysPath_IsTakenFromTheSitesFolder_NotFromTheWorkingDirectory()
+    {
+        var relative = Path.Combine("App_Data", "keys-test-" + Guid.NewGuid().ToString("N"));
+        using var factory = new Factory(relative);
+        var contentRoot = factory.Services.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>().ContentRootPath;
+        var expected = Path.Combine(contentRoot, relative);
+        try
+        {
+            var protector = factory.Services.GetRequiredService<IDataProtectionProvider>().CreateProtector("test");
+            Assert.Equal("hello", protector.Unprotect(protector.Protect("hello")));
+            Assert.NotEmpty(Directory.GetFiles(expected, "key-*.xml"));
+        }
+        finally
+        {
+            if (Directory.Exists(expected)) Directory.Delete(expected, recursive: true);
+            var parent = Path.Combine(contentRoot, "App_Data");
+            if (Directory.Exists(parent) && !Directory.EnumerateFileSystemEntries(parent).Any()) Directory.Delete(parent);
+        }
+    }
+
+    [Fact]
     public void KeysPath_KeepsTheKeysInTheConfiguredFolder()
     {
         var folder = Path.Combine(Path.GetTempPath(), "vnews-keys-" + Guid.NewGuid().ToString("N"));

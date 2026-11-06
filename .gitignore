@@ -8,6 +8,8 @@
 .env.*
 **/appsettings.Development.json
 **/appsettings.Local.json
+# Server-only settings that hold the connection string and the Cloudinary API secret (the example lives in docs/deploy)
+**/appsettings.Production.json
 **/secrets.json
 artifacts/
 TestResults/

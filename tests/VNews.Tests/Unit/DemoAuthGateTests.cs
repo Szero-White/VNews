@@ -128,6 +128,34 @@ public class DemoAuthGateTests
     public void LocalHostNames_AreAccepted(string host) =>
         Assert.Equal(DemoAuthDecision.Available, Gate().Evaluate(Request(host: host)));
 
+    private static DemoAuthGate PublicGate(bool enabled = true, string environment = "Production", string? database = "vnewsdemo", bool allowPublic = true)
+    {
+        var options = new DemoAuthOptions { Enabled = enabled, AllowPublicHost = allowPublic };
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ConnectionStrings:DefaultConnection"] = $"Data Source=sql.example.net;Initial Catalog={database};User ID=u;Password=p;",
+        }).Build();
+        return new DemoAuthGate(Options.Create(options), new FakeEnvironment(environment), config);
+    }
+
+    [Fact]
+    public void PublicHost_OptIn_AllowsAnyVisitor_OnADemoDatabase() =>
+        Assert.Equal(DemoAuthDecision.Available, PublicGate().Evaluate(Request(remote: "203.0.113.9", host: "vnews-szero.somee.com", ("X-Forwarded-For", "1.2.3.4"))));
+
+    [Fact]
+    public void PublicHost_StillNeedsEnabledTrue() =>
+        Assert.Equal(DemoAuthDecision.Disabled, PublicGate(enabled: false).Evaluate(Request(remote: "203.0.113.9", host: "vnews-szero.somee.com")));
+
+    [Theory]
+    [InlineData("VNewsDb")]
+    [InlineData("production")]
+    public void PublicHost_NeverOpens_OnANonDemoDatabase(string database) =>
+        Assert.Equal(DemoAuthDecision.DatabaseNotAllowed, PublicGate(database: database).Evaluate(Request(remote: "203.0.113.9", host: "x.example")));
+
+    [Fact]
+    public void WithoutTheOptIn_ProductionIsStillRefused() =>
+        Assert.Equal(DemoAuthDecision.NotDevelopment, PublicGate(allowPublic: false).Evaluate(Request()));
+
     [Fact]
     public void ExposesTheDatabaseNameItChecked() => Assert.Equal("VNewsDemo", Gate(database: "VNewsDemo").DatabaseName);
 

@@ -15,7 +15,15 @@ public sealed class UploadStorage
         Root = string.IsNullOrWhiteSpace(configured)
             ? Path.Combine(environment.WebRootPath, "uploads")
             : Path.GetFullPath(configured);
-        Directory.CreateDirectory(Path.Combine(Root, "articles"));
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(Root, "articles"));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // A host that keeps pictures off-site (Cloudinary) may not let the site write next to its own files. Start anyway: nothing
+            // is stored here in that mode, and the file serving below is skipped while the folder does not exist.
+        }
     }
 
     /// <summary>The folder that /uploads maps to.</summary>

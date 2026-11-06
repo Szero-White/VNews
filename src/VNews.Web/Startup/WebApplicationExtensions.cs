@@ -32,12 +32,15 @@ public static class WebApplicationExtensions
         // Pictures uploaded while the site runs are read from disk on each request; MapStaticAssets only serves what existed at build time,
         // so without this a freshly uploaded cover would be a broken image until the next publish (and then be lost).
         var storage = app.Services.GetRequiredService<UploadStorage>();
-        app.UseStaticFiles(new StaticFileOptions
+        if (Directory.Exists(storage.Root))
         {
-            RequestPath = UploadStorage.RequestPath,
-            FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(storage.Root),
-            ServeUnknownFileTypes = false,
-        });
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                RequestPath = UploadStorage.RequestPath,
+                FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(storage.Root),
+                ServeUnknownFileTypes = false,
+            });
+        }
         app.UseHttpsRedirection();
         app.UseRouting();
         app.UseRateLimiter();
@@ -53,6 +56,7 @@ public static class WebApplicationExtensions
     public static WebApplication MapVNewsRoutes(this WebApplication app)
     {
         app.MapStaticAssets();
+        MapPictureRedirect(app);
 
         Route(app, "article", "tin/{slug}", "Article", "Detail");
         Route(app, "category", "chuyen-muc/{slug}", "Category", "Index");
@@ -78,6 +82,26 @@ public static class WebApplicationExtensions
             .WithStaticAssets();
 
         return app;
+    }
+
+    /// <summary>
+    /// With Cloudinary on, a stored address (/uploads/articles/{id}.{ext}) that the web server's disk does not hold is answered with a redirect
+    /// to the picture's Cloudinary URL. Pages already print the Cloudinary URL directly; this covers every other place an old address can
+    /// appear (the editor preview, saved-article lists, a bookmark, a copied link). A file that does exist on disk is still served first.
+    /// Only addresses of the exact generated shape are redirected, and the target host is fixed, so it cannot be used as an open redirect.
+    /// </summary>
+    private static void MapPictureRedirect(WebApplication app)
+    {
+        var delivery = app.Services.GetRequiredService<ImageDelivery>();
+        if (!delivery.Enabled) return;
+
+        app.MapGet($"{UploadStorage.RequestPath}/articles/{{name}}", (string name, HttpContext context) =>
+        {
+            if (!delivery.TryResolve($"{UploadStorage.RequestPath}/articles/{name}", out var url)) return Results.NotFound();
+            // The name is a random GUID that is never reused, so the answer never changes.
+            context.Response.Headers.CacheControl = "public, max-age=86400";
+            return Results.Redirect(url, permanent: false);
+        });
     }
 
     private static void Route(WebApplication app, string name, string pattern, string controller, string action) =>

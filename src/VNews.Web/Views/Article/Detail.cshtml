@@ -1,4 +1,5 @@
 @model ArticleDetailPageViewModel
+@inject VNews.Web.Services.ImageDelivery Delivery
 @{
     var article = Model.Article;
     var related = Model.RelatedArticles;
@@ -40,13 +41,13 @@
             @if (!string.IsNullOrWhiteSpace(article.CoverImageUrl))
             {
                 <figure class="article-cover-wrap">
-                    <img class="article-detail__cover" src="@article.CoverImageUrl" alt="Ảnh minh họa: @article.Title" fetchpriority="high" />
+                    <img class="article-detail__cover" src="@Url.Picture(article.CoverImageUrl)" alt="Ảnh minh họa: @article.Title" fetchpriority="high" />
                     <figcaption>@(string.IsNullOrWhiteSpace(article.CoverCaption) ? "Ảnh minh họa" : article.CoverCaption)</figcaption>
                 </figure>
             }
             <div class="article-detail__body" id="article-body">
                 @* CMS sanitizes HTML on save. Existing seeded body is generated within the application. *@
-                @Html.Raw(ArticleBodyFormatter.ToHtml(article.Body))
+                @Html.Raw(Delivery.RewriteHtml(ArticleBodyFormatter.ToHtml(article.Body)))
             </div>
             @if (article.GalleryImages.Count > 0)
             {
@@ -54,8 +55,8 @@
                 <section class="article-gallery article-gallery--@(Math.Min(article.GalleryImages.Count, 5))" aria-label="Ảnh trong bài">
                     @for (var i = 0; i < article.GalleryImages.Count; i++)
                     {
-                        <a class="article-gallery__item" href="@article.GalleryImages[i]" target="_blank" rel="noopener">
-                            <img src="@article.GalleryImages[i]" alt="Ảnh @(i + 1): @article.Title" loading="lazy" />
+                        <a class="article-gallery__item" href="@Url.Picture(article.GalleryImages[i])" target="_blank" rel="noopener">
+                            <img src="@Url.Picture(article.GalleryImages[i])" alt="Ảnh @(i + 1): @article.Title" loading="lazy" />
                         </a>
                     }
                 </section>
