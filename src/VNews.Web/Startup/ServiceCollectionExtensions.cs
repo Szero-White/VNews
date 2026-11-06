@@ -16,7 +16,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddVNewsWeb(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         services.AddControllersWithViews();
-        services.AddVNewsDataProtection(configuration);
+        services.AddVNewsDataProtection(configuration, environment);
         services.AddInfrastructure(configuration);
         services.AddExceptionHandler<ApiExceptionHandler>();
 
@@ -37,11 +37,18 @@ public static class ServiceCollectionExtensions
     /// Cookie and antiforgery keys. DataProtection:KeysPath (a folder that survives restarts and redeployments) keeps readers and staff signed in; without
     /// it the framework's default location is used, which on some shared hosts is lost on every restart.
     /// </summary>
-    private static IServiceCollection AddVNewsDataProtection(this IServiceCollection services, IConfiguration configuration)
+    private static IServiceCollection AddVNewsDataProtection(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         var builder = services.AddDataProtection().SetApplicationName("VNews");
         var keysPath = configuration["DataProtection:KeysPath"];
-        if (!string.IsNullOrWhiteSpace(keysPath)) builder.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+        if (!string.IsNullOrWhiteSpace(keysPath))
+        {
+            // A relative path (for example App_Data\keys, which IIS never serves) is taken from the site's folder, not from the process's
+            // working directory, which under IIS is not something to rely on.
+            var full = Path.IsPathRooted(keysPath) ? keysPath : Path.Combine(environment.ContentRootPath, keysPath);
+            builder.PersistKeysToFileSystem(new DirectoryInfo(full));
+        }
+
         return services;
     }
 
