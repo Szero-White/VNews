@@ -21,6 +21,7 @@ public static class ServiceCollectionExtensions
         services.AddExceptionHandler<ApiExceptionHandler>();
 
         services.AddNewsroomServices();
+        services.AddImageStorage(configuration);
         services.AddDemoAuth(configuration);
         services.AddCookieAndStampSecurity(environment);
         services.AddAuthRateLimiting(configuration);
@@ -49,6 +50,19 @@ public static class ServiceCollectionExtensions
             builder.PersistKeysToFileSystem(new DirectoryInfo(full));
         }
 
+        return services;
+    }
+
+    /// <summary>
+    /// Where pictures are shown from and stored. Without a Cloudinary cloud name nothing changes (the web server's own /uploads folder).
+    /// With one, pictures are shown from Cloudinary; with the API key and secret as well, new uploads go there too.
+    /// </summary>
+    private static IServiceCollection AddImageStorage(this IServiceCollection services, IConfiguration configuration)
+    {
+        var options = CloudinaryOptions.From(configuration);
+        services.AddSingleton(options);
+        services.AddSingleton<ImageDelivery>();
+        if (options.CanUpload) services.AddSingleton<IExternalImageStore, CloudinaryImageStore>();
         return services;
     }
 

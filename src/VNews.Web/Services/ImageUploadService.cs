@@ -28,11 +28,14 @@ public class ImageUploadService : IImageUploadService
 
     private readonly UploadStorage _storage;
     private readonly ILogger<ImageUploadService> _logger;
+    private readonly IExternalImageStore? _external;
 
-    public ImageUploadService(UploadStorage storage, ILogger<ImageUploadService> logger)
+    /// <param name="external">Registered only when Cloudinary upload is configured; otherwise pictures are written to the local uploads folder.</param>
+    public ImageUploadService(UploadStorage storage, ILogger<ImageUploadService> logger, IExternalImageStore? external = null)
     {
         _storage = storage;
         _logger = logger;
+        _external = external;
     }
 
     public async Task<ImageUploadResult> SaveAsync(Stream content, string originalFileName, string contentType, long length, CancellationToken cancellationToken = default)
@@ -75,9 +78,6 @@ public class ImageUploadService : IImageUploadService
             return Reject("signature", "Nội dung tệp không khớp với định dạng ảnh khai báo.", length);
         }
 
-        var uploadsRoot = _storage.ArticlesPath;
-        Directory.CreateDirectory(uploadsRoot);
-
         var storedExtension = expected.Format switch
         {
             ImageFormat.Jpeg => ".jpg",
@@ -85,7 +85,25 @@ public class ImageUploadService : IImageUploadService
             _ => ".webp"
         };
         var safeFileName = $"{Guid.NewGuid():N}{storedExtension}";
-        await File.WriteAllBytesAsync(Path.Combine(uploadsRoot, safeFileName), bytes, cancellationToken);
+
+        if (_external is not null)
+        {
+            try
+            {
+                await _external.StoreAsync(safeFileName, bytes, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogError(ex, "Image store failed for {StoredFile}.", safeFileName);
+                return new ImageUploadResult { Success = false, ErrorMessage = "Không lưu được ảnh vào kho ảnh. Vui lòng thử lại sau." };
+            }
+        }
+        else
+        {
+            var uploadsRoot = _storage.ArticlesPath;
+            Directory.CreateDirectory(uploadsRoot);
+            await File.WriteAllBytesAsync(Path.Combine(uploadsRoot, safeFileName), bytes, cancellationToken);
+        }
 
         _logger.LogInformation("Cover image uploaded: {StoredFile} ({Format}, {Bytes} bytes).", safeFileName, expected.Format, bytes.Length);
         return new ImageUploadResult { Success = true, Url = $"/uploads/articles/{safeFileName}" };

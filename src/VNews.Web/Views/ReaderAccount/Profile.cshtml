@@ -59,7 +59,7 @@
                 @foreach (var a in Model.RecentSaved)
                 {
                     <li class="saved-item">
-                        @if (!string.IsNullOrWhiteSpace(a.CoverImageUrl)) { <img class="saved-item__img" src="@a.CoverImageUrl" alt="" loading="lazy" /> } else { <span class="saved-item__img"></span> }
+                        @if (!string.IsNullOrWhiteSpace(a.CoverImageUrl)) { <img class="saved-item__img" src="@Url.Picture(a.CoverImageUrl)" alt="" loading="lazy" /> } else { <span class="saved-item__img"></span> }
                         <div>
                             <a class="saved-item__title" asp-controller="Article" asp-action="Detail" asp-route-slug="@a.Slug">@a.Title</a>
                             <span class="saved-item__meta">@a.CategoryName@(a.PublishedAt is null ? "" : " · " + a.PublishedAt.Value.ToLocalTime().ToString("dd/MM/yyyy"))</span>
