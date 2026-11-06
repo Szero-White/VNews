@@ -1,7 +1,15 @@
+
 # VNews — Vietnamese News Platform
 
 A full-stack news website and editorial CMS built with **ASP.NET Core MVC (.NET 10)**, **EF Core** and **SQL Server**.
+
 Readers browse, search, comment and save articles; journalists write and submit stories; editors review and publish; admins manage categories, users and moderation, all backed by a real SQL Server database and role-based security.
+
+### 🌐 Live Demo
+
+**[🚀 Visit VNews — Live Website](https://vnews-szero.somee.com/)**
+
+Explore the Vietnamese news platform and its editorial CMS.
 
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
 ![C#](https://img.shields.io/badge/C%23-239120?logo=csharp&logoColor=white)
@@ -10,6 +18,7 @@ Readers browse, search, comment and save articles; journalists write and submit 
 ![SQL Server](https://img.shields.io/badge/SQL_Server-LocalDB-CC2927?logo=microsoftsqlserver&logoColor=white)
 
 > The public site and the CMS interface are in Vietnamese. This README and the code identifiers are in English; some guides under `docs/`, `RUN-WINDOWS.md` and a number of code comments are written in Vietnamese.
+
 
 ## Table of contents
 
