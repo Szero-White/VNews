@@ -58,3 +58,51 @@ public class DemoAuthProductionIntegrationTests : IClassFixture<DemoAuthProducti
         Assert.Empty(users.Users.Where(u => u.Email!.EndsWith("@demo.vnews.local")));
     }
 }
+
+/// <summary>A public portfolio site on a demo-named database that opted in with DemoAuth:AllowPublicHost (the Somee setup).</summary>
+public sealed class DemoAuthPublicHostWebApplicationFactory : IsolatedDbWebApplicationFactory
+{
+    protected override string EnvironmentName => "Production";
+
+    protected override IEnumerable<KeyValuePair<string, string?>> ExtraConfiguration =>
+        base.ExtraConfiguration
+            .Append(new KeyValuePair<string, string?>("DemoAuth:Enabled", "true"))
+            .Append(new KeyValuePair<string, string?>("DemoAuth:AllowPublicHost", "true"));
+}
+
+public class DemoAuthPublicHostIntegrationTests : IClassFixture<DemoAuthPublicHostWebApplicationFactory>
+{
+    private readonly DemoAuthPublicHostWebApplicationFactory _factory;
+
+    public DemoAuthPublicHostIntegrationTests(DemoAuthPublicHostWebApplicationFactory factory) => _factory = factory;
+
+    private HttpClient Https() => _factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions { AllowAutoRedirect = false, BaseAddress = new Uri("https://vnews-szero.somee.com") });
+
+    [Fact]
+    public async Task TheFourButtons_AreShown_ToAnyVisitor()
+    {
+        var html = await Https().GetStringAsync("/tai-khoan/dang-nhap");
+        foreach (var persona in DemoPersonas.All) Assert.Contains($"data-demo-role=\"{persona.Key}\"", html);
+    }
+
+    [Theory]
+    [InlineData("reader", "/")]
+    [InlineData("author", "/cms")]
+    [InlineData("editor", "/cms")]
+    [InlineData("admin", "/cms")]
+    public async Task EveryRole_SignsIn_WithItsOwnRoleAndLimits(string role, string destinationStart)
+    {
+        var client = Https();
+        var response = await DemoAuthIntegrationTests.PostDemoAsync(client, role);
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.StartsWith(destinationStart, response.Headers.Location!.OriginalString);
+        Assert.True(HttpHelpers.SetsAuthCookie(response));
+
+        var cms = (await client.GetAsync("/cms")).StatusCode;
+        var users = (await client.GetAsync("/cms/CmsUsers")).StatusCode;
+        if (role == "reader") Assert.Equal(HttpStatusCode.Redirect, cms);
+        else Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/cms/CmsArticles")).StatusCode);
+        Assert.Equal(role == "admin" ? HttpStatusCode.OK : HttpStatusCode.Redirect, users);
+    }
+}

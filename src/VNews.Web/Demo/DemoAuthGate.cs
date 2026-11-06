@@ -20,6 +20,12 @@ public sealed class DemoAuthOptions
     /// never be pointed at the real development database (VNewsDb) by mistake. Case-insensitive.
     /// </summary>
     public string[] AllowedDatabasePrefixes { get; set; } = { "VNewsDemo", "VNewsE2E", "VNewsTests_" };
+
+    /// <summary>
+    /// Opt-in for a PUBLIC portfolio site (for example the Somee deployment): the demo sign-in then also works outside Development and for
+    /// requests that are not from this machine. Needs Enabled=true AND an allowed demo database name. Default false: nothing changes.
+    /// </summary>
+    public bool AllowPublicHost { get; set; }
 }
 
 public enum DemoAuthDecision
@@ -60,9 +66,10 @@ public sealed class DemoAuthGate
     public DemoAuthDecision Evaluate(HttpContext context)
     {
         // Order matters only for the reported reason; every branch denies.
-        if (!_environment.IsDevelopment()) return DemoAuthDecision.NotDevelopment;
+        if (!_environment.IsDevelopment() && !_options.AllowPublicHost) return DemoAuthDecision.NotDevelopment;
         if (!_options.Enabled) return DemoAuthDecision.Disabled;
         if (!IsAllowedDatabase(_databaseName, _options.AllowedDatabasePrefixes)) return DemoAuthDecision.DatabaseNotAllowed;
+        if (_options.AllowPublicHost) return DemoAuthDecision.Available; // public demo site: any visitor, but only on a demo-named database
 
         var remote = context.Connection.RemoteIpAddress;
         if (remote is null || !IPAddress.IsLoopback(remote.IsIPv4MappedToIPv6 ? remote.MapToIPv4() : remote)) return DemoAuthDecision.NotLoopback;
